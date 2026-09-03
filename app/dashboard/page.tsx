@@ -592,17 +592,18 @@ export default function DashboardPage() {
           )}
 
           {/* Footer Dashboard */}
-          <footer className="pt-8 pb-12 border-t border-slate-200 mt-12 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-700">MonCV.ai</span>
-              <span>•</span>
-              <span>Développé par <strong>INNOVA GROUP</strong></span>
+          <footer className="pt-8 pb-12 border-t border-slate-200 mt-12 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2">
+              <span className="font-extrabold text-slate-900">MonCV<span className="text-blue-600">.ai</span></span>
+              <span className="text-slate-400">
+                <span className="hidden sm:inline">•</span> Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>
+              </span>
             </div>
-            <div className="flex items-center gap-4 font-semibold">
-              <Link href="/terms" className="hover:text-blue-600 transition-colors">
+            <div className="flex items-center justify-center gap-5 font-semibold">
+              <Link href="/terms" className="text-slate-600 hover:text-blue-600 transition-colors">
                 Conditions d'Utilisation
               </Link>
-              <Link href="/contact" className="hover:text-blue-600 transition-colors">
+              <Link href="/contact" className="text-slate-600 hover:text-blue-600 transition-colors">
                 Nous Contacter
               </Link>
             </div>

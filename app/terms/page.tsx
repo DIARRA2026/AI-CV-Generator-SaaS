@@ -278,8 +278,8 @@ export default function TermsPage() {
         </div>
 
         {/* Pied de page document */}
-        <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 MonCV.ai — Conçu & Développé par <strong>INNOVA GROUP</strong>. Tous droits réservés.</p>
+        <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 text-center sm:text-left">
+          <p>© 2026 MonCV.ai — Conçu & Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>. Tous droits réservés.</p>
           <Link href="/contact" className="text-blue-600 font-bold hover:underline">
             Accéder à la section Nous Contacter →
           </Link>

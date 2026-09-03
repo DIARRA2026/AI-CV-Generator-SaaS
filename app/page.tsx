@@ -259,22 +259,22 @@ export default function HomePage() {
             {/* Badge flottant avec effet shimmer */}
             <div
               onClick={handleStartCreation}
-              className="shimmer-badge inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-blue-200/80 shadow-xs text-slate-800 text-xs font-semibold mb-4 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer"
+              className="shimmer-badge inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-blue-200/80 shadow-xs text-slate-800 text-[11px] sm:text-xs font-semibold mb-4 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer select-none max-w-full"
             >
-              <span className="flex h-2 w-2 relative">
+              <span className="flex h-2 w-2 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-slate-900 font-bold">+18 450 CVs créés</span>
+              <span className="text-slate-900 font-bold whitespace-nowrap">+18 450 CVs créés</span>
               <span className="text-slate-300">•</span>
-              <span className="text-blue-600 font-semibold">Afrique & International</span>
-              <span className="px-1.5 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] rounded-full font-bold uppercase tracking-wider shadow-xs">
+              <span className="text-blue-600 font-semibold whitespace-nowrap">Afrique & Monde</span>
+              <span className="px-1.5 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] rounded-full font-bold uppercase tracking-wider shadow-xs shrink-0">
                 IA 2026
               </span>
             </div>
 
-            {/* Titre Principal Moderne, Équilibré & Stylé (Taille optimisée & bien alignée) */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-extrabold text-slate-900 tracking-tight leading-snug sm:leading-tight max-w-2xl mx-auto px-4">
+            {/* Titre Principal Moderne, Équilibré & Stylé */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-extrabold text-slate-900 tracking-tight leading-tight max-w-2xl mx-auto text-center px-1">
               Répondez à quelques questions. <br className="hidden sm:inline" />
               Votre{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
@@ -284,46 +284,48 @@ export default function HomePage() {
             </h1>
 
             {/* Sous-titre Épuré & Lisible */}
-            <p className="mt-3.5 text-xs sm:text-sm md:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-normal px-4">
+            <p className="mt-3.5 text-xs sm:text-sm md:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-normal text-center px-1">
               Fini les rejets silencieux et les heures perdues sur Word. Notre IA transforme vos réponses en un CV percutant selon la <strong className="text-slate-900 font-semibold">méthode STAR</strong>, optimisé pour les <strong className="text-slate-900 font-semibold">robots ATS</strong> et conforme aux exigences des recruteurs.
             </p>
 
             {/* CTAs d'action Compacts & Animés */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 max-w-2xl mx-auto px-4">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto w-full px-2">
               <button
                 type="button"
                 onClick={handleStartCreation}
-                className="whitespace-nowrap px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer animate-cta-loop shadow-xl shadow-blue-600/30 active:scale-98"
+                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer animate-cta-loop shadow-xl shadow-blue-600/30 active:scale-98"
               >
                 <Sparkles className="w-4 h-4 text-blue-200 shrink-0" />
                 <span className="whitespace-nowrap font-black">Créer mon CV Gratuitement</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
 
-              <a
-                href="#exposition-modeles"
-                className="whitespace-nowrap px-6 py-3.5 sm:px-7 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-md hover:shadow-lg text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:border-blue-300 animate-btn-secondary-loop cursor-pointer"
-              >
-                <Eye className="w-4 h-4 text-blue-600 animate-pulse shrink-0" />
-                <span className="whitespace-nowrap">Galerie des Modèles</span>
-              </a>
+              <div className="w-full sm:w-auto grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:gap-3">
+                <a
+                  href="#exposition-modeles"
+                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:border-blue-300 cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="whitespace-nowrap">Modèles</span>
+                </a>
 
-              <Link
-                href="/portfolio"
-                target="_blank"
-                className="whitespace-nowrap px-6 py-3.5 sm:px-7 sm:py-4 bg-purple-50 hover:bg-purple-100/90 text-purple-900 font-bold rounded-2xl border border-purple-200 shadow-md hover:shadow-lg text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer btn-press"
-              >
-                <Globe className="w-4 h-4 text-purple-600 shrink-0" />
-                <span>Portfolio Web Démo</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
-                  VIP
-                </span>
-              </Link>
+                <Link
+                  href="/portfolio"
+                  target="_blank"
+                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-purple-50 hover:bg-purple-100/90 text-purple-900 font-bold rounded-2xl border border-purple-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer btn-press"
+                >
+                  <Globe className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span className="whitespace-nowrap">Portfolio</span>
+                  <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase shrink-0">
+                    VIP
+                  </span>
+                </Link>
+              </div>
             </div>
 
             {/* Social Proof & Avis */}
             <div className="mt-8 flex flex-col items-center justify-center gap-3">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center gap-2.5">
                 <div className="flex -space-x-2.5 overflow-hidden">
                   {TESTIMONIALS.map((t, idx) => (
                     <img
@@ -339,23 +341,23 @@ export default function HomePage() {
                     <Star key={i} className="w-4 h-4 fill-current drop-shadow-xs" />
                   ))}
                 </div>
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-xs font-bold text-slate-800 text-center">
                   4.9/5 <span className="font-medium text-slate-500">(1 240+ avis vérifiés)</span>
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-600">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[11px] sm:text-xs font-semibold text-slate-600 text-center">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Sans inscription obligatoire
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <span>Sans inscription obligatoire</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Score ATS 0-100% en direct
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <span>Score ATS 0-100% en direct</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Wave & Mobile Money acceptés
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <span>Wave & Mobile Money acceptés</span>
                 </span>
               </div>
             </div>
@@ -1480,37 +1482,58 @@ export default function HomePage() {
       </main>
 
       {/* Footer Officiel INNOVA GROUP */}
-      <footer className="py-8 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto px-4 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs">
-                M
+      <footer className="py-8 sm:py-10 bg-white border-t border-slate-200 text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            {/* Logo & Éditeur */}
+            <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-extrabold text-slate-900 text-sm tracking-tight">
+                  MonCV<span className="text-blue-600">.ai</span>
+                </span>
               </div>
-              <span className="font-extrabold text-slate-800">MonCV.ai</span>
-              <span className="text-slate-400">• Développé par <strong>INNOVA GROUP</strong></span>
+              <span className="text-slate-400 text-xs font-medium">
+                <span className="hidden sm:inline">•</span> Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>
+              </span>
             </div>
 
             {/* Liens Légaux & Navigation Footer */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-semibold">
-              <Link href="/terms" className="text-slate-600 hover:text-blue-600 transition-colors">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-center">
+              <Link href="/terms" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
                 Conditions d'Utilisation
               </Link>
-              <Link href="/contact" className="text-slate-600 hover:text-blue-600 transition-colors">
+              <Link href="/contact" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
                 Nous Contacter
               </Link>
-              <Link href="/portfolio" className="text-slate-600 hover:text-blue-600 transition-colors">
+              <Link href="/portfolio" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
                 Portfolio Web Démo
               </Link>
-              <Link href="/create" className="text-blue-600 hover:underline">
+              <Link href="/create" className="text-blue-600 font-bold hover:underline py-1">
                 Créer un CV →
               </Link>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10.5px] text-slate-400">
-            <span>© 2026 MonCV.ai — Une solution logicielle conçue et éditée par INNOVA GROUP. Tous droits réservés.</span>
-            <span>Abidjan 🇨🇮 • Dakar 🇸🇳 • Douala 🇨🇲 • Ouagadougou 🇧🇫 • Bamako 🇲🇱 • Paris 🇫🇷</span>
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left text-[11px] text-slate-400">
+            <p className="leading-relaxed text-center sm:text-left">
+              © 2026 MonCV.ai — Une solution logicielle conçue et éditée par <strong className="text-slate-600 font-semibold">INNOVA GROUP</strong>. Tous droits réservés.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-medium text-slate-500 text-center">
+              <span>Abidjan 🇨🇮</span>
+              <span>•</span>
+              <span>Dakar 🇸🇳</span>
+              <span>•</span>
+              <span>Douala 🇨🇲</span>
+              <span>•</span>
+              <span>Ouagadougou 🇧🇫</span>
+              <span>•</span>
+              <span>Bamako 🇲🇱</span>
+              <span>•</span>
+              <span>Paris 🇫🇷</span>
+            </div>
           </div>
         </div>
       </footer>

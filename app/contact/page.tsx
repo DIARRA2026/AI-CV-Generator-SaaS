@@ -309,19 +309,20 @@ export default function ContactPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">MonCV.ai</span>
-            <span>•</span>
-            <span>Développé par <strong>INNOVA GROUP</strong></span>
+      <footer className="py-8 sm:py-10 bg-white border-t border-slate-200 text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2.5">
+            <span className="font-extrabold text-slate-900">MonCV<span className="text-blue-600">.ai</span></span>
+            <span className="text-slate-400">
+              <span className="hidden sm:inline">•</span> Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>
+            </span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/terms" className="hover:text-blue-600 transition-colors">
+          <div className="flex items-center justify-center gap-5 text-xs font-semibold">
+            <Link href="/terms" className="text-slate-600 hover:text-blue-600 transition-colors">
               Conditions d'Utilisation
             </Link>
-            <Link href="/" className="hover:text-blue-600 transition-colors">
-              Créer un CV
+            <Link href="/" className="text-blue-600 font-bold hover:underline">
+              Créer un CV →
             </Link>
           </div>
         </div>

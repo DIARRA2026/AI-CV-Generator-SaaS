@@ -1,0 +1,37 @@
+{
+  "name": "MonCV.ai — Portfolio Professionnel & CV d'Excellence",
+  "short_name": "MonCV.ai",
+  "description": "Portfolio professionnel haute fidélité, CV certifiés ATS et demandes d'emploi officielles propulsés par l'Intelligence Artificielle.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#121318",
+  "theme_color": "#121318",
+  "lang": "fr",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

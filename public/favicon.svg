@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Arrière-plan sombre indigo profond sans coins arrondis (#121318) -->
+  <rect width="512" height="512" fill="#121318"/>
+  
+  <defs>
+    <!-- Dégradé lumineux bleu électrique & sapphire -->
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Symbole Géométrique Minimaliste et Tranchant Haute Définition -->
+  <g transform="translate(256, 256) scale(0.85) translate(-256, -256)" filter="url(#glow)">
+    <!-- Contour externe tranchant -->
+    <path d="M 140 140 L 372 140 L 372 260 L 290 372 L 210 372 L 140 300 Z" 
+          fill="none" 
+          stroke="url(#neonGlow)" 
+          stroke-width="26" 
+          stroke-linejoin="miter" 
+          stroke-miterlimit="10"/>
+
+    <!-- Barres géométriques internes haute visibilité -->
+    <path d="M 190 200 L 190 320" 
+          stroke="#ffffff" 
+          stroke-width="24" 
+          stroke-linecap="square"/>
+    <path d="M 240 200 L 320 200 L 320 260 L 240 260 Z" 
+          fill="url(#neonGlow)"/>
+    <path d="M 240 260 L 290 340" 
+          stroke="url(#neonGlow)" 
+          stroke-width="22" 
+          stroke-linecap="square"/>
+  </g>
+</svg>

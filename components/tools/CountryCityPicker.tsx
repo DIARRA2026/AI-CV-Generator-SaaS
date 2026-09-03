@@ -57,7 +57,7 @@ export const CountryCityPicker: React.FC<Props> = ({
           <select
             value={currentCountry}
             onChange={handleSelectCountry}
-            className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all appearance-none cursor-pointer"
+            className={`w-full pl-2.5 pr-7 ${compact ? "py-1.5 text-xs rounded-lg" : "py-2 text-xs sm:text-sm rounded-xl"} bg-white border border-slate-200 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all appearance-none cursor-pointer`}
           >
             <optgroup label="🌍 Pays Fréquents (Afrique & Diaspora)">
               {POPULAR_COUNTRIES.map((c) => (
@@ -74,8 +74,8 @@ export const CountryCityPicker: React.FC<Props> = ({
               ))}
             </optgroup>
           </select>
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <ChevronDown className="w-4 h-4" />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+            <ChevronDown className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>
@@ -102,7 +102,7 @@ export const CountryCityPicker: React.FC<Props> = ({
             value={selectedCity}
             onChange={(e) => onCityChange(e.target.value)}
             placeholder={cities.length > 0 ? `Ex: ${cities[0]}...` : "Ex: Ville ou commune..."}
-            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+            className={`w-full px-2.5 ${compact ? "py-1.5 text-xs rounded-lg" : "py-2 text-xs sm:text-sm rounded-xl"} bg-white border border-slate-200 font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all`}
           />
           <datalist id={`cities-datalist-${currentCountry.replace(/[^a-zA-Z]/g, "")}`}>
             {cities.map((city) => (

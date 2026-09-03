@@ -56,19 +56,28 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setResetSuccessMessage(null);
 
-      // Récupérer les identifiants mémorisés si disponibles
-      const savedCreds = StorageManager.getRememberedCreds();
-      if (savedCreds) {
-        setEmail(savedCreds.email || "");
-        if (savedCreds.password) {
-          setPassword(savedCreds.password);
+      if (defaultMode === "login") {
+        // En mode connexion : pré-remplir les identifiants mémorisés si existants
+        const savedCreds = StorageManager.getRememberedCreds();
+        if (savedCreds) {
+          setEmail(savedCreds.email || "");
+          setPassword(savedCreds.password || "");
+          setRememberMe(true);
+        } else {
+          setEmail("");
+          setPassword("");
         }
+      } else {
+        // En mode inscription ('register') : FORMULAIRE STRICTEMENT VIERGE ET PROPRE
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPhone("");
+        setPassword("");
+        setConfirmPassword("");
+        setCountry("Côte d'Ivoire");
+        setCity("Abidjan");
         setRememberMe(true);
-      }
-
-      // Pré-remplir l'indicatif téléphonique par défaut si vide
-      if (!phone || phone.trim() === "") {
-        setPhone(`${getDialCodeForCountry("Côte d'Ivoire")} `);
       }
     }
   }, [isOpen, defaultMode]);
@@ -351,6 +360,23 @@ export const AuthModal: React.FC<Props> = ({
                 onClick={() => {
                   setMode(m);
                   setErrors({});
+                  if (m === "register") {
+                    setFirstName("");
+                    setLastName("");
+                    setEmail("");
+                    setPhone("");
+                    setPassword("");
+                    setConfirmPassword("");
+                  } else if (m === "login") {
+                    const savedCreds = StorageManager.getRememberedCreds();
+                    if (savedCreds) {
+                      setEmail(savedCreds.email || "");
+                      setPassword(savedCreds.password || "");
+                    } else {
+                      setEmail("");
+                      setPassword("");
+                    }
+                  }
                 }}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   mode === m
@@ -452,7 +478,7 @@ export const AuthModal: React.FC<Props> = ({
             </>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3">
             {/* Si inscription : Nom & Prénom */}
             {mode === "register" && (
               <div className="grid grid-cols-2 gap-2">
@@ -467,6 +493,7 @@ export const AuthModal: React.FC<Props> = ({
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Nom de famille"
+                      autoComplete="off"
                       className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 min-w-0 font-medium"
                     />
                   </div>
@@ -484,6 +511,7 @@ export const AuthModal: React.FC<Props> = ({
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Prénom"
+                      autoComplete="off"
                       className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 min-w-0 font-medium"
                     />
                   </div>
@@ -504,6 +532,7 @@ export const AuthModal: React.FC<Props> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="votre.email@exemple.com"
+                  autoComplete="off"
                   className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                 />
               </div>
@@ -543,6 +572,7 @@ export const AuthModal: React.FC<Props> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder={`${getDialCodeForCountry(country)} 07 00 00 00 00`}
+                    autoComplete="off"
                     className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                   />
                 </div>
@@ -563,6 +593,7 @@ export const AuthModal: React.FC<Props> = ({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={mode === "register" ? "Min. 6 caractères" : "Votre mot de passe"}
+                    autoComplete={mode === "register" ? "new-password" : "current-password"}
                     className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                   />
                   <button
@@ -590,6 +621,7 @@ export const AuthModal: React.FC<Props> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Répétez votre mot de passe"
+                    autoComplete="new-password"
                     className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                   />
                   <button

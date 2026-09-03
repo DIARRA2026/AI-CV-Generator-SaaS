@@ -7,6 +7,7 @@ import {
   KeyRound, AlertTriangle, ArrowLeft
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
+import { SupabaseService } from "@/lib/supabaseService";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
 
@@ -140,21 +141,40 @@ export const AuthModal: React.FC<Props> = ({
 
     await new Promise((r) => setTimeout(r, 600));
 
-    // MODE 1 : INSCRIPTION (Création de compte et enregistrement du mot de passe)
+    // MODE 1 : INSCRIPTION (Cloud Supabase avec repli local sécurisé)
     if (mode === "register") {
-      const regResult = StorageManager.registerUser({
-        firstName,
-        lastName,
-        email,
-        phone,
-        country,
-        city,
-        password,
-      });
+      let regSuccess = false;
+      let regMessage = "";
 
-      if (!regResult.success) {
+      if (SupabaseService.isAvailable()) {
+        const cloudResult = await SupabaseService.signUp({
+          firstName,
+          lastName,
+          email,
+          phone,
+          country,
+          city,
+          password,
+        });
+        regSuccess = cloudResult.success;
+        regMessage = cloudResult.message || "";
+      } else {
+        const regResult = StorageManager.registerUser({
+          firstName,
+          lastName,
+          email,
+          phone,
+          country,
+          city,
+          password,
+        });
+        regSuccess = regResult.success;
+        regMessage = regResult.message || "";
+      }
+
+      if (!regSuccess) {
         setIsLoading(false);
-        setErrors({ general: regResult.message || "Erreur lors de la création du compte." });
+        setErrors({ general: regMessage || "Erreur lors de la création du compte." });
         return;
       }
 
@@ -176,15 +196,25 @@ export const AuthModal: React.FC<Props> = ({
       return;
     }
 
-    // MODE 2 : CONNEXION (Blocage d'accès strict si mot de passe non conforme)
+    // MODE 2 : CONNEXION (Cloud Supabase avec repli local sécurisé)
     if (mode === "login") {
-      const authResult = StorageManager.verifyLogin(email, password);
+      let authSuccess = false;
+      let authMessage = "";
 
-      if (!authResult.success) {
+      if (SupabaseService.isAvailable()) {
+        const cloudResult = await SupabaseService.signIn(email, password);
+        authSuccess = cloudResult.success;
+        authMessage = cloudResult.message || "";
+      } else {
+        const authResult = StorageManager.verifyLogin(email, password);
+        authSuccess = authResult.success;
+        authMessage = authResult.message || "";
+      }
+
+      if (!authSuccess) {
         setIsLoading(false);
-        // BLOCAGE STRICT : si le mot de passe n'est pas celui utilisé lors de la création
         setErrors({
-          loginBlocked: authResult.message || "Mot de passe incorrect. L'accès est strictement refusé.",
+          loginBlocked: authMessage || "Mot de passe incorrect. L'accès est strictement refusé.",
         });
         return;
       }

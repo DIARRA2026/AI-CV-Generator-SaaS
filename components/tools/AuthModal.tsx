@@ -47,7 +47,7 @@ export const AuthModal: React.FC<Props> = ({
   const [rememberMe, setRememberMe] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Synchronisation & Mémorisation des identifiants (Sécurité de connexion)
+  // Réinitialisation stricte : formulaires 100% vierges et vides sans aucune pré-remplissage
   useEffect(() => {
     if (isOpen) {
       setMode(defaultMode);
@@ -56,31 +56,36 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setResetSuccessMessage(null);
 
-      if (defaultMode === "login") {
-        // En mode connexion : pré-remplir les identifiants mémorisés si existants
-        const savedCreds = StorageManager.getRememberedCreds();
-        if (savedCreds) {
-          setEmail(savedCreds.email || "");
-          setPassword(savedCreds.password || "");
-          setRememberMe(true);
-        } else {
-          setEmail("");
-          setPassword("");
-        }
-      } else {
-        // En mode inscription ('register') : FORMULAIRE STRICTEMENT VIERGE ET PROPRE
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setPhone("");
-        setPassword("");
-        setConfirmPassword("");
-        setCountry("Côte d'Ivoire");
-        setCity("Abidjan");
-        setRememberMe(true);
-      }
+      // TOUS LES CHAMPS SONT STRICTEMENT VIDES DÈS L'OUVERTURE
+      setEmail("");
+      setPassword("");
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setConfirmPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setCountry("Côte d'Ivoire");
+      setCity("Abidjan");
+      setRememberMe(false);
+      StorageManager.clearRememberedCreds();
     }
   }, [isOpen, defaultMode]);
+
+  const switchMode = (m: "login" | "register" | "forgot") => {
+    setMode(m);
+    setErrors({});
+    setEmail("");
+    setPassword("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setConfirmPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setResetSuccessMessage(null);
+    StorageManager.clearRememberedCreds();
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -357,27 +362,7 @@ export const AuthModal: React.FC<Props> = ({
               <button
                 key={m}
                 type="button"
-                onClick={() => {
-                  setMode(m);
-                  setErrors({});
-                  if (m === "register") {
-                    setFirstName("");
-                    setLastName("");
-                    setEmail("");
-                    setPhone("");
-                    setPassword("");
-                    setConfirmPassword("");
-                  } else if (m === "login") {
-                    const savedCreds = StorageManager.getRememberedCreds();
-                    if (savedCreds) {
-                      setEmail(savedCreds.email || "");
-                      setPassword(savedCreds.password || "");
-                    } else {
-                      setEmail("");
-                      setPassword("");
-                    }
-                  }
-                }}
+                onClick={() => switchMode(m)}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   mode === m
                     ? "bg-white text-blue-600 shadow-sm"
@@ -392,10 +377,7 @@ export const AuthModal: React.FC<Props> = ({
           <div className="mx-5 mb-3">
             <button
               type="button"
-              onClick={() => {
-                setMode("login");
-                setErrors({});
-              }}
+              onClick={() => switchMode("login")}
               className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -529,10 +511,13 @@ export const AuthModal: React.FC<Props> = ({
                 <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <input
                   type="email"
+                  name="mc_auth_email"
+                  id="mc_auth_email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="votre.email@exemple.com"
                   autoComplete="off"
+                  data-lpignore="true"
                   className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                 />
               </div>
@@ -569,10 +554,13 @@ export const AuthModal: React.FC<Props> = ({
                   <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <input
                     type="tel"
+                    name="mc_auth_phone"
+                    id="mc_auth_phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder={`${getDialCodeForCountry(country)} 07 00 00 00 00`}
                     autoComplete="off"
+                    data-lpignore="true"
                     className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                   />
                 </div>
@@ -590,10 +578,13 @@ export const AuthModal: React.FC<Props> = ({
                   <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <input
                     type={showPassword ? "text" : "password"}
+                    name="mc_auth_password"
+                    id="mc_auth_password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={mode === "register" ? "Min. 6 caractères" : "Votre mot de passe"}
-                    autoComplete={mode === "register" ? "new-password" : "current-password"}
+                    autoComplete="new-password"
+                    data-lpignore="true"
                     className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-slate-400 font-medium"
                   />
                   <button
@@ -707,10 +698,7 @@ export const AuthModal: React.FC<Props> = ({
                 {mode === "login" && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setMode("forgot");
-                      setErrors({});
-                    }}
+                    onClick={() => switchMode("forgot")}
                     className="text-[11px] text-blue-600 hover:underline font-bold cursor-pointer"
                   >
                     Mot de passe oublié ?
@@ -780,10 +768,7 @@ export const AuthModal: React.FC<Props> = ({
                 {mode === "register" ? "Vous avez déjà un compte ?" : "Pas encore de compte ?"}{" "}
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode(mode === "login" ? "register" : "login");
-                    setErrors({});
-                  }}
+                  onClick={() => switchMode(mode === "login" ? "register" : "login")}
                   className="text-blue-600 font-bold hover:underline cursor-pointer"
                 >
                   {mode === "register" ? "Se connecter" : "Créer un compte"}

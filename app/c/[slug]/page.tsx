@@ -57,7 +57,7 @@ export default function PublicCandidateCVPage() {
   const [activeTab, setActiveTab] = useState<"portfolio" | "cv">("portfolio");
   const [copiedLink, setCopiedLink] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("Tous");
 

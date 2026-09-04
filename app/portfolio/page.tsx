@@ -274,7 +274,7 @@ const PORTFOLIO_CONFIG = {
 };
 
 export default function PortfolioLandingPage() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [activeFilter, setActiveFilter] = useState<string>("Tous");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

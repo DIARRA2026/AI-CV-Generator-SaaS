@@ -94,18 +94,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
           ? "bg-white/95 backdrop-blur-md shadow-xs border-b border-slate-200/90"
           : "bg-white/80 backdrop-blur-sm border-b border-slate-200/60"
       }`}>
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 btn-press min-w-0">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+          {/* Logo - Toutes les écritures alignées sur une seule ligne */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 btn-press shrink-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/25 shrink-0">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div className="flex flex-col justify-center min-w-0">
-              <span className="text-[15px] sm:text-base font-black tracking-tight text-slate-900 leading-none">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[15px] sm:text-base font-black tracking-tight text-slate-900 leading-none whitespace-nowrap">
                 MonCV<span className="text-blue-600">.ai</span>
               </span>
-              <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 leading-none whitespace-nowrap">
-                Intelligence CV & ATS
+              <span className="hidden min-[380px]:inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[9px] sm:text-[9.5px] font-bold text-blue-600 border border-blue-100/80 whitespace-nowrap leading-none">
+                ATS & IA
               </span>
             </div>
           </Link>
@@ -272,13 +272,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
             )}
           </div>
 
-          {/* Mobile Action Controls (< 640px) */}
-          <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+          {/* Mobile Action Controls (< 640px) - Protégé contre tout débordement ou rognage d'écran */}
+          <div className="flex sm:hidden items-center gap-1.5 shrink-0 pl-1 pr-0.5">
             {onOpenPayment && (
               <button
                 type="button"
                 onClick={() => onOpenPayment()}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-[11px] shadow-xs cursor-pointer btn-press"
+                className="flex items-center gap-1 px-2 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
               >
                 <Crown className="w-3 h-3" />
                 <span>Premium</span>
@@ -289,18 +289,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
               <button
                 type="button"
                 onClick={() => setIsSettingsModalOpen(true)}
-                className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center cursor-pointer btn-press shadow-xs"
+                className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center cursor-pointer btn-press shadow-xs shrink-0"
                 title="Mon Profil"
               >
                 {(currentUser.firstName?.[0] || "C").toUpperCase()}
               </button>
             )}
 
-            {/* Bouton Burger Mobile */}
+            {/* Bouton Burger Mobile - Dimensions garanties et entièrement visible sans être coupé */}
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
-              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer btn-press"
+              className="w-9 h-9 min-w-[36px] flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer btn-press shrink-0"
               aria-label="Ouvrir le menu"
             >
               {isMobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -320,24 +320,24 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
 
           {/* Panneau Latéral */}
           <div className="relative ml-auto w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 slide-up overflow-y-auto">
-            {/* Header Drawer */}
+            {/* Header Drawer - Alignement sur une seule ligne */}
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-1.5">
                   <span className="font-black text-sm text-slate-900 leading-none">
                     MonCV<span className="text-blue-600">.ai</span>
                   </span>
-                  <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 leading-none">
-                    Intelligence CV & ATS
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[9px] font-bold text-blue-600 border border-blue-100/80 leading-none">
+                    ATS & IA
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer shrink-0"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />

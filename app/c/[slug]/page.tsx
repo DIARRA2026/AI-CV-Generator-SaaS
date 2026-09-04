@@ -253,29 +253,6 @@ export default function PublicCandidateCVPage() {
             </span>
           </div>
 
-          {/* Navigation Liens Desktop */}
-          <nav className="hidden xl:flex items-center gap-1 text-xs font-bold p-1 rounded-2xl bg-slate-800/20 border border-slate-700/30 backdrop-blur-md shrink-0">
-            {[
-              { label: "Accueil", href: "#hero" },
-              { label: "À propos", href: "#apropos" },
-              { label: "Compétences", href: "#competences" },
-              { label: "Projets", href: "#projets" },
-              { label: "Expérience", href: "#experience" },
-              { label: "Prestations", href: "#services" },
-              { label: "Contact", href: "#contact" },
-            ].map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className={`px-3 py-1.5 rounded-xl transition-all duration-200 whitespace-nowrap select-none hover:scale-105 active:scale-95 ${
-                  isDark ? "text-slate-300 hover:text-white hover:bg-slate-800/80" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-
           {/* Actions : Mode Switcher + Télécharger PDF + Theme Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Toggle Dark / Light mode */}
@@ -408,7 +385,7 @@ export default function PublicCandidateCVPage() {
               isDark ? "bg-[#0b0c10] border-slate-800" : "bg-white border-slate-200"
             }`}
           >
-            {/* Retour Accueil Mobile */}
+            {/* Actions rapides Mobile */}
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
@@ -417,28 +394,6 @@ export default function PublicCandidateCVPage() {
               <Home className="w-4 h-4" />
               <span>← Retour à l'accueil MonCV.ai</span>
             </Link>
-            <div className="grid grid-cols-2 gap-2 text-xs font-bold">
-              {[
-                { label: "Accueil", href: "#hero" },
-                { label: "À propos", href: "#apropos" },
-                { label: "Compétences", href: "#competences" },
-                { label: "Projets", href: "#projets" },
-                { label: "Expérience", href: "#experience" },
-                { label: "Prestations", href: "#services" },
-                { label: "Contact", href: "#contact" },
-              ].map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isDark ? "hover:bg-slate-900 text-slate-300" : "hover:bg-slate-100 text-slate-700"
-                  }`}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </div>
             <a
               href="#contact"
               onClick={() => setMobileMenuOpen(false)}
@@ -455,197 +410,198 @@ export default function PublicCandidateCVPage() {
       {/* VUE 1 : PORTFOLIO WEB SITE INTERACTIF                                     */}
       {/* ========================================================================= */}
       {activeTab === "portfolio" ? (
-        <div className="w-full space-y-16 sm:space-y-24 pb-20">
+        <div className="w-full space-y-10 sm:space-y-14 pb-14">
           {/* ======================================================================= */}
-          {/* 2. HERO SECTION IMMERSIVE DU CANDIDAT                                   */}
+          {/* 2. HERO SECTION IMMERSIVE DU CANDIDAT (CENTRÉE & ÉPURÉE)                */}
           {/* ======================================================================= */}
-          <section id="hero" className="relative pt-10 sm:pt-16 pb-12 sm:pb-20 overflow-hidden">
+          <section id="hero" className="relative pt-6 sm:pt-10 pb-6 sm:pb-10 overflow-hidden">
             {/* Halo lumineux */}
             <div
-              className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] h-[300px] blur-[120px] rounded-full pointer-events-none -z-10 opacity-20"
+              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[250px] blur-[100px] rounded-full pointer-events-none -z-10 opacity-20"
               style={{ backgroundColor: primaryColor }}
             />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-                {/* Colonne Accroche & Textes (7 col) */}
-                <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
-                  {/* Badge Disponibilité & Certifié */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Profil Candidat Certifié • Disponible pour opportunités</span>
+            <div className="max-w-4xl mx-auto px-4 sm:px-6">
+              <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5">
+                {/* Photo Portrait avec Badges Flottants Centrés */}
+                <div className="relative w-36 h-44 sm:w-44 sm:h-52 mx-auto my-2">
+                  {/* Cadre Portrait */}
+                  <div className="relative w-full h-full rounded-3xl p-1 bg-gradient-to-b from-blue-500/40 via-indigo-500/25 to-transparent shadow-xl">
+                    <div className="overflow-hidden rounded-[22px] w-full h-full bg-slate-900 relative">
+                      {p.photoUrl && resumeData.design.showPhoto ? (
+                        <img
+                          src={p.photoUrl}
+                          alt={candidateFullName}
+                          className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-white font-black text-4xl sm:text-5xl"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {p.firstName?.[0] || "C"}{p.lastName?.[0] || "V"}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40" />
+                    </div>
                   </div>
 
-                  {/* Titre & Identité */}
-                  <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.12]">
+                  {/* Badge Flottant Supérieur : ATS */}
+                  <div
+                    className={`absolute -top-2 -right-3 sm:-right-4 px-2.5 py-1.5 rounded-xl shadow-lg border backdrop-blur-xl flex items-center gap-1.5 animate-float-reverse ${
+                      isDark
+                        ? "bg-[#121318]/95 border-slate-700/80 text-white"
+                        : "bg-white/95 border-slate-200 text-slate-900"
+                    }`}
+                  >
+                    <div className="w-5 h-5 rounded-md bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                      <Zap className="w-3 h-3" />
+                    </div>
+                    <div className="text-left leading-tight">
+                      <span className="text-[10px] font-black block">Conforme ATS</span>
+                      <span className="text-[8.5px] font-semibold text-slate-400">Score 98/100</span>
+                    </div>
+                  </div>
+
+                  {/* Badge Flottant Inférieur : Satisfaction Recruteur */}
+                  <div
+                    className={`absolute -bottom-2 -left-3 sm:-left-4 px-2.5 py-1.5 rounded-xl shadow-lg border backdrop-blur-xl flex items-center gap-1.5 animate-float ${
+                      isDark
+                        ? "bg-[#121318]/95 border-slate-700/80 text-white"
+                        : "bg-white/95 border-slate-200 text-slate-900"
+                    }`}
+                  >
+                    <div className="w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Award className="w-3 h-3" />
+                    </div>
+                    <div className="text-left leading-tight">
+                      <div className="flex items-center gap-0.5 font-black text-[10.5px]">
+                        <span>99.8%</span>
+                        <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                      </div>
+                      <p className="text-[8.5px] font-semibold text-slate-400">
+                        Satisfaction recruteurs
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badge Disponibilité & Profil Certifié */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Profil Candidat Certifié • Disponible pour opportunités</span>
+                </div>
+
+                {/* Titre & Identité */}
+                <div className="space-y-1.5">
+                  <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
                     Bonjour, je suis{" "}
-                    <span
-                      className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-sky-400"
-                    >
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-sky-400">
                       {candidateFullName}.
                     </span>
                   </h1>
 
-                  {/* Titre Professionnel */}
-                  <div className="text-lg sm:text-2xl font-extrabold text-blue-500 tracking-tight">
+                  {/* Titre Professionnel Badge Élégant */}
+                  <div className="inline-block px-3.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-500 font-extrabold text-xs sm:text-sm uppercase tracking-wider">
                     {p.title || "Professionnel d'Excellence"}
                   </div>
+                </div>
 
-                  {/* Pitch / Bio courte */}
-                  <p
-                    className={`text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal ${
-                      isDark ? "text-slate-300" : "text-slate-600"
+                {/* Pitch / Bio courte bien ajustée */}
+                <p
+                  className={`text-xs sm:text-sm md:text-[15px] leading-relaxed max-w-xl mx-auto font-normal ${
+                    isDark ? "text-slate-300" : "text-slate-600"
+                  }`}
+                >
+                  {resumeData.summary ||
+                    "Professionnel rigoureux et orienté résultats, alliant expertise technique et méthodologie agile pour créer une forte valeur ajoutée commerciale."}
+                </p>
+
+                {/* Double Appel à l'action Centré */}
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-1 w-full max-w-md">
+                  <a
+                    href="#contact"
+                    className="flex-1 min-w-[180px] px-5 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Me Contacter / Recruter</span>
+                  </a>
+
+                  <a
+                    href="#projets"
+                    className={`flex-1 min-w-[180px] px-5 py-3 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-2 ${
+                      isDark
+                        ? "bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-white"
+                        : "bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-xs"
                     }`}
                   >
-                    {resumeData.summary ||
-                      "Professionnel rigoureux et orienté résultats, alliant expertise technique et méthodologie agile pour créer une forte valeur ajoutée commerciale."}
-                  </p>
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <span>Voir mes Réalisations</span>
+                  </a>
+                </div>
 
-                  {/* Double Appel à l'action Responsive (Plein écran mobile) */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 pt-2">
-                    <a
-                      href="#contact"
-                      className="px-6 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Me Contacter / Recruter</span>
-                    </a>
+                {/* Coordonnées Rapides Centrées */}
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-slate-400 font-semibold pt-1">
+                  {[p.city, p.country].filter(Boolean).length > 0 && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
+                      <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>{[p.city, p.country].filter(Boolean).join(", ")}</span>
+                    </span>
+                  )}
+                  {p.email && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
+                      <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      <span>{p.email}</span>
+                    </span>
+                  )}
+                  {p.phone && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
+                      <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>{p.phone}</span>
+                    </span>
+                  )}
+                </div>
 
-                    <a
-                      href="#projets"
-                      className={`px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-2 w-full sm:w-auto ${
-                        isDark
-                          ? "bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-white"
-                          : "bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-sm"
-                      }`}
-                    >
-                      <Sparkles className="w-4 h-4 text-blue-500" />
-                      <span>Voir mes Réalisations</span>
-                    </a>
+                {/* Bandeau Métriques Compact & Centré */}
+                <div
+                  className={`mt-4 w-full p-4 sm:p-5 rounded-2xl border grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center ${
+                    isDark
+                      ? "bg-[#121318]/80 border-slate-800/80 shadow-lg"
+                      : "bg-white border-slate-200 shadow-xs"
+                  }`}
+                >
+                  <div>
+                    <span className="text-xl sm:text-3xl font-black text-blue-500 block">
+                      {experiencesList.length}+
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 block">
+                      Postes Clés
+                    </span>
                   </div>
-
-                  {/* Coordonnées Rapides */}
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs text-slate-400 font-semibold pt-1">
-                    {[p.city, p.country].filter(Boolean).length > 0 && (
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                        <span>{[p.city, p.country].filter(Boolean).join(", ")}</span>
-                      </span>
-                    )}
-                    {p.email && (
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span>{p.email}</span>
-                      </span>
-                    )}
+                  <div>
+                    <span className="text-xl sm:text-3xl font-black text-indigo-400 block">
+                      {skillsList.reduce((acc, s) => acc + s.items.length, 0)}+
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 block">
+                      Compétences
+                    </span>
                   </div>
-                </div>
-
-                {/* Colonne Portrait & Cartes Flottantes Compactes (5 col) */}
-                <div className="lg:col-span-5 relative flex justify-center">
-                  <div className="relative w-full max-w-[240px] sm:max-w-[270px]">
-                    {/* Cadre Portrait */}
-                    <div className="relative rounded-3xl p-1.5 bg-gradient-to-b from-blue-500/30 via-indigo-500/20 to-transparent shadow-xl">
-                      <div className="overflow-hidden rounded-2xl aspect-[4/5] bg-slate-900 relative">
-                        {p.photoUrl && resumeData.design.showPhoto ? (
-                          <img
-                            src={p.photoUrl}
-                            alt={candidateFullName}
-                            className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center text-white font-black text-5xl"
-                            style={{ backgroundColor: primaryColor }}
-                          >
-                            {p.firstName?.[0] || "C"}{p.lastName?.[0] || "V"}
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-50" />
-                      </div>
-                    </div>
-
-                    {/* Carte Flottante : Score de Satisfaction Client */}
-                    <div
-                      className={`absolute -bottom-3 -left-3 p-2.5 rounded-2xl shadow-xl border backdrop-blur-xl flex items-center gap-2.5 animate-float ${
-                        isDark
-                          ? "bg-[#121318]/95 border-slate-700/80 text-white"
-                          : "bg-white/95 border-slate-200 text-slate-900"
-                      }`}
-                    >
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                        <Award className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1 font-black text-sm">
-                          <span>99.8%</span>
-                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        </div>
-                        <p className="text-[9px] font-semibold text-slate-400">
-                          Satisfaction recruteurs
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Badge Flottant Supérieur */}
-                    <div
-                      className={`absolute -top-2.5 -right-2.5 p-2.5 rounded-2xl shadow-xl border backdrop-blur-xl flex items-center gap-2 animate-float-reverse ${
-                        isDark
-                          ? "bg-[#121318]/95 border-slate-700/80 text-white"
-                          : "bg-white/95 border-slate-200 text-slate-900"
-                      }`}
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                        <Zap className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <span className="text-[11px] font-black block">Conforme ATS</span>
-                        <span className="text-[9px] font-semibold text-slate-400">Score 98/100</span>
-                      </div>
-                    </div>
+                  <div>
+                    <span className="text-xl sm:text-3xl font-black text-emerald-400 block">
+                      100%
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 block">
+                      Délais Respectés
+                    </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Bandeau Métriques de Réassurance Responsive */}
-              <div
-                className={`mt-12 sm:mt-16 p-5 sm:p-7 rounded-3xl border grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center ${
-                  isDark
-                    ? "bg-[#121318]/80 border-slate-800/80 shadow-xl"
-                    : "bg-white border-slate-200 shadow-xs"
-                }`}
-              >
-                <div>
-                  <span className="text-2xl sm:text-4xl font-black text-blue-500 block">
-                    {experiencesList.length}+
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1 block">
-                    Postes Clés
-                  </span>
-                </div>
-                <div>
-                  <span className="text-2xl sm:text-4xl font-black text-indigo-400 block">
-                    {skillsList.reduce((acc, s) => acc + s.items.length, 0)}+
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1 block">
-                    Compétences
-                  </span>
-                </div>
-                <div>
-                  <span className="text-2xl sm:text-4xl font-black text-emerald-400 block">
-                    100%
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1 block">
-                    Délais Respectés
-                  </span>
-                </div>
-                <div>
-                  <span className="text-2xl sm:text-4xl font-black text-amber-400 block">
-                    5.0 ★
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1 block">
-                    Évaluation Pro
-                  </span>
+                  <div>
+                    <span className="text-xl sm:text-3xl font-black text-amber-400 block">
+                      5.0 ★
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 block">
+                      Évaluation Pro
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -656,16 +612,16 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           <section
             id="apropos"
-            className={`py-16 border-y ${
+            className={`py-8 sm:py-10 border-y ${
               isDark ? "bg-[#0e0f14] border-slate-800/80" : "bg-slate-100/70 border-slate-200"
             }`}
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-              <div className="max-w-3xl space-y-2 text-center sm:text-left">
+            <div className="max-w-4xl sm:max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+              <div className="max-w-2xl mx-auto space-y-1.5 text-center">
                 <span className="text-xs font-black uppercase tracking-widest text-blue-500">
                   Philosophie de Travail
                 </span>
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+                <h2 className="text-xl sm:text-3xl font-black tracking-tight">
                   Rigueur d'Exécution & Recherche de Valeur
                 </h2>
                 <p
@@ -677,7 +633,7 @@ export default function PublicCandidateCVPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   {
                     title: "Excellence du détail",
@@ -699,16 +655,16 @@ export default function PublicCandidateCVPage() {
                   return (
                     <div
                       key={idx}
-                      className={`p-6 rounded-3xl border transition-all hover:scale-[1.02] ${
+                      className={`p-5 rounded-2xl border transition-all hover:scale-[1.02] ${
                         isDark
                           ? "bg-[#14161f] border-slate-800 hover:border-blue-500/40 shadow-lg"
                           : "bg-white border-slate-200 hover:border-blue-300 shadow-xs"
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-500 mb-4">
-                        <IconComp className="w-5 h-5" />
+                      <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-500 mb-3">
+                        <IconComp className="w-4 h-4" />
                       </div>
-                      <h3 className="font-extrabold text-base mb-1.5">{val.title}</h3>
+                      <h3 className="font-extrabold text-sm sm:text-base mb-1">{val.title}</h3>
                       <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                         {val.desc}
                       </p>
@@ -722,35 +678,35 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           {/* 4. GRILLE DE COMPÉTENCES & STACK (DYNAMIQUE)                           */}
           {/* ======================================================================= */}
-          <section id="competences" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
+          <section id="competences" className="max-w-4xl sm:max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-1.5">
               <span className="text-xs font-black uppercase tracking-widest text-indigo-400">
                 Pôles d'Expertise
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+              <h2 className="text-xl sm:text-3xl font-black tracking-tight">
                 Compétences & Savoir-Faire
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {skillsList.map((sk, idx) => (
                 <div
                   key={idx}
-                  className={`p-6 rounded-3xl border transition-all ${
+                  className={`p-5 rounded-2xl border transition-all ${
                     isDark
                       ? "bg-[#121318] border-slate-800 hover:border-indigo-500/40"
                       : "bg-white border-slate-200 hover:border-indigo-300 shadow-xs"
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-3.5">
+                  <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 rounded-full bg-blue-500" />
                     <h3 className="font-bold text-sm sm:text-base">{sk.category}</h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {sk.items.map((item, i) => (
                       <span
                         key={i}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-default hover:scale-105 ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-default hover:scale-105 ${
                           isDark
                             ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-blue-500"
                             : "bg-slate-100 border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-400"
@@ -770,29 +726,29 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           <section
             id="projets"
-            className={`py-16 border-y ${
+            className={`py-8 sm:py-10 border-y ${
               isDark ? "bg-[#0e0f14] border-slate-800/80" : "bg-slate-100/70 border-slate-200"
             }`}
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
+            <div className="max-w-4xl sm:max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-center sm:text-left">
                   <span className="text-xs font-black uppercase tracking-widest text-blue-500">
                     Réalisations
                   </span>
-                  <h2 className="text-2xl sm:text-4xl font-black tracking-tight mt-1">
+                  <h2 className="text-xl sm:text-3xl font-black tracking-tight mt-0.5">
                     Études de Cas & Projets
                   </h2>
                 </div>
 
                 {/* Filtres Swipeables sur Mobile */}
-                <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md overflow-x-auto no-scrollbar self-center sm:self-auto">
                   {["Tous", "Web", "Mobile", "UI/UX"].map((filter) => (
                     <button
                       key={filter}
                       type="button"
                       onClick={() => setActiveFilter(filter)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeFilter === filter
                           ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
                           : isDark
@@ -807,7 +763,7 @@ export default function PublicCandidateCVPage() {
               </div>
 
               {/* Grille des Projets Compacte & Alignée */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredProjects.map((proj) => (
                   <div
                     key={proj.id}
@@ -842,7 +798,7 @@ export default function PublicCandidateCVPage() {
                       </div>
 
                       {/* Mockup Compact */}
-                      <div className="relative h-40 sm:h-44 w-full overflow-hidden bg-slate-950">
+                      <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-950">
                         <img
                           src={proj.imageUrl}
                           alt={proj.title}
@@ -851,7 +807,7 @@ export default function PublicCandidateCVPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-40" />
                       </div>
 
-                      <div className="p-4 sm:p-5 space-y-2.5">
+                      <div className="p-3.5 sm:p-4 space-y-2">
                         <h3 className="font-extrabold text-sm sm:text-base group-hover:text-blue-400 transition-colors line-clamp-1">
                           {proj.title}
                         </h3>
@@ -862,14 +818,14 @@ export default function PublicCandidateCVPage() {
                         >
                           {proj.subtitle}
                         </p>
-                        <div className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10.5px] font-bold">
+                        <div className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold">
                           {proj.metrics}
                         </div>
-                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        <div className="flex flex-wrap gap-1 pt-0.5">
                           {proj.tags.map((t, idx) => (
                             <span
                               key={idx}
-                              className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md ${
+                              className={`text-[9px] font-semibold px-2 py-0.5 rounded-md ${
                                 isDark ? "bg-slate-900 text-slate-400" : "bg-slate-100 text-slate-600"
                               }`}
                             >
@@ -880,12 +836,12 @@ export default function PublicCandidateCVPage() {
                       </div>
                     </div>
 
-                    <div className="px-4 sm:px-5 pb-4 pt-1">
+                    <div className="px-3.5 sm:px-4 pb-3.5 pt-0.5">
                       <a
                         href="#contact"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors"
                       >
-                        <span>Échanger sur ce type de projet</span>
+                        <span>Échanger sur ce projet</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </a>
                     </div>
@@ -898,48 +854,48 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           {/* 6. TIMELINE D'EXPÉRIENCE DU CANDIDAT                                    */}
           {/* ======================================================================= */}
-          <section id="experience" className="max-w-4xl mx-auto px-4 sm:px-6 space-y-10">
+          <section id="experience" className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
             <div className="text-center space-y-1.5">
               <span className="text-xs font-black uppercase tracking-widest text-blue-500">
                 Parcours Professionnel
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+              <h2 className="text-xl sm:text-3xl font-black tracking-tight">
                 Expérience & Postes Occupés
               </h2>
             </div>
 
-            <div className="relative border-l-2 border-blue-600/30 ml-2 sm:ml-6 space-y-8 pl-5 sm:pl-8">
+            <div className="relative border-l-2 border-blue-600/30 ml-2 sm:ml-6 space-y-5 pl-4 sm:pl-7">
               {experiencesList.map((exp, idx) => (
                 <div key={exp.id || idx} className="relative group">
-                  <div className="absolute -left-[27px] sm:-left-[39px] top-1.5 w-3.5 h-3.5 rounded-full bg-blue-600 border-4 border-[#0b0c10] shadow-md shadow-blue-500/50 group-hover:scale-125 transition-transform" />
+                  <div className="absolute -left-[23px] sm:-left-[35px] top-1.5 w-3 h-3 rounded-full bg-blue-600 border-2 border-[#0b0c10] shadow-md shadow-blue-500/50 group-hover:scale-125 transition-transform" />
 
                   <div
-                    className={`p-5 sm:p-6 rounded-3xl border transition-all ${
+                    className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                       isDark
                         ? "bg-[#121318] border-slate-800 hover:border-slate-700"
                         : "bg-white border-slate-200 hover:border-slate-300 shadow-xs"
                     }`}
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                       <span className="text-xs font-extrabold text-blue-500">
                         {exp.startDate} — {exp.current ? "Présent" : exp.endDate}
                       </span>
                       {[exp.city, exp.country].filter(Boolean).length > 0 && (
-                        <span className="text-[11px] font-medium text-slate-400">
+                        <span className="text-[10.5px] font-medium text-slate-400">
                           {[exp.city, exp.country].filter(Boolean).join(", ")}
                         </span>
                       )}
                     </div>
-                    <h3 className="font-extrabold text-base sm:text-lg">{exp.role || (exp as any).position || "Poste Occupé"}</h3>
-                    <p className="text-xs font-bold text-indigo-400 mt-0.5 mb-2.5">
+                    <h3 className="font-extrabold text-sm sm:text-base">{exp.role || (exp as any).position || "Poste Occupé"}</h3>
+                    <p className="text-xs font-bold text-indigo-400 mt-0.5 mb-2">
                       {exp.company}
                     </p>
                     {exp.highlights && exp.highlights.length > 0 ? (
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-1">
                         {exp.highlights.map((h, hIdx) => (
                           <li
                             key={hIdx}
-                            className={`text-xs sm:text-sm leading-relaxed flex items-start gap-2 ${
+                            className={`text-xs leading-relaxed flex items-start gap-1.5 ${
                               isDark ? "text-slate-300" : "text-slate-600"
                             }`}
                           >
@@ -950,7 +906,7 @@ export default function PublicCandidateCVPage() {
                       </ul>
                     ) : (
                       <p
-                        className={`text-xs sm:text-sm leading-relaxed ${
+                        className={`text-xs leading-relaxed ${
                           isDark ? "text-slate-300" : "text-slate-600"
                         }`}
                       >
@@ -968,21 +924,21 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           <section
             id="services"
-            className={`py-16 border-y ${
+            className={`py-8 sm:py-10 border-y ${
               isDark ? "bg-[#0e0f14] border-slate-800/80" : "bg-slate-100/70 border-slate-200"
             }`}
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-              <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="max-w-4xl sm:max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+              <div className="text-center max-w-2xl mx-auto space-y-1.5">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-400">
                   Services Disponibles
                 </span>
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+                <h2 className="text-xl sm:text-3xl font-black tracking-tight">
                   Prestations & Collaborations
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   {
                     title: "Recrutement CDI / CDD",
@@ -1002,21 +958,21 @@ export default function PublicCandidateCVPage() {
                 ].map((srv, idx) => (
                   <div
                     key={idx}
-                    className={`p-6 rounded-3xl border flex flex-col justify-between transition-all hover:scale-[1.02] ${
+                    className={`p-5 rounded-2xl border flex flex-col justify-between transition-all hover:scale-[1.02] ${
                       isDark
                         ? "bg-[#14151d] border-slate-800 hover:border-emerald-500/40 shadow-lg"
                         : "bg-white border-slate-200 hover:border-emerald-400 shadow-xs"
                     }`}
                   >
-                    <div className="space-y-3.5">
-                      <h3 className="font-extrabold text-base sm:text-lg">{srv.title}</h3>
+                    <div className="space-y-2.5">
+                      <h3 className="font-extrabold text-sm sm:text-base">{srv.title}</h3>
                       <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                         {srv.subtitle}
                       </p>
                       <div className="h-px bg-slate-800 my-1" />
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         {srv.deliverables.map((d, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs">
+                          <div key={i} className="flex items-center gap-1.5 text-xs">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                             <span className={isDark ? "text-slate-300" : "text-slate-700"}>{d}</span>
                           </div>
@@ -1024,11 +980,11 @@ export default function PublicCandidateCVPage() {
                       </div>
                     </div>
 
-                    <div className="pt-5 mt-5 border-t border-slate-800/80 flex items-center justify-between">
+                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
                       <span className="text-xs font-black text-emerald-400">Devis sous 24h</span>
                       <a
                         href="#contact"
-                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition-all"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition-all"
                       >
                         <span>Discuter</span>
                         <ArrowRight className="w-3 h-3" />
@@ -1044,30 +1000,30 @@ export default function PublicCandidateCVPage() {
           {/* 8. BANNIÈRE CALL-TO-ACTION PERCUTANTE                                  */}
           {/* ======================================================================= */}
           <section className="px-4 sm:px-6">
-            <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-12 text-center text-white relative overflow-hidden shadow-2xl">
-              <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-                <span className="inline-block px-3 py-1 rounded-full bg-white/15 text-xs font-bold uppercase tracking-wider text-sky-200">
+            <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-2xl p-5 sm:p-8 text-center text-white relative overflow-hidden shadow-xl">
+              <div className="relative z-10 max-w-xl mx-auto space-y-3">
+                <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/15 text-[10.5px] font-bold uppercase tracking-wider text-sky-200">
                   Prise de Contact Immédiate
                 </span>
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight">
                   Vous avez un poste ou un projet à pourvoir ?
                 </h2>
-                <p className="text-xs sm:text-sm text-blue-100 max-w-lg mx-auto leading-relaxed">
+                <p className="text-xs sm:text-sm text-blue-100 max-w-md mx-auto leading-relaxed">
                   Échangeons directement par WhatsApp ou via le formulaire ci-dessous pour planifier un premier entretien.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
                   <a
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-105"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>Contacter sur WhatsApp Direct</span>
                   </a>
                   <a
                     href="#contact"
-                    className="w-full sm:w-auto px-6 py-3.5 bg-white text-blue-900 font-extrabold rounded-2xl text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-105"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-white text-blue-900 font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <Mail className="w-4 h-4 text-blue-600" />
                     <span>Envoyer un Message Formel</span>
@@ -1080,31 +1036,31 @@ export default function PublicCandidateCVPage() {
           {/* ======================================================================= */}
           {/* 9. FORMULAIRE DE CONTACT & COORDONNÉES DIRECTES                       */}
           {/* ======================================================================= */}
-          <section id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          <section id="contact" className="max-w-4xl sm:max-w-5xl mx-auto px-4 sm:px-6 pt-2">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Coordonnées */}
-              <div className="lg:col-span-5 space-y-5">
+              <div className="lg:col-span-5 space-y-4">
                 <div>
                   <span className="text-xs font-black uppercase tracking-widest text-blue-500">
                     Contact Direct
                   </span>
-                  <h2 className="text-2xl sm:text-4xl font-black tracking-tight mt-1">
+                  <h2 className="text-xl sm:text-3xl font-black tracking-tight mt-0.5">
                     Échanger avec {p.firstName || "le Candidat"}
                   </h2>
-                  <p className={`text-xs sm:text-sm mt-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                  <p className={`text-xs sm:text-sm mt-1.5 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                     Réponse assurée dans les 24 heures pour toute proposition sérieuse.
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {p.email && (
                     <a
                       href={`mailto:${p.email}`}
-                      className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
                         isDark ? "bg-[#14151d] border-slate-800 hover:border-blue-500/50" : "bg-white border-slate-200 hover:border-blue-400"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-500 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-blue-600/15 text-blue-500 flex items-center justify-center shrink-0">
                         <Mail className="w-4 h-4" />
                       </div>
                       <div className="truncate">
@@ -1119,11 +1075,11 @@ export default function PublicCandidateCVPage() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
                         isDark ? "bg-[#14151d] border-slate-800 hover:border-emerald-500/50" : "bg-white border-slate-200 hover:border-emerald-400"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-emerald-600/15 text-emerald-400 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-600/15 text-emerald-400 flex items-center justify-center shrink-0">
                         <Phone className="w-4 h-4" />
                       </div>
                       <div className="truncate">
@@ -1135,11 +1091,11 @@ export default function PublicCandidateCVPage() {
 
                   {[p.city, p.country].filter(Boolean).length > 0 && (
                     <div
-                      className={`flex items-center gap-3 p-3.5 rounded-2xl border ${
+                      className={`flex items-center gap-3 p-3 rounded-2xl border ${
                         isDark ? "bg-[#14151d] border-slate-800" : "bg-white border-slate-200"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-indigo-600/15 text-indigo-400 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-600/15 text-indigo-400 flex items-center justify-center shrink-0">
                         <MapPin className="w-4 h-4" />
                       </div>
                       <div>
@@ -1156,11 +1112,11 @@ export default function PublicCandidateCVPage() {
                       href={p.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
                         isDark ? "bg-[#14151d] border-slate-800 hover:border-blue-500/50" : "bg-white border-slate-200 hover:border-blue-400"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-500 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-blue-600/15 text-blue-500 flex items-center justify-center shrink-0">
                         <Linkedin className="w-4 h-4" />
                       </div>
                       <div className="truncate">
@@ -1174,29 +1130,29 @@ export default function PublicCandidateCVPage() {
 
               {/* Formulaire Responsive */}
               <div
-                className={`lg:col-span-7 p-5 sm:p-7 rounded-3xl border ${
+                className={`lg:col-span-7 p-4 sm:p-6 rounded-2xl border ${
                   isDark ? "bg-[#121318] border-slate-800/90 shadow-xl" : "bg-white border-slate-200 shadow-xs"
                 }`}
               >
                 {contactSent ? (
-                  <div className="py-12 text-center space-y-3 fade-in">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-                      <CheckCircle2 className="w-6 h-6" />
+                  <div className="py-8 text-center space-y-2.5 fade-in">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                      <CheckCircle2 className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold">Message transmis avec succès !</h3>
+                    <h3 className="text-base font-bold">Message transmis avec succès !</h3>
                     <p className="text-xs text-slate-400 max-w-sm mx-auto">
                       Votre prise de contact a été enregistrée. {candidateFullName} vous répondra très rapidement.
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="space-y-3.5">
-                    <h3 className="font-extrabold text-base mb-1">
+                  <form onSubmit={handleSendMessage} className="space-y-3">
+                    <h3 className="font-extrabold text-sm sm:text-base mb-1">
                       Envoyer une proposition ou un message
                     </h3>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                        <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
                           Votre Nom / Entreprise <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -1205,14 +1161,14 @@ export default function PublicCandidateCVPage() {
                           value={contactName}
                           onChange={(e) => setContactName(e.target.value)}
                           placeholder="Cabinet / Recruteur"
-                          className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 rounded-xl border text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                           }`}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                        <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
                           Votre Email <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -1221,16 +1177,16 @@ export default function PublicCandidateCVPage() {
                           value={contactEmail}
                           onChange={(e) => setContactEmail(e.target.value)}
                           placeholder="contact@entreprise.com"
-                          className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 rounded-xl border text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                           }`}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                        <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
                           Téléphone / WhatsApp
                         </label>
                         <input
@@ -1238,20 +1194,20 @@ export default function PublicCandidateCVPage() {
                           value={contactPhone}
                           onChange={(e) => setContactPhone(e.target.value)}
                           placeholder="+225 07 00 00 00 00"
-                          className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 rounded-xl border text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                           }`}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                        <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
                           Objet de l'Échange
                         </label>
                         <select
                           value={contactProjectType}
                           onChange={(e) => setContactProjectType(e.target.value)}
-                          className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 rounded-xl border text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                           }`}
                         >
@@ -1264,16 +1220,16 @@ export default function PublicCandidateCVPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                      <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
                         Détails de l'opportunité <span className="text-red-400">*</span>
                       </label>
                       <textarea
                         required
-                        rows={4}
+                        rows={3}
                         value={contactMessage}
                         onChange={(e) => setContactMessage(e.target.value)}
                         placeholder="Présentez brièvement le poste, les responsabilités ou vos attentes..."
-                        className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 rounded-xl border text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                         }`}
                       />
@@ -1281,7 +1237,7 @@ export default function PublicCandidateCVPage() {
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <Send className="w-4 h-4" />
                       <span>Transmettre la proposition</span>
@@ -1356,7 +1312,7 @@ export default function PublicCandidateCVPage() {
           isDark ? "bg-[#090a0e] border-slate-800 text-slate-500" : "bg-white border-slate-200 text-slate-500"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">Portfolio de {candidateFullName}</span>
             <span>•</span>

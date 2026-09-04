@@ -327,6 +327,9 @@ export class StorageManager {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem(USER_KEY, JSON.stringify({ ...user, createdAt: user.createdAt || new Date().toISOString() }));
+      // Synchronisation du cookie de session pour le middleware Next.js
+      const tokenValue = encodeURIComponent(user.token || `auth_${user.email}`);
+      document.cookie = `moncv_auth_token=${tokenValue}; path=/; max-age=2592000; SameSite=Lax`;
     } catch (e) {
       console.error("Erreur sauvegarde session", e);
     }
@@ -339,6 +342,8 @@ export class StorageManager {
   static logout(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(USER_KEY);
+    // Suppression du cookie de session
+    document.cookie = "moncv_auth_token=; path=/; max-age=0; SameSite=Lax";
   }
 
   // === NIVEAU D'OFFRE & PERMISSIONS (RESPECT DES OFFRES) ===

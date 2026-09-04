@@ -100,6 +100,9 @@ CREATE POLICY "Les utilisateurs peuvent voir leur profil"
 CREATE POLICY "Les utilisateurs peuvent modifier leur profil" 
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
+CREATE POLICY "Les utilisateurs peuvent créer leur profil" 
+  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
 -- Politiques Resumes
 CREATE POLICY "Les utilisateurs gèrent leurs propres CVs" 
   ON public.resumes FOR ALL USING (auth.uid() = user_id);
@@ -133,7 +136,11 @@ CREATE POLICY "Insertion de transactions autorisée"
 -- =========================================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   INSERT INTO public.profiles (
     id, 
@@ -154,10 +161,16 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'country', 'Côte d''Ivoire'),
     COALESCE(new.raw_user_meta_data->>'city', 'Abidjan'),
     'free'
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- Révocation stricte des droits d'appel public RPC sur la fonction
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM authenticated;
 
 -- Déclencheur après inscription dans auth.users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

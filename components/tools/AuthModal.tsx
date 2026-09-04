@@ -44,8 +44,30 @@ export const AuthModal: React.FC<Props> = ({
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
+  // Sécurité Avancée & Rate Limiting (4 tentatives maximum)
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [emailVerificationPending, setEmailVerificationPending] = useState<string | null>(null);
+
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Compte à rebours de déverrouillage de sécurité
+  useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setSecondsRemaining(0);
+        setFailedAttempts(0);
+      } else {
+        setSecondsRemaining(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   // Réinitialisation stricte : formulaires 100% vierges et vides sans aucune pré-remplissage
   useEffect(() => {
@@ -55,6 +77,7 @@ export const AuthModal: React.FC<Props> = ({
       setDone(false);
       setIsLoading(false);
       setResetSuccessMessage(null);
+      setEmailVerificationPending(null);
 
       // TOUS LES CHAMPS SONT STRICTEMENT VIDES DÈS L'OUVERTURE
       setEmail("");
@@ -135,10 +158,58 @@ export const AuthModal: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
+    // Contrôle strict de verrouillage local (4 tentatives max)
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const min = Math.ceil(secondsRemaining / 60);
+      setErrors({
+        loginBlocked: `Verrouillage de sécurité actif (4 tentatives atteintes). Veuillez patienter ${min} minute(s).`,
+      });
+      return;
+    }
+
     setIsLoading(true);
     setErrors({});
 
-    await new Promise((r) => setTimeout(r, 600));
+    // ÉTAPE 1 : VALIDATION CÔTÉ SERVEUR & RATE LIMITING SERVEUR
+    try {
+      const serverRes = await fetch("/api/auth/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          email,
+          password,
+          firstName,
+          lastName,
+          phone,
+          country,
+          city,
+        }),
+      });
+
+      const serverData = await serverRes.json();
+      if (!serverRes.ok) {
+        setIsLoading(false);
+        if (serverRes.status === 429) {
+          const resetSec = serverData.resetInSeconds || 900;
+          setLockoutUntil(Date.now() + resetSec * 1000);
+          setSecondsRemaining(resetSec);
+          setErrors({
+            loginBlocked: serverData.error || "Trop de tentatives (maximum 4). Accès temporairement bloqué.",
+          });
+          return;
+        }
+        if (serverData.errors) {
+          setErrors(serverData.errors);
+          return;
+        }
+      }
+    } catch {
+      // Tolérance réseau en mode déconnecté
+    }
+
+    await new Promise((r) => setTimeout(r, 400));
 
     // MODE 1 : INSCRIPTION (Cloud Supabase avec repli local sécurisé)
     if (mode === "register") {
@@ -155,6 +226,14 @@ export const AuthModal: React.FC<Props> = ({
           city,
           password,
         });
+
+        // Cas de vérification d'email requise par Supabase Cloud
+        if (cloudResult.emailVerificationRequired) {
+          setIsLoading(false);
+          setEmailVerificationPending(email);
+          return;
+        }
+
         regSuccess = cloudResult.success;
         regMessage = cloudResult.message || "";
       } else {
@@ -195,7 +274,7 @@ export const AuthModal: React.FC<Props> = ({
       return;
     }
 
-    // MODE 2 : CONNEXION (Cloud Supabase avec repli local sécurisé)
+    // MODE 2 : CONNEXION (Cloud Supabase avec repli local sécurisé & Rate Limiting 4 tentatives)
     if (mode === "login") {
       let authSuccess = false;
       let authMessage = "";
@@ -211,12 +290,29 @@ export const AuthModal: React.FC<Props> = ({
       }
 
       if (!authSuccess) {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
         setIsLoading(false);
-        setErrors({
-          loginBlocked: authMessage || "Mot de passe incorrect. L'accès est strictement refusé.",
-        });
+
+        // Seuil strict de 4 tentatives maximum
+        if (nextAttempts >= 4) {
+          const lockTime = Date.now() + 15 * 60 * 1000;
+          setLockoutUntil(lockTime);
+          setSecondsRemaining(15 * 60);
+          setErrors({
+            loginBlocked: "Sécurité activée : Seuil de 4 tentatives consécutives atteint. Votre compte est verrouillé pendant 15 minutes.",
+          });
+        } else {
+          setErrors({
+            loginBlocked: `${authMessage || "Mot de passe incorrect."} (Tentative ${nextAttempts}/4)`,
+          });
+        }
         return;
       }
+
+      // Connexion réussie : réinitialisation du compteur de tentatives
+      setFailedAttempts(0);
+      setLockoutUntil(null);
 
       if (rememberMe) {
         StorageManager.setRememberedCreds({ email: email.trim(), password });
@@ -290,6 +386,58 @@ export const AuthModal: React.FC<Props> = ({
     onSuccess();
     onClose();
   };
+
+  // ÉCRAN SPÉCIFIQUE : CONFIRMATION D'EMAIL REQUISE (Supabase Cloud Auth)
+  if (emailVerificationPending) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-md fade-in overflow-y-auto"
+        onMouseDown={onClose}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6 text-center border border-slate-100 relative my-auto"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-blue-600 shadow-sm">
+            <Mail className="w-7 h-7 animate-bounce" />
+          </div>
+
+          <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+            Vérifiez votre boîte de réception
+          </h3>
+          <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+            Un email de confirmation d'activation vient d'être envoyé à :
+          </p>
+          <div className="my-2.5 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-blue-600 break-all inline-block border border-slate-200">
+            {emailVerificationPending}
+          </div>
+          <p className="text-[11px] text-slate-500 leading-relaxed mb-5">
+            Veuillez cliquer sur le lien dans le message pour activer votre compte. Vérifiez également vos courriers indésirables (spams).
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEmailVerificationPending(null);
+              switchMode("login");
+            }}
+            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>J'ai vérifié mon email • Me connecter</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -381,12 +529,41 @@ export const AuthModal: React.FC<Props> = ({
 
         {/* Corps de formulaire défilant avec fluidité */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+          {/* Alerte Bloquante Anti-Brute-Force (4 tentatives max) */}
+          {lockoutUntil && Date.now() < lockoutUntil ? (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5 text-red-700 text-[11px] animate-pulse">
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-black text-red-800 block text-xs">
+                  Sécurité Déclenchée : 4 Tentatives Atteintes
+                </span>
+                <p className="text-red-700 leading-tight">
+                  Pour protéger votre compte contre toute attaque, l'accès est temporairement suspendu.
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100/80 rounded font-mono font-bold text-red-900 text-[10.5px]">
+                  <span>Temps restant :</span>
+                  <span>{Math.floor(secondsRemaining / 60)}m {String(secondsRemaining % 60).padStart(2, "0")}s</span>
+                </div>
+              </div>
+            </div>
+          ) : mode === "login" && failedAttempts > 0 && failedAttempts < 4 ? (
+            <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-amber-800 text-[10.5px]">
+              <div className="flex items-center gap-1.5 font-medium">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>Tentatives restantes avant blocage :</span>
+              </div>
+              <span className="px-2 py-0.5 bg-amber-200/70 text-amber-900 rounded font-black text-[10px]">
+                {4 - failedAttempts} sur 4
+              </span>
+            </div>
+          ) : null}
+
           {/* Alerte Erreur Bloquante de Connexion */}
-          {errors.loginBlocked && (
+          {errors.loginBlocked && !lockoutUntil && (
             <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-700 text-[11px]">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <span className="font-bold block">Accès Bloqué</span>
+                <span className="font-bold block">Accès Refusé</span>
                 <span>{errors.loginBlocked}</span>
               </div>
             </div>
@@ -778,14 +955,21 @@ export const AuthModal: React.FC<Props> = ({
             <div className="pt-1.5">
               <button
                 type="submit"
-                disabled={isLoading || done}
+                disabled={isLoading || done || Boolean(lockoutUntil && Date.now() < lockoutUntil)}
                 className={`w-full py-2.5 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer ${
-                  done
+                  lockoutUntil && Date.now() < lockoutUntil
+                    ? "bg-slate-400 cursor-not-allowed opacity-75"
+                    : done
                     ? "bg-emerald-500"
                     : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-600/20 active:scale-[0.99]"
                 }`}
               >
-                {isLoading ? (
+                {lockoutUntil && Date.now() < lockoutUntil ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Accès temporairement suspendu</span>
+                  </>
+                ) : isLoading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>

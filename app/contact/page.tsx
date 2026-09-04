@@ -25,13 +25,29 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (!name.trim() || !email.trim() || !message.trim()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, message }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setIsSubmitting(false);
+        const errMsg = data.error || (data.errors ? Object.values(data.errors).join(" • ") : "Erreur de validation.");
+        setErrorMessage(errMsg);
+        return;
+      }
+
       setIsSubmitting(false);
       setSubmitted(true);
       setTimeout(() => {
@@ -41,7 +57,10 @@ export default function ContactPage() {
         setMessage("");
         setSubmitted(false);
       }, 5000);
-    }, 1000);
+    } catch {
+      setIsSubmitting(false);
+      setErrorMessage("Erreur de connexion avec le serveur. Veuillez réessayer.");
+    }
   };
 
   const whatsappSupportUrl =
@@ -217,6 +236,13 @@ export default function ContactPage() {
                     Remplissez le formulaire ci-dessous pour une prise en charge rapide.
                   </p>
                 </div>
+
+                {errorMessage && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   <div>

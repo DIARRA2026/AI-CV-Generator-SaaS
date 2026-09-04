@@ -6,6 +6,7 @@ export interface CloudAuthResponse {
   success: boolean;
   user?: UserSession;
   message?: string;
+  emailVerificationRequired?: boolean;
 }
 
 export class SupabaseService {
@@ -17,7 +18,7 @@ export class SupabaseService {
   }
 
   /**
-   * Inscription d'un nouvel utilisateur
+   * Inscription d'un nouvel utilisateur avec gestion de vérification email
    */
   static async signUp(payload: {
     firstName: string;
@@ -47,6 +48,16 @@ export class SupabaseService {
 
         if (error) {
           return { success: false, message: error.message };
+        }
+
+        // Si la vérification par email est activée sur le projet Supabase
+        // data.session est null tant que l'email n'a pas été cliqué
+        if (!data.session && data.user) {
+          return {
+            success: true,
+            emailVerificationRequired: true,
+            message: `Un email de confirmation a été envoyé à ${payload.email}. Veuillez cliquer sur le lien reçu pour activer votre compte.`,
+          };
         }
 
         const userSession: UserSession = {
@@ -91,7 +102,7 @@ export class SupabaseService {
   }
 
   /**
-   * Connexion utilisateur
+   * Connexion utilisateur avec détection des statuts de confirmation email
    */
   static async signIn(email: string, password: string): Promise<CloudAuthResponse> {
     // Si Supabase Cloud est connecté
@@ -103,6 +114,18 @@ export class SupabaseService {
         });
 
         if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            return {
+              success: false,
+              message: "Votre adresse email n'a pas encore été confirmée. Veuillez vérifier votre boîte de réception ou vos spams pour valider votre compte.",
+            };
+          }
+          if (error.message.toLowerCase().includes("invalid login credentials")) {
+            return {
+              success: false,
+              message: "Email ou mot de passe incorrect. L'accès est refusé.",
+            };
+          }
           return { success: false, message: error.message };
         }
 

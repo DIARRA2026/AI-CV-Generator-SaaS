@@ -21,10 +21,50 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   const [rawSkillsInput, setRawSkillsInput] = useState("");
   const [newTagInputs, setNewTagInputs] = useState<{ [key: string]: string }>({});
 
-  const handleSmartOrganize = () => {
+  const handleSmartOrganize = async () => {
     if (!rawSkillsInput.trim()) return;
-    const parsed = CVEngine.parseSkillsInput(rawSkillsInput);
 
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "skills",
+          rawInput: rawSkillsInput,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const parsed = json.data;
+          const updated: SkillCategory[] = [
+            {
+              id: "sk-tools",
+              category: "Logiciels & Outils Maîtrisés",
+              items: parsed.tools?.length > 0 ? parsed.tools : ["Microsoft Excel", "Canva", "Word"],
+            },
+            {
+              id: "sk-business",
+              category: "Compétences Techniques Métier",
+              items: parsed.business?.length > 0 ? parsed.business : ["Gestion Commerciale", "Prospection", "Négociation"],
+            },
+            {
+              id: "sk-soft",
+              category: "Qualités Humaines (Soft Skills)",
+              items: parsed.soft?.length > 0 ? parsed.soft : ["Sens de l'écoute", "Esprit d'équipe", "Rigueur"],
+            },
+          ];
+          onChangeSkills(updated);
+          setRawSkillsInput("");
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Repli sur moteur IA local pour StepSkills:", e);
+    }
+
+    const parsed = CVEngine.parseSkillsInput(rawSkillsInput);
     const updated: SkillCategory[] = [
       {
         id: "sk-tools",

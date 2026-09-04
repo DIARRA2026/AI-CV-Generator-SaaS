@@ -26,14 +26,33 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!jobText.trim()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const res = ATSEngine.analyze(resumeData, jobText);
-      setResult(res);
-      setIsAnalyzing(false);
-    }, 600);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "ats_analysis",
+          resumeData,
+          jobText,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setResult(json.data);
+          setIsAnalyzing(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Repli sur moteur ATS local:", e);
+    }
+    const res = ATSEngine.analyze(resumeData, jobText);
+    setResult(res);
+    setIsAnalyzing(false);
   };
 
   const handleApplyAll = () => {

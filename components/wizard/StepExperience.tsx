@@ -55,17 +55,37 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
     onChangeExperiences(updated);
   };
 
-  const handleAITransform = (exp: ExperienceItem) => {
+  const handleAITransform = async (exp: ExperienceItem) => {
     setIsEnhancing(exp.id);
-    setTimeout(() => {
-      const bullets = CVEngine.enhanceExperienceBullets(
-        exp.rawInput || exp.role,
-        exp.role,
-        exp.company
-      );
-      handleUpdateExp(exp.id, { highlights: bullets });
-      setIsEnhancing(null);
-    }, 450);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "experience_bullets",
+          rawInput: exp.rawInput || exp.role,
+          role: exp.role,
+          company: exp.company,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data?.bullets) {
+          handleUpdateExp(exp.id, { highlights: json.data.bullets });
+          setIsEnhancing(null);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Repli sur moteur IA local pour StepExperience:", e);
+    }
+    const bullets = CVEngine.enhanceExperienceBullets(
+      exp.rawInput || exp.role,
+      exp.role,
+      exp.company
+    );
+    handleUpdateExp(exp.id, { highlights: bullets });
+    setIsEnhancing(null);
   };
 
   const handleAddBullet = (expId: string) => {

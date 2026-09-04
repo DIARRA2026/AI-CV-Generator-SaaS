@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ResumeData } from "@/lib/types";
 import { StorageManager, UserSession } from "@/lib/storage";
+import { SupabaseService } from "@/lib/supabaseService";
 import { Navbar } from "@/components/Navbar";
 import { ShareModal } from "@/components/tools/ShareModal";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
@@ -63,6 +64,17 @@ export default function DashboardPage() {
       setCurrentUser(user);
       setResumes(StorageManager.getResumes());
       setIsInitialized(true);
+
+      // Hydratation Cloud Full-Stack si l'utilisateur est connecté
+      if (user?.email) {
+        SupabaseService.getResumes(user.email)
+          .then((cloudList) => {
+            if (cloudList && cloudList.length > 0) {
+              setResumes(cloudList);
+            }
+          })
+          .catch(() => {});
+      }
 
       if (!logged) {
         setIsAuthOpen(true);
@@ -123,6 +135,7 @@ export default function DashboardPage() {
     const title = customTitle || `Nouveau CV ${resumes.length + 1}`;
     const newCv = StorageManager.createNewResume(title);
     StorageManager.saveActiveResume(newCv);
+    SupabaseService.syncResumeToCloud(newCv).catch(() => {});
     router.push("/create");
   };
 
@@ -137,15 +150,16 @@ export default function DashboardPage() {
     setIsCreatingModal(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Voulez-vous vraiment supprimer ce CV ?")) {
-      const updated = StorageManager.deleteResume(id);
+  const handleDelete = async (id: string) => {
+    if (confirm("Voulez-vous vraiment supprimer ce CV ? Cette action est irréversible.")) {
+      const updated = await SupabaseService.deleteResume(id);
       setResumes(updated);
     }
   };
 
-  const handleDuplicate = (resume: ResumeData) => {
+  const handleDuplicate = async (resume: ResumeData) => {
     const dup = StorageManager.createNewResume(`${resume.title} (Copie)`, resume);
+    await SupabaseService.syncResumeToCloud(dup).catch(() => {});
     setResumes(StorageManager.getResumes());
   };
 

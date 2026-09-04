@@ -17,6 +17,7 @@ import { ScanConvertModal } from "@/components/tools/ScanConvertModal";
 import { SmartGenerateModal } from "@/components/tools/SmartGenerateModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { Navbar } from "@/components/Navbar";
+import { SupabaseService } from "@/lib/supabaseService";
 import {
   Download,
   Share2,
@@ -36,6 +37,7 @@ import {
   Briefcase,
   Maximize2,
   Globe,
+  Cloud,
 } from "lucide-react";
 
 export default function CreateCVPage() {
@@ -58,6 +60,11 @@ export default function CreateCVPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [pendingAction, setPendingAction] = useState<"coverLetter" | "jobApplication" | "smartGenerate" | null>(null);
 
+  // Indicateur Full-Stack Cloud Auto-Save
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<"saved" | "saving" | "local" | "error">("saved");
+  const [lastSyncTime, setLastSyncTime] = useState<string>("À l'instant");
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Ouvre auth si pas connecté, sinon ouvre directement le modal
   const requireAuth = (action: typeof pendingAction, openFn: () => void) => {
     if (isLoggedIn) { openFn(); return; }
@@ -67,15 +74,48 @@ export default function CreateCVPage() {
 
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // Charger le CV actif au montage & synchroniser l'authentification
+  // Charger le CV actif au montage, hydrater depuis le Cloud Supabase & synchroniser l'authentification
   useEffect(() => {
     const syncAuth = () => {
-      setIsLoggedIn(StorageManager.isLoggedIn());
+      const logged = StorageManager.isLoggedIn();
+      setIsLoggedIn(logged);
+      if (!logged) {
+        setCloudSyncStatus("local");
+      }
     };
     syncAuth();
+
     const active = StorageManager.getActiveResume();
     if (active) {
       setResumeData(active);
+    }
+
+    // Hydratation Cloud si l'utilisateur est connecté
+    const user = StorageManager.getUser();
+    if (user?.email) {
+      setCloudSyncStatus("saving");
+      SupabaseService.getResumes(user.email)
+        .then((cloudList) => {
+          if (cloudList && cloudList.length > 0) {
+            const currentActiveId = StorageManager.getActiveResume()?.id;
+            const match = cloudList.find((r) => r.id === currentActiveId) || cloudList[0];
+            if (match) {
+              setResumeData(match);
+              StorageManager.saveActiveResume(match);
+              setCloudSyncStatus("saved");
+              const d = new Date();
+              setLastSyncTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+            }
+          } else if (active) {
+            // Premier envoi du CV vers Supabase
+            SupabaseService.syncResumeToCloud(active, user.email).then((res) => {
+              if (res.success) setCloudSyncStatus("saved");
+            });
+          }
+        })
+        .catch(() => {
+          setCloudSyncStatus("saved");
+        });
     }
 
     // Détection de la taille d'écran pour un zoom initial parfaitement adapté
@@ -106,10 +146,32 @@ export default function CreateCVPage() {
     }
   };
 
-  // Sauvegarder automatiquement les modifications dans le LocalStorage
+  // Sauvegarder automatiquement : LocalStorage immédiat + Débounced Cloud Sync Full-Stack (700ms)
   const handleUpdateData = (updated: ResumeData) => {
     setResumeData(updated);
     StorageManager.saveActiveResume(updated);
+
+    // Déclencher la synchronisation Cloud
+    setCloudSyncStatus("saving");
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = setTimeout(async () => {
+      try {
+        const user = StorageManager.getUser();
+        const res = await SupabaseService.syncResumeToCloud(updated, user?.email);
+        if (res.success) {
+          setCloudSyncStatus("saved");
+          const d = new Date();
+          setLastSyncTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+        } else {
+          setCloudSyncStatus(user?.email ? "error" : "local");
+        }
+      } catch (err) {
+        setCloudSyncStatus("local");
+      }
+    }, 700);
   };
 
   // Téléchargement direct du PDF prévisualisé (respect de l'offre)
@@ -186,6 +248,35 @@ export default function CreateCVPage() {
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
+        </div>
+
+        {/* Indicateur Full-Stack Cloud Auto-Save */}
+        <div
+          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all"
+          title={
+            cloudSyncStatus === "saved"
+              ? `Dernière synchronisation cloud à ${lastSyncTime}`
+              : cloudSyncStatus === "saving"
+              ? "Synchronisation vers la base de données cloud..."
+              : "Enregistrement en local"
+          }
+        >
+          {cloudSyncStatus === "saving" ? (
+            <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50/90 border border-blue-200 px-2 py-0.5 rounded-lg">
+              <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
+              <span className="text-[10.5px] font-black">Cloud Sync...</span>
+            </span>
+          ) : cloudSyncStatus === "saved" ? (
+            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50/90 border border-emerald-200 px-2 py-0.5 rounded-lg">
+              <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10.5px] font-black">Cloud Synced ✓</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
+              <Cloud className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[10.5px] font-semibold">Local</span>
+            </span>
+          )}
         </div>
 
         {/* Badge Offre Active (Respect des Formules) */}

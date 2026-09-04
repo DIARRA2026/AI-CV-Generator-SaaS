@@ -26,14 +26,36 @@ export const StepSummary: React.FC<StepSummaryProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const handleGenerateAI = () => {
+  const handleGenerateAI = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      const result = CVEngine.enhanceSummary(rawPrompt || summary, roleTitle, profileType);
-      onChangeSummary(result.main);
-      setSuggestions(result.variants);
-      setIsGenerating(false);
-    }, 400);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "summary",
+          prompt: rawPrompt || summary,
+          roleTitle,
+          profileType,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          onChangeSummary(json.data.main);
+          setSuggestions(json.data.variants || []);
+          setIsGenerating(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Repli sur moteur IA local pour StepSummary:", e);
+    }
+    // Fallback local instantané
+    const result = CVEngine.enhanceSummary(rawPrompt || summary, roleTitle, profileType);
+    onChangeSummary(result.main);
+    setSuggestions(result.variants);
+    setIsGenerating(false);
   };
 
   return (

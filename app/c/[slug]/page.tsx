@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ResumeData } from "@/lib/types";
 import { StorageManager } from "@/lib/storage";
+import { SupabaseService } from "@/lib/supabaseService";
 import { initialResumeData } from "@/lib/initialData";
 import { downloadResumePDF } from "@/lib/pdf-export";
 import { CVPreviewCanvas } from "@/components/preview/CVPreviewCanvas";
@@ -137,9 +138,23 @@ export default function PublicCandidateCVPage() {
   const [contactSent, setContactSent] = useState(false);
 
   useEffect(() => {
+    // 1. Repli local synchrone immédiat si disponible dans le cache
     const found = StorageManager.getResumeBySlug(slug);
     if (found) {
       setResumeData(found);
+    }
+
+    // 2. Récupération Cloud Full-Stack (permet à tout recruteur sur n'importe quel appareil de voir le CV)
+    if (slug) {
+      SupabaseService.getResumeBySlug(slug)
+        .then((cloudResume) => {
+          if (cloudResume) {
+            setResumeData(cloudResume);
+          }
+        })
+        .catch((err) => {
+          console.warn("Erreur chargement cloud candidat:", err);
+        });
     }
   }, [slug]);
 

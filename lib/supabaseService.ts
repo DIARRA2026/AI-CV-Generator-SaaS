@@ -282,60 +282,202 @@ export class SupabaseService {
   }
 
   /**
-   * Sauvegarde ou synchronisation d'un CV vers le cloud Supabase
+   * Sauvegarde ou synchronisation d'un CV vers le cloud Supabase (Full-Stack)
    */
-  static async syncResumeToCloud(resume: ResumeData): Promise<{ success: boolean; error?: string }> {
-    // Toujours sauvegarder localement
+  static async syncResumeToCloud(
+    resume: ResumeData,
+    explicitEmail?: string
+  ): Promise<{ success: boolean; syncedAt?: string; error?: string }> {
+    // 1. Sauvegarde locale instantanée à latence zéro
     StorageManager.saveActiveResume(resume);
 
+    const currentUser = StorageManager.getUser();
+    const resolvedEmail = (
+      explicitEmail ||
+      currentUser?.email ||
+      resume.userEmail ||
+      resume.personal?.email ||
+      ""
+    ).toLowerCase().trim();
+
+    const nowIso = new Date().toISOString();
+    const resumeWithMetadata: ResumeData = {
+      ...resume,
+      userEmail: resolvedEmail || resume.userEmail,
+      updatedAt: nowIso,
+    };
+
+    // 2. Appel de la route API serveur Next.js pour persistance PostgreSQL Supabase
+    try {
+      if (typeof window !== "undefined") {
+        const res = await fetch("/api/resumes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resume: resumeWithMetadata,
+            userEmail: resolvedEmail,
+          }),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            return { success: true, syncedAt: result.syncedAt || nowIso };
+          }
+        }
+      }
+    } catch (apiErr) {
+      console.warn("API /api/resumes indisponible, tentative directe via Supabase Client:", apiErr);
+    }
+
+    // 3. Repli direct via le client Supabase
     if (this.isAvailable() && supabase) {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData?.session?.user?.id;
+        let userId: string | null = null;
+        if (resolvedEmail) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", resolvedEmail)
+            .maybeSingle();
+          if (profile?.id) {
+            userId = profile.id;
+          }
+        }
 
         const { error } = await supabase.from("resumes").upsert(
           {
-            id: resume.id,
-            user_id: userId || null,
-            title: resume.personal.title || "Mon CV Professionnel",
-            slug: resume.slug,
-            resume_data: resume,
-            updated_at: new Date().toISOString(),
+            id: resumeWithMetadata.id,
+            user_id: userId,
+            user_email: resolvedEmail || null,
+            title: resumeWithMetadata.title || resumeWithMetadata.personal?.title || "Mon CV Professionnel",
+            slug: resumeWithMetadata.slug,
+            resume_data: resumeWithMetadata,
+            ats_score: 85,
+            is_public: true,
+            updated_at: nowIso,
           },
           { onConflict: "id" }
         );
 
         if (error) {
-          console.warn("Avertissement synchronisation cloud:", error.message);
+          console.warn("Avertissement synchronisation directe Supabase:", error.message);
           return { success: false, error: error.message };
         }
-        return { success: true };
+
+        return { success: true, syncedAt: nowIso };
       } catch (err: any) {
         return { success: false, error: err?.message };
       }
     }
-    return { success: true };
+
+    return { success: true, syncedAt: nowIso };
   }
 
   /**
-   * Récupération des CVs depuis le cloud Supabase avec repli local
+   * Récupération d'un CV par son slug ou son ID depuis le Cloud Supabase
+   * (indispensable pour les recruteurs consultant un portfolio /c/[slug] sur un autre appareil)
    */
-  static async getResumes(): Promise<ResumeData[]> {
+  static async getResumeBySlug(slug: string): Promise<ResumeData | null> {
+    if (!slug) return null;
+
+    // 1. Interroger la route API serveur
+    try {
+      if (typeof window !== "undefined") {
+        const res = await fetch(`/api/resumes/${encodeURIComponent(slug)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.resume) {
+            StorageManager.registerPublicResume(data.resume);
+            return data.resume as ResumeData;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Erreur fetch API slug, repli direct:", e);
+    }
+
+    // 2. Repli direct Supabase Client
     if (this.isAvailable() && supabase) {
       try {
         const { data, error } = await supabase
           .from("resumes")
           .select("resume_data")
+          .or(`slug.eq.${slug},id.eq.${slug}`)
+          .maybeSingle();
+
+        if (!error && data?.resume_data) {
+          const loaded = data.resume_data as ResumeData;
+          StorageManager.registerPublicResume(loaded);
+          return loaded;
+        }
+      } catch (e) {
+        console.warn("Erreur Supabase getResumeBySlug:", e);
+      }
+    }
+
+    // 3. Repli LocalStorage
+    return StorageManager.getResumeBySlug(slug);
+  }
+
+  /**
+   * Récupération des CVs depuis le cloud Supabase avec fusion locale intelligente
+   */
+  static async getResumes(userEmail?: string): Promise<ResumeData[]> {
+    const email = (userEmail || StorageManager.getUser()?.email || "").toLowerCase().trim();
+
+    if (this.isAvailable() && supabase && email) {
+      try {
+        const { data, error } = await supabase
+          .from("resumes")
+          .select("resume_data")
+          .eq("user_email", email)
           .order("updated_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
-          return data.map((item) => item.resume_data as ResumeData);
+          const cloudResumes = data.map((item) => item.resume_data as ResumeData);
+          
+          // Fusionner avec le local pour ne jamais perdre de travail hors-ligne
+          const localResumes = StorageManager.getResumes();
+          const mergedMap = new Map<string, ResumeData>();
+
+          cloudResumes.forEach((cr) => mergedMap.set(cr.id, cr));
+          localResumes.forEach((lr) => {
+            if (!mergedMap.has(lr.id)) {
+              mergedMap.set(lr.id, lr);
+            }
+          });
+
+          const finalList = Array.from(mergedMap.values());
+          StorageManager.saveResumes(finalList);
+          return finalList;
         }
       } catch (e) {
         console.warn("Repli vers le stockage local");
       }
     }
     return StorageManager.getResumes();
+  }
+
+  /**
+   * Suppression d'un CV (Cloud + Local)
+   */
+  static async deleteResume(id: string): Promise<ResumeData[]> {
+    if (this.isAvailable() && supabase) {
+      try {
+        await supabase.from("resumes").delete().eq("id", id);
+        if (typeof window !== "undefined") {
+          fetch(`/api/resumes?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+        }
+      } catch (e) {
+        console.warn("Erreur suppression cloud CV:", e);
+      }
+    }
+    return StorageManager.deleteResume(id);
   }
 
   /**
@@ -359,3 +501,4 @@ export class SupabaseService {
     return { success: false, message: "Service Supabase non connecté." };
   }
 }
+

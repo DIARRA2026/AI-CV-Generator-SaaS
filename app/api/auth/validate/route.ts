@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, resetRateLimit, isRateLimited } from "@/lib/rateLimit";
 import { validateRegistrationPayload, validateLoginPayload } from "@/lib/validation";
 
 /**
@@ -16,23 +16,44 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const mode = body?.mode || "login";
+    const action = body?.action; // "fail" | "reset" | undefined
     const emailKey = body?.email ? `email:${body.email.toLowerCase().trim()}` : null;
     const rateLimitKey = `auth:${ip}:${emailKey || "anon"}`;
 
-    // 2. Contrôle strict de Rate Limiting (Seuil de 4 tentatives maximum)
-    const rateCheck = checkRateLimit(rateLimitKey, 4, 15 * 60 * 1000);
-    if (!rateCheck.allowed) {
+    // Si action === "reset" (ex: connexion réussie)
+    if (action === "reset") {
+      resetRateLimit(rateLimitKey);
+      return NextResponse.json({ success: true, remainingAttempts: 4 });
+    }
+
+    // Si action === "fail" (mot de passe incorrect avéré)
+    if (action === "fail") {
+      const rateCheck = checkRateLimit(rateLimitKey, 4, 15 * 60 * 1000);
+      return NextResponse.json(
+        {
+          success: rateCheck.allowed,
+          remainingAttempts: rateCheck.remaining,
+          resetInSeconds: rateCheck.resetInSeconds,
+          error: rateCheck.errorMessage,
+        },
+        { status: rateCheck.allowed ? 200 : 429 }
+      );
+    }
+
+    // 2. Contrôle de blocage existant (ne consomme pas de tentative à la simple vérification)
+    const currentStatus = isRateLimited(rateLimitKey);
+    if (currentStatus.blocked) {
       return NextResponse.json(
         {
           success: false,
-          error: rateCheck.errorMessage,
+          error: currentStatus.errorMessage,
           remainingAttempts: 0,
-          resetInSeconds: rateCheck.resetInSeconds,
+          resetInSeconds: currentStatus.resetInSeconds,
         },
         {
           status: 429,
           headers: {
-            "Retry-After": String(rateCheck.resetInSeconds),
+            "Retry-After": String(currentStatus.resetInSeconds),
             "X-RateLimit-Limit": "4",
             "X-RateLimit-Remaining": "0",
           },
@@ -48,7 +69,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             errors: validation.errors,
-            remainingAttempts: rateCheck.remaining,
+            remainingAttempts: 4,
           },
           { status: 400 }
         );
@@ -57,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         sanitizedData: validation.sanitizedData,
-        remainingAttempts: rateCheck.remaining,
+        remainingAttempts: 4,
       });
     }
 
@@ -68,7 +89,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           errors: loginValidation.errors,
-          remainingAttempts: rateCheck.remaining,
+          remainingAttempts: 4,
         },
         { status: 400 }
       );
@@ -77,7 +98,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       sanitizedData: loginValidation.sanitizedData,
-      remainingAttempts: rateCheck.remaining,
+      remainingAttempts: 4,
     });
   } catch (error: any) {
     return NextResponse.json(

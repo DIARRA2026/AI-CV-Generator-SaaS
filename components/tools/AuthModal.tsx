@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
-  KeyRound, AlertTriangle, ArrowLeft, RefreshCw
+  KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
@@ -97,10 +97,14 @@ export const AuthModal: React.FC<Props> = ({
     }
   }, [isOpen, defaultMode]);
 
-  const switchMode = (m: "login" | "register" | "forgot") => {
+  const switchMode = (m: "login" | "register" | "forgot", preserveEmail?: string) => {
     setMode(m);
     setErrors({});
-    setEmail("");
+    if (preserveEmail) {
+      setEmail(preserveEmail);
+    } else {
+      setEmail("");
+    }
     setPassword("");
     setFirstName("");
     setLastName("");
@@ -226,46 +230,19 @@ export const AuthModal: React.FC<Props> = ({
 
     // MODE 1 : INSCRIPTION (Cloud Supabase avec repli local sécurisé)
     if (mode === "register") {
-      let regSuccess = false;
-      let regMessage = "";
+      const regResult = await SupabaseService.signUp({
+        firstName,
+        lastName,
+        email,
+        phone,
+        country,
+        city,
+        password,
+      });
 
-      if (SupabaseService.isAvailable()) {
-        const cloudResult = await SupabaseService.signUp({
-          firstName,
-          lastName,
-          email,
-          phone,
-          country,
-          city,
-          password,
-        });
-
-        // Cas de vérification d'email requise par Supabase Cloud
-        if (cloudResult.emailVerificationRequired) {
-          setIsLoading(false);
-          setEmailVerificationPending(email);
-          return;
-        }
-
-        regSuccess = cloudResult.success;
-        regMessage = cloudResult.message || "";
-      } else {
-        const regResult = StorageManager.registerUser({
-          firstName,
-          lastName,
-          email,
-          phone,
-          country,
-          city,
-          password,
-        });
-        regSuccess = regResult.success;
-        regMessage = regResult.message || "";
-      }
-
-      if (!regSuccess) {
+      if (!regResult.success) {
         setIsLoading(false);
-        setErrors({ general: regMessage || "Erreur lors de la création du compte." });
+        setErrors({ general: regResult.message || "Erreur lors de la création du compte." });
         return;
       }
 
@@ -279,6 +256,13 @@ export const AuthModal: React.FC<Props> = ({
         window.dispatchEvent(new Event("storage"));
       }
 
+      // Cas de vérification d'email requise par Supabase Cloud
+      if (regResult.emailVerificationRequired) {
+        setIsLoading(false);
+        setEmailVerificationPending(email);
+        return;
+      }
+
       setIsLoading(false);
       setDone(true);
       await new Promise((r) => setTimeout(r, 500));
@@ -289,23 +273,35 @@ export const AuthModal: React.FC<Props> = ({
 
     // MODE 2 : CONNEXION (Cloud Supabase avec repli local sécurisé & Rate Limiting 4 tentatives)
     if (mode === "login") {
-      let authSuccess = false;
-      let authMessage = "";
+      const authResult = await SupabaseService.signIn(email, password);
 
-      if (SupabaseService.isAvailable()) {
-        const cloudResult = await SupabaseService.signIn(email, password);
-        authSuccess = cloudResult.success;
-        authMessage = cloudResult.message || "";
-      } else {
-        const authResult = StorageManager.verifyLogin(email, password);
-        authSuccess = authResult.success;
-        authMessage = authResult.message || "";
-      }
+      if (!authResult.success) {
+        setIsLoading(false);
 
-      if (!authSuccess) {
+        // Cas 1 : L'email n'a pas encore été confirmé
+        if (authResult.emailVerificationRequired) {
+          setEmailVerificationPending(email);
+          return;
+        }
+
+        // Cas 2 : Aucun compte n'a été trouvé avec cet email (ne consomme pas de tentative)
+        if (authResult.userNotFound) {
+          setErrors({
+            userNotFound: authResult.message || `Aucun compte n'a été trouvé avec l'adresse ${email}.`,
+          });
+          return;
+        }
+
+        // Cas 3 : Mot de passe incorrect
         const nextAttempts = failedAttempts + 1;
         setFailedAttempts(nextAttempts);
-        setIsLoading(false);
+
+        // Notifier le serveur d'une tentative infructueuse
+        fetch("/api/auth/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "fail", email }),
+        }).catch(() => {});
 
         // Seuil strict de 4 tentatives maximum
         if (nextAttempts >= 4) {
@@ -317,15 +313,22 @@ export const AuthModal: React.FC<Props> = ({
           });
         } else {
           setErrors({
-            loginBlocked: `${authMessage || "Mot de passe incorrect."} (Tentative ${nextAttempts}/4)`,
+            wrongPassword: `${authResult.message || "Mot de passe incorrect."} (Tentative ${nextAttempts}/4)`,
           });
         }
         return;
       }
 
-      // Connexion réussie : réinitialisation du compteur de tentatives
+      // Connexion réussie : réinitialisation du compteur de tentatives local et serveur
       setFailedAttempts(0);
       setLockoutUntil(null);
+      setErrors({});
+
+      fetch("/api/auth/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset", email }),
+      }).catch(() => {});
 
       if (rememberMe) {
         StorageManager.setRememberedCreds({ email: email.trim(), password });
@@ -362,7 +365,7 @@ export const AuthModal: React.FC<Props> = ({
       setConfirmNewPassword("");
 
       setTimeout(() => {
-        switchMode("login");
+        switchMode("login", email);
       }, 1200);
       return;
     }
@@ -370,34 +373,41 @@ export const AuthModal: React.FC<Props> = ({
 
   const handleSocial = async (provider: "Google" | "Facebook") => {
     setIsLoading(true);
+    setErrors({});
 
-    if (typeof window !== "undefined") {
-      if (provider === "Google") {
-        window.open("https://accounts.google.com/o/oauth2/v2/auth", "_blank", "width=500,height=600,scrollbars=yes");
-      } else {
-        window.open("https://www.facebook.com/v12.0/dialog/oauth", "_blank", "width=500,height=600,scrollbars=yes");
+    // Tentative d'authentification Supabase OAuth réelle
+    if (SupabaseService.isAvailable()) {
+      try {
+        const { supabase } = await import("@/lib/supabaseClient");
+        if (supabase) {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider === "Google" ? "google" : "facebook",
+            options: {
+              redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined,
+            },
+          });
+          if (error) {
+            setIsLoading(false);
+            setErrors({
+              general: `L'accès via ${provider} nécessite la configuration du fournisseur OAuth dans Supabase. Veuillez renseigner votre email ci-dessous pour vous connecter.`,
+            });
+            return;
+          }
+        }
+      } catch {
+        setIsLoading(false);
+        setErrors({
+          general: `Connexion ${provider} indisponible. Veuillez utiliser votre adresse email personnelle.`,
+        });
+        return;
       }
+    } else {
+      setIsLoading(false);
+      setErrors({
+        general: `Veuillez renseigner votre adresse email et votre mot de passe pour accéder à votre espace personnel.`,
+      });
+      return;
     }
-
-    await new Promise((r) => setTimeout(r, 900));
-
-    const socialEmail = provider === "Google" ? "candidat.google@gmail.com" : "candidat.fb@facebook.com";
-    StorageManager.registerUser({
-      firstName: "Candidat",
-      lastName: provider,
-      email: socialEmail,
-      password: `social-${Date.now()}`,
-    });
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("storage"));
-    }
-
-    setIsLoading(false);
-    setDone(true);
-    await new Promise((r) => setTimeout(r, 500));
-    onSuccess();
-    onClose();
   };
 
   // ÉCRAN SPÉCIFIQUE : CONFIRMATION D'EMAIL REQUISE (Supabase Cloud Auth)
@@ -589,12 +599,55 @@ export const AuthModal: React.FC<Props> = ({
             </div>
           ) : null}
 
-          {/* Alerte Erreur Bloquante de Connexion */}
+          {/* Compte introuvable : Proposition d'inscription en 1 clic */}
+          {errors.userNotFound && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-col gap-2 text-blue-900 text-xs">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="font-bold block text-blue-900">Compte introuvable</span>
+                  <span className="text-[11px] text-blue-700 leading-snug">{errors.userNotFound}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => switchMode("register", email)}
+                className="w-full mt-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Créer mon compte avec cet email</span>
+              </button>
+            </div>
+          )}
+
+          {/* Mot de passe incorrect : Message clair et lien vers réinitialisation */}
+          {errors.wrongPassword && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-amber-900 text-xs">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="font-bold block text-amber-900">Identifiants incorrects</span>
+                  <span className="text-[11px] text-amber-700 leading-snug">{errors.wrongPassword}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => switchMode("forgot", email)}
+                  className="text-[11px] text-amber-800 hover:text-amber-950 underline font-semibold cursor-pointer"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Alerte Sécurité Déclenchée */}
           {errors.loginBlocked && !lockoutUntil && (
             <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-700 text-[11px]">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <span className="font-bold block">Accès Refusé</span>
+                <span className="font-bold block">Sécurité temporaire</span>
                 <span>{errors.loginBlocked}</span>
               </div>
             </div>

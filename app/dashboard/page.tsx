@@ -220,7 +220,7 @@ export default function DashboardPage() {
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  Connecté : {currentUser?.firstName || "Candidat"}
+                  Connecté : {currentUser?.firstName || currentUser?.email?.split("@")[0] || "Mon Espace"}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">•</span>
                 <span className="text-xs text-slate-500 font-medium">

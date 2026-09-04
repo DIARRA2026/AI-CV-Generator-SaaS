@@ -134,7 +134,7 @@ export class StorageManager {
       if (user.passwordHash !== password) {
         return {
           success: false,
-          message: "Mot de passe incorrect. L'accès est strictement refusé.",
+          message: "Mot de passe incorrect. Veuillez vérifier votre saisie ou réinitialiser votre mot de passe.",
         };
       }
 

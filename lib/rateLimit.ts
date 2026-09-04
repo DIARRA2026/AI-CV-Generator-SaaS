@@ -33,6 +33,23 @@ export interface RateLimitResult {
 }
 
 /**
+ * Vérifie si la clé est actuellement bloquée SANS incrémenter le compteur
+ */
+export function isRateLimited(key: string): { blocked: boolean; resetInSeconds: number; errorMessage?: string } {
+  const now = Date.now();
+  const record = rateLimitStore.get(key);
+  if (record && record.blockedUntil && now < record.blockedUntil) {
+    const remainingSeconds = Math.ceil((record.blockedUntil - now) / 1000);
+    return {
+      blocked: true,
+      resetInSeconds: remainingSeconds,
+      errorMessage: `Trop de tentatives (maximum ${RATE_LIMIT_CONFIG.MAX_ATTEMPTS}). Accès temporairement suspendu par mesure de sécurité. Réessayez dans ${Math.ceil(remainingSeconds / 60)} minute(s).`,
+    };
+  }
+  return { blocked: false, resetInSeconds: 0 };
+}
+
+/**
  * Vérifie et incrémente le compteur de tentatives pour une clé donnée (IP ou Email)
  */
 export function checkRateLimit(

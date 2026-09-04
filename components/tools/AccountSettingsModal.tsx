@@ -209,7 +209,7 @@ export const AccountSettingsModal: React.FC<Props> = ({
           <div className="flex-1 text-center sm:text-left space-y-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h2 className="text-xl font-black text-slate-900">
-                {firstName || "Candidat"} {lastName}
+                {firstName || (email ? email.split("@")[0] : "Mon Profil")} {lastName}
               </h2>
 
               {/* Badge Formule */}

@@ -169,10 +169,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                   title="Paramètres et options du compte"
                 >
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[11px] flex items-center justify-center shrink-0">
-                    {(currentUser.firstName?.[0] || "C").toUpperCase()}
+                    {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
                   </div>
                   <span className="font-bold text-slate-900">
-                    {currentUser.firstName}
+                    {currentUser.firstName || currentUser.email?.split("@")[0] || "Mon Profil"}
                   </span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
@@ -292,7 +292,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                 className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center cursor-pointer btn-press shadow-xs shrink-0"
                 title="Mon Profil"
               >
-                {(currentUser.firstName?.[0] || "C").toUpperCase()}
+                {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
               </button>
             )}
 

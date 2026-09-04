@@ -7,6 +7,7 @@ export interface CloudAuthResponse {
   user?: UserSession;
   message?: string;
   emailVerificationRequired?: boolean;
+  userNotFound?: boolean;
 }
 
 export class SupabaseService {
@@ -29,16 +30,28 @@ export class SupabaseService {
     city?: string;
     password: string;
   }): Promise<CloudAuthResponse> {
-    // Si Supabase Cloud est connecté
+    const cleanEmail = payload.email.toLowerCase().trim();
+    const cleanFirstName = payload.firstName.trim();
+    const cleanLastName = payload.lastName.trim();
+
+    // 1. Toujours enregistrer immédiatement dans le registre local sécurisé
+    const localResult = StorageManager.registerUser({
+      ...payload,
+      email: cleanEmail,
+      firstName: cleanFirstName,
+      lastName: cleanLastName,
+    });
+
+    // 2. Si Supabase Cloud est connecté, synchroniser avec Supabase Auth
     if (this.isAvailable() && supabase) {
       try {
         const { data, error } = await supabase.auth.signUp({
-          email: payload.email.toLowerCase().trim(),
+          email: cleanEmail,
           password: payload.password,
           options: {
             data: {
-              first_name: payload.firstName.trim(),
-              last_name: payload.lastName.trim(),
+              first_name: cleanFirstName,
+              last_name: cleanLastName,
               phone: payload.phone?.trim(),
               country: payload.country?.trim() || "Côte d'Ivoire",
               city: payload.city?.trim() || "Abidjan",
@@ -47,118 +60,196 @@ export class SupabaseService {
         });
 
         if (error) {
-          return { success: false, message: error.message };
+          if (error.message.toLowerCase().includes("already registered")) {
+            return {
+              success: false,
+              message: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
+            };
+          }
         }
 
-        // Si la vérification par email est activée sur le projet Supabase
-        // data.session est null tant que l'email n'a pas été cliqué
-        if (!data.session && data.user) {
+        // Si la vérification par email est exigée par Supabase
+        if (!data?.session && data?.user) {
+          const userSession = StorageManager.getUser() || {
+            email: cleanEmail,
+            firstName: cleanFirstName,
+            lastName: cleanLastName,
+            phone: payload.phone?.trim(),
+            country: payload.country?.trim(),
+            city: payload.city?.trim(),
+            planTier: "free" as PlanTier,
+            createdAt: new Date().toISOString(),
+          };
           return {
             success: true,
             emailVerificationRequired: true,
-            message: `Un email de confirmation a été envoyé à ${payload.email}. Veuillez cliquer sur le lien reçu pour activer votre compte.`,
+            user: userSession,
+            message: `Un email de confirmation a été envoyé à ${cleanEmail}. Veuillez vérifier votre boîte de réception ou vos spams.`,
           };
         }
 
-        const userSession: UserSession = {
-          email: payload.email.toLowerCase().trim(),
-          firstName: payload.firstName.trim(),
-          lastName: payload.lastName.trim(),
-          phone: payload.phone?.trim(),
-          country: payload.country?.trim(),
-          city: payload.city?.trim(),
-          token: data.session?.access_token,
-          planTier: "free",
-          createdAt: new Date().toISOString(),
-        };
-
-        // Enregistrer la session locale
-        StorageManager.setUser(userSession);
-        return { success: true, user: userSession };
+        if (data?.session) {
+          const userSession: UserSession = {
+            email: cleanEmail,
+            firstName: cleanFirstName,
+            lastName: cleanLastName,
+            phone: payload.phone?.trim(),
+            country: payload.country?.trim(),
+            city: payload.city?.trim(),
+            token: data.session.access_token,
+            planTier: "free",
+            createdAt: new Date().toISOString(),
+          };
+          StorageManager.setUser(userSession);
+          return { success: true, user: userSession };
+        }
       } catch (err: any) {
-        return { success: false, message: err?.message || "Erreur de connexion cloud" };
+        console.warn("Erreur d'inscription Supabase, utilisation du repli local:", err);
       }
     }
 
-    // Mode LocalStorage Fallback (si Supabase n'a pas encore de clés renseignées)
-    const localResult = StorageManager.registerUser(payload);
-    if (!localResult.success || !localResult.user) {
-      return { success: false, message: localResult.message };
+    if (localResult.success && localResult.user) {
+      const session: UserSession = {
+        email: localResult.user.email,
+        firstName: localResult.user.firstName,
+        lastName: localResult.user.lastName,
+        phone: localResult.user.phone,
+        city: localResult.user.city,
+        country: localResult.user.country,
+        token: `local-${Date.now()}`,
+        planTier: "free",
+        createdAt: localResult.user.createdAt,
+      };
+      StorageManager.setUser(session);
+      return { success: true, user: session };
     }
 
-    const session: UserSession = {
-      email: localResult.user.email,
-      firstName: localResult.user.firstName,
-      lastName: localResult.user.lastName,
-      phone: localResult.user.phone,
-      city: localResult.user.city,
-      country: localResult.user.country,
-      token: `local-${Date.now()}`,
-      planTier: "free",
-      createdAt: localResult.user.createdAt,
-    };
-    StorageManager.setUser(session);
-    return { success: true, user: session };
+    return { success: false, message: localResult.message || "Erreur lors de la création du compte." };
   }
 
   /**
-   * Connexion utilisateur avec détection des statuts de confirmation email
+   * Connexion utilisateur avec détection intelligente (Cloud Supabase + LocalStorage)
    */
   static async signIn(email: string, password: string): Promise<CloudAuthResponse> {
-    // Si Supabase Cloud est connecté
+    const cleanEmail = email.toLowerCase().trim();
+
+    // 1. Si Supabase Cloud est connecté
     if (this.isAvailable() && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase().trim(),
+          email: cleanEmail,
           password: password,
         });
 
-        if (error) {
-          if (error.message.toLowerCase().includes("email not confirmed")) {
-            return {
-              success: false,
-              message: "Votre adresse email n'a pas encore été confirmée. Veuillez vérifier votre boîte de réception ou vos spams pour valider votre compte.",
-            };
-          }
-          if (error.message.toLowerCase().includes("invalid login credentials")) {
-            return {
-              success: false,
-              message: "Email ou mot de passe incorrect. L'accès est refusé.",
-            };
-          }
-          return { success: false, message: error.message };
+        if (!error && data?.user) {
+          // Récupération des informations de profil
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+
+          const resolvedFirstName =
+            profile?.first_name ||
+            data.user.user_metadata?.first_name ||
+            (cleanEmail.split("@")[0].charAt(0).toUpperCase() + cleanEmail.split("@")[0].slice(1));
+
+          const userSession: UserSession = {
+            email: data.user.email || cleanEmail,
+            firstName: resolvedFirstName,
+            lastName: profile?.last_name || data.user.user_metadata?.last_name || "",
+            phone: profile?.phone || data.user.user_metadata?.phone,
+            country: profile?.country || data.user.user_metadata?.country,
+            city: profile?.city || data.user.user_metadata?.city,
+            planTier: (profile?.plan_tier as PlanTier) || "free",
+            token: data.session?.access_token,
+            createdAt: data.user.created_at,
+          };
+
+          StorageManager.setUser(userSession);
+          return { success: true, user: userSession };
         }
 
-        // Récupération des informations de profil
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", data.user.id)
-          .single();
+        // Si l'email n'a pas encore été validé sur Supabase
+        if (error && error.message.toLowerCase().includes("email not confirmed")) {
+          // Vérifier si le compte existe en local pour permettre l'accès direct sans blocage
+          const localCheck = StorageManager.verifyLogin(cleanEmail, password);
+          if (localCheck.success && localCheck.user) {
+            const session: UserSession = {
+              email: localCheck.user.email,
+              firstName: localCheck.user.firstName,
+              lastName: localCheck.user.lastName,
+              phone: localCheck.user.phone,
+              city: localCheck.user.city,
+              country: localCheck.user.country,
+              token: `local-${Date.now()}`,
+              planTier: "free",
+              createdAt: localCheck.user.createdAt,
+            };
+            StorageManager.setUser(session);
+            return { success: true, user: session };
+          }
 
-        const userSession: UserSession = {
-          email: data.user.email || email,
-          firstName: profile?.first_name || data.user.user_metadata?.first_name || "Candidat",
-          lastName: profile?.last_name || data.user.user_metadata?.last_name || "",
-          phone: profile?.phone || data.user.user_metadata?.phone,
-          country: profile?.country || data.user.user_metadata?.country,
-          city: profile?.city || data.user.user_metadata?.city,
-          planTier: (profile?.plan_tier as PlanTier) || "free",
-          token: data.session?.access_token,
-          createdAt: data.user.created_at,
-        };
+          return {
+            success: false,
+            emailVerificationRequired: true,
+            message: "Votre adresse email est en attente de confirmation. Veuillez cliquer sur le lien reçu par email.",
+          };
+        }
 
-        StorageManager.setUser(userSession);
-        return { success: true, user: userSession };
+        // Si Supabase renvoie identifiants invalides, tester le compte local
+        if (error && error.message.toLowerCase().includes("invalid login credentials")) {
+          const localCheck = StorageManager.verifyLogin(cleanEmail, password);
+          if (localCheck.success && localCheck.user) {
+            const session: UserSession = {
+              email: localCheck.user.email,
+              firstName: localCheck.user.firstName,
+              lastName: localCheck.user.lastName,
+              phone: localCheck.user.phone,
+              city: localCheck.user.city,
+              country: localCheck.user.country,
+              token: `local-${Date.now()}`,
+              planTier: "free",
+              createdAt: localCheck.user.createdAt,
+            };
+            StorageManager.setUser(session);
+            return { success: true, user: session };
+          }
+
+          // Si le mot de passe est faux mais l'email existe
+          const registeredUsers = StorageManager.getRegisteredUsers();
+          const emailExists = registeredUsers.some((u) => u.email.toLowerCase().trim() === cleanEmail);
+          if (!emailExists) {
+            return {
+              success: false,
+              userNotFound: true,
+              message: `Aucun compte n'a été trouvé avec l'adresse ${cleanEmail}. Souhaitez-vous créer votre compte ?`,
+            };
+          }
+
+          return {
+            success: false,
+            message: "Mot de passe incorrect. Veuillez vérifier votre saisie ou réinitialiser votre mot de passe.",
+          };
+        }
       } catch (err: any) {
-        return { success: false, message: err?.message || "Erreur de connexion" };
+        console.warn("Erreur Supabase signIn, repli sur local:", err);
       }
     }
 
-    // Mode LocalStorage Fallback
-    const localResult = StorageManager.verifyLogin(email, password);
+    // 2. Mode LocalStorage Fallback
+    const localResult = StorageManager.verifyLogin(cleanEmail, password);
     if (!localResult.success || !localResult.user) {
-      return { success: false, message: localResult.message };
+      const registeredUsers = StorageManager.getRegisteredUsers();
+      const emailExists = registeredUsers.some((u) => u.email.toLowerCase().trim() === cleanEmail);
+      if (!emailExists) {
+        return {
+          success: false,
+          userNotFound: true,
+          message: `Aucun compte n'a été trouvé avec l'adresse ${cleanEmail}. Souhaitez-vous créer votre compte ?`,
+        };
+      }
+      return { success: false, message: localResult.message || "Mot de passe incorrect." };
     }
 
     const session: UserSession = {

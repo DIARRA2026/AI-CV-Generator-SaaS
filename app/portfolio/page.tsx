@@ -39,6 +39,69 @@ import {
 } from "lucide-react";
 
 /**
+ * CONFIGURATION DU THÈME DES CARTES (Format exact Inspiré du Mockup SaaS)
+ */
+const getCardTheme = (color?: string) => {
+  switch (color) {
+    case "amber":
+      return {
+        topBorder: "border-t-4 border-t-amber-500",
+        iconBox: "bg-amber-50 dark:bg-amber-500/10 border-amber-200/80 dark:border-amber-500/25 text-amber-600 dark:text-amber-400",
+        tag: "text-amber-600 dark:text-amber-400",
+        badge: "bg-amber-500 text-white",
+        btn: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/25",
+        stepArrow: "text-amber-500",
+      };
+    case "blue":
+      return {
+        topBorder: "border-t-4 border-t-blue-500",
+        iconBox: "bg-blue-50 dark:bg-blue-500/10 border-blue-200/80 dark:border-blue-500/25 text-blue-600 dark:text-blue-400",
+        tag: "text-blue-600 dark:text-blue-400",
+        badge: "bg-blue-600 text-white",
+        btn: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/25",
+        stepArrow: "text-blue-500",
+      };
+    case "cyan":
+      return {
+        topBorder: "border-t-4 border-t-cyan-500",
+        iconBox: "bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200/80 dark:border-cyan-500/25 text-cyan-600 dark:text-cyan-400",
+        tag: "text-cyan-600 dark:text-cyan-400",
+        badge: "bg-cyan-600 text-white",
+        btn: "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-600/25",
+        stepArrow: "text-cyan-500",
+      };
+    case "emerald":
+      return {
+        topBorder: "border-t-4 border-t-emerald-500",
+        iconBox: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200/80 dark:border-emerald-500/25 text-emerald-600 dark:text-emerald-400",
+        tag: "text-emerald-600 dark:text-emerald-400",
+        badge: "bg-emerald-600 text-white",
+        btn: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/25",
+        stepArrow: "text-emerald-500",
+      };
+    case "purple":
+      return {
+        topBorder: "border-t-4 border-t-purple-500",
+        iconBox: "bg-purple-50 dark:bg-purple-500/10 border-purple-200/80 dark:border-purple-500/25 text-purple-600 dark:text-purple-400",
+        tag: "text-purple-600 dark:text-purple-400",
+        badge: "bg-purple-600 text-white",
+        btn: "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-purple-600/25",
+        stepArrow: "text-purple-500",
+      };
+    case "indigo":
+    default:
+      return {
+        topBorder: "border-t-4 border-t-indigo-500",
+        iconBox: "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200/80 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400",
+        tag: "text-indigo-600 dark:text-indigo-400",
+        badge: "bg-indigo-600 text-white",
+        btn: "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-600/25",
+        stepArrow: "text-indigo-500",
+      };
+  }
+};
+
+/**
  * CONFIGURATION UNIQUE & CENTRALISÉE DU PORTFOLIO
  * Facilite la personnalisation instantanée de tous les contenus
  */
@@ -66,209 +129,348 @@ const PORTFOLIO_CONFIG = {
   },
   values: [
     {
+      category: "MODULE CONCEPTION",
+      badge: "★ NOUVEAU",
       title: "Excellence du détail",
-      desc: "Chaque micro-interaction, chaque typographie et espacement est calibré au pixel près pour susciter l'émotion.",
+      desc: "Chaque micro-interaction, chaque typographie et espacement est calibré au pixel près pour susciter l'émotion et garantir une finition impeccable.",
+      step: "Design System → Tokens → Pixel-Perfect : Oui",
       icon: Palette,
+      color: "amber",
     },
     {
+      category: "PARAMÈTRE TECHNIQUE",
+      badge: "★ 100/100",
       title: "Performance & Accessibilité",
-      desc: "Des interfaces ultralégères garantissant des scores Google Lighthouse de 100/100 et le respect strict des normes WCAG.",
+      desc: "Des interfaces ultra-rapides garantissant des scores Google Lighthouse optimaux et le respect strict des normes internationales WCAG.",
+      step: "Lighthouse → Core Web Vitals → WCAG : Conforme",
       icon: Zap,
+      color: "blue",
     },
     {
+      category: "MÉTHODOLOGIE AGILE",
+      badge: "★ PRO",
       title: "Co-création fluide",
-      desc: "Une méthodologie agile et transparente : livrables itératifs, écoute active et communication constante en direct.",
+      desc: "Une méthodologie agile et transparente : livrables itératifs, écoute active et communication constante en direct pour respecter chaque jalon.",
+      step: "Méthode → Sprint Itératif → Délais : Respectés",
       icon: Users,
+      color: "emerald",
     },
   ],
   skills: [
     {
+      category: "MODULE DESIGN",
+      badge: "★ PRO",
       domain: "Design UI/UX",
-      tools: ["Figma", "Design Systems", "Prototypage Micro-interactions", "User Research", "Wireframing", "Tests A/B"],
+      desc: "Conception de parcours utilisateurs fluides, wireframes immersifs, tests utilisateurs et design systems scalables.",
+      step: "Figma → Prototypage → Tests A/B : Validé",
+      icon: Layout,
+      color: "amber",
+      tools: ["Figma", "Design Systems", "Micro-interactions", "User Research", "Wireframing", "Tests A/B"],
     },
     {
+      category: "APPLICATION FRONT-END",
+      badge: "★ MODERNE",
       domain: "Développement Front-End",
+      desc: "Développement d'interfaces web réactives, robustes et optimisées en React 19, Next.js 14 et TypeScript.",
+      step: "Next.js 14 → TypeScript → Tailwind CSS : Production",
+      icon: Code2,
+      color: "blue",
       tools: ["React 19", "Next.js 14", "TypeScript", "Tailwind CSS", "Framer Motion", "Shadcn/UI"],
     },
     {
+      category: "ARCHITECTURE DATA",
+      badge: "★ SÉCURISÉ",
       domain: "Développement Back-End & API",
+      desc: "Bases de données relationnelles sécurisées, API REST/GraphQL et intégrations Cloud performantes.",
+      step: "Supabase → PostgreSQL → API REST : Opérationnel",
+      icon: Layers,
+      color: "cyan",
       tools: ["Node.js", "PostgreSQL", "Supabase", "REST & GraphQL", "NextAuth", "Prisma"],
     },
     {
+      category: "DIRECTION ARTISTIQUE",
+      badge: "★ CRÉATION",
       domain: "Branding & Direction Artistique",
+      desc: "Identités visuelles marquantes, chartes graphiques complètes et typographies haut de gamme.",
+      step: "Identité → Typographie → Motion : Harmonisé",
+      icon: Palette,
+      color: "purple",
       tools: ["Identité Visuelle", "Chartes Graphiques", "Typographie de Luxe", "Logotypes", "Motion Design"],
     },
     {
-      domain: "Performance & Outils",
+      category: "OPTIMISATION SYSTÈME",
+      badge: "★ PERFORMANCE",
+      domain: "Performance & Déploiement",
+      desc: "Optimisation rigoureuse de la vitesse, intégration continue, SEO technique et infrastructure haute disponibilité.",
+      step: "Vercel → CI/CD → SEO Technique : 100%",
+      icon: Zap,
+      color: "emerald",
       tools: ["Core Web Vitals", "Git / GitHub", "Vercel / Cloudflare", "SEO Technique", "Docker", "CI/CD"],
     },
     {
-      domain: "Stratégie & Produit",
-      tools: ["Product Discovery", "MVP Launch", "Data Analytics", "Agile Scrum", "Conversion Rate Optimization"],
+      category: "STRATÉGIE PRODUIT",
+      badge: "★ RÉSULTATS",
+      domain: "Stratégie & Croissance",
+      desc: "Discovery produit, cadrage MVP, analyse de métriques et optimisation continue du taux de conversion.",
+      step: "Discovery → MVP Launch → Analytics : Croissance",
+      icon: TrendingUp,
+      color: "indigo",
+      tools: ["Product Discovery", "MVP Launch", "Data Analytics", "Agile Scrum", "Conversion Rate"],
     },
   ],
   projects: [
     {
       id: "p1",
-      title: "Atelier Digital — Showcase & Plateforme Créative",
+      categoryType: "MODULE WEB",
+      badge: "★ NOUVEAU",
+      title: "Atelier Digital — Showcase & Plateforme",
       category: "Web",
-      subtitle: "Plateforme web haute fidélité pour une agence de design international",
+      subtitle: "Plateforme web haute fidélité pour une agence de design international.",
+      step: "Next.js → Tailwind → Framer Motion : En Ligne",
       tags: ["Next.js", "Tailwind CSS", "Framer Motion", "TypeScript"],
       metrics: "+140% de conversion • Mention Spéciale Awwwards",
       imageUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "amber",
+      icon: Globe,
     },
     {
       id: "p2",
-      title: "PayAfrique — Super-App Fintech Mobile Money",
+      categoryType: "APPLICATION MOBILE",
+      badge: "★ TOP APP",
+      title: "PayAfrique — Super-App Mobile Money",
       category: "Mobile",
-      subtitle: "Application mobile de paiement instantané & portefeuille multi-devises",
+      subtitle: "Application mobile de paiement instantané & portefeuille multi-devises.",
+      step: "React Native → TypeScript → Node.js : 50k+ Actifs",
       tags: ["React Native", "TypeScript", "Node.js", "Fintech Security"],
-      metrics: "50k+ utilisateurs actifs • Note 4.9/5",
+      metrics: "50k+ utilisateurs actifs • Note 4.9/5 ★",
       imageUrl: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "blue",
+      icon: Smartphone,
     },
     {
       id: "p3",
-      title: "Lumina SaaS — Analytics IA & Business Intelligence",
+      categoryType: "APPLICATION SAAS",
+      badge: "★ IA DATA",
+      title: "Lumina SaaS — Analytics IA & BI",
       category: "Web",
-      subtitle: "Dashboard interactif avec visualisations temps réel et prédictions IA",
+      subtitle: "Dashboard interactif avec visualisations temps réel et prédictions IA.",
+      step: "Next.js → PostgreSQL → OpenAI API : 99.99% Uptime",
       tags: ["Next.js", "PostgreSQL", "Tailwind", "OpenAI API"],
       metrics: "3.2M requêtes/jour • 99.99% Uptime",
       imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "cyan",
+      icon: Layers,
     },
     {
       id: "p4",
-      title: "NéoBank — Design System Complet & Expérience Client",
+      categoryType: "DESIGN SYSTEM",
+      badge: "★ WCAG PRO",
+      title: "NéoBank — Design System Complet",
       category: "UI/UX",
-      subtitle: "Système de conception unifié multi-plateforme pour banque digitale",
+      subtitle: "Système de conception unifié multi-plateforme pour banque digitale.",
+      step: "Figma Tokens → Tokens API → WCAG : 120+ Composants",
       tags: ["Figma Tokens", "Design System", "Accessibilité WCAG", "Tokens API"],
       metrics: "120+ composants prêts pour la production",
       imageUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "emerald",
+      icon: Layout,
     },
     {
       id: "p5",
-      title: "KolaStore — E-Commerce Headless Mode & Luxe Panafricain",
+      categoryType: "DIRECTION MARQUE",
+      badge: "★ LUXE",
+      title: "KolaStore — E-Commerce Luxe Headless",
       category: "Branding",
-      subtitle: "Identité de marque & boutique ultra-rapide pour collection haute couture",
+      subtitle: "Identité de marque & boutique ultra-rapide pour collection haute couture.",
+      step: "Shopify Headless → Next.js → Stripe : +82% Panier",
       tags: ["Shopify Headless", "Next.js", "Branding", "Stripe Connect"],
       metrics: "+82% valeur moyenne du panier",
       imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "purple",
+      icon: Palette,
     },
     {
       id: "p6",
-      title: "Pulse Health — Télémédecine & Prise de Rendez-vous IA",
+      categoryType: "APPLICATION MOBILE",
+      badge: "★ IOT CONNECT",
+      title: "Pulse Health — Télémédecine & IA",
       category: "UI/UX",
-      subtitle: "Interface intuitive de téléconsultation et dossier patient sécurisé",
+      subtitle: "Interface intuitive de téléconsultation et dossier patient sécurisé.",
+      step: "WebRTC → HIPAA Compliant → React : Déployé",
       tags: ["UI/UX Design", "WebRTC", "HIPAA Compliant", "React"],
       metrics: "Temps d'attente divisé par 3",
       imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
-      liveUrl: "#",
+      liveUrl: "#contact",
+      color: "indigo",
+      icon: Smartphone,
     },
   ],
   experiences: [
     {
+      category: "POSTE CLÉ",
+      badge: "★ LEAD PRO",
       period: "2024 — Présent",
       role: "Senior Lead Product Designer & Creative Consultant",
       company: "Atelier Digital Studio (Freelance International)",
       location: "Paris • Abidjan • Remote",
       description:
         "Direction de la conception de plateformes SaaS et refontes d'envergure pour startups en phase de Scale-Up et grands comptes. Stratégie produit, design system et implémentation front-end.",
+      step: "Missions → Architecture → Leadership : Validé",
+      color: "amber",
+      icon: Award,
     },
     {
+      category: "POSTE MANAGEMENT",
+      badge: "★ SCALE-UP",
       period: "2022 — 2024",
       role: "Lead Front-End & UI/UX Designer",
       company: "FinTech Pulse Global",
       location: "Abidjan • Dakar",
       description:
         "Responsable de l'équipe d'interface client. Refonte complète de la super-app mobile et du portail marchand. Augmentation du taux d'adoption de 45% en 12 mois.",
+      step: "Super-App Mobile → Portail Marchand → +45% Adoption",
+      color: "blue",
+      icon: Smartphone,
     },
     {
+      category: "POSTE TECHNIQUE",
+      badge: "★ AGENCE",
       period: "2021 — 2022",
       role: "Product Designer & Frontend Engineer",
       company: "Creative Spark Agency",
       location: "Paris, France",
       description:
         "Conception de plus de 15 sites web immersifs primés sur Awwwards et FWA. Création de chartes graphiques complètes et intégration Next.js.",
+      step: "15+ Projets Primés → Awwwards → Next.js : Livré",
+      color: "emerald",
+      icon: Code2,
     },
   ],
   services: [
     {
+      categoryType: "OFFRE CLÉ-EN-MAIN",
+      badge: "★ POPULAIRE",
       title: "Création de Sites Web d'Élite",
       subtitle: "Sites vitrines & landing pages de conversion ultra-rapides",
+      step: "Architecture Next.js → SEO 100% → Responsive : Oui",
       deliverables: ["Architecture Next.js 14", "SEO & Core Web Vitals 100%", "Animations interactives", "Responsive 100% mobile"],
       priceIndication: "À partir de 450 000 FCFA / 750 €",
+      color: "amber",
+      icon: Globe,
     },
     {
+      categoryType: "APPLICATION SAAS PRO",
+      badge: "★ TOUT INCLUS",
       title: "Applications Web & SaaS Sur-Mesure",
       subtitle: "Plateformes logicielles complètes avec authentification & paiements",
+      step: "Dashboard → Supabase Cloud → Paiements Wave : Opérationnel",
       deliverables: ["Dashboard interactif", "Base de données PostgreSQL/Supabase", "Paiements Wave/Orange/Stripe", "Gestion des rôles"],
       priceIndication: "À partir de 1 200 000 FCFA / 1 850 €",
+      color: "blue",
+      icon: Layers,
     },
     {
+      categoryType: "MODULE CONCEPTION",
+      badge: "★ DESIGN SYSTEM",
       title: "UI/UX Design & Prototypage Figma",
       subtitle: "Conception centrée utilisateur du wireframe au prototype cliquable",
+      step: "Wireframes → Prototype Cliquable → Tests : Validé",
       deliverables: ["Design System complet", "Prototypes cliquables haute fidélité", "Tests utilisateurs", "Fichiers de transmission dev"],
       priceIndication: "À partir de 350 000 FCFA / 550 €",
+      color: "cyan",
+      icon: Layout,
     },
     {
+      categoryType: "DIRECTION MARQUE",
+      badge: "★ HAUT DE GAMME",
       title: "Branding Complet & Direction Artistique",
       subtitle: "Identité visuelle de marque haut de gamme et reconnaissable",
+      step: "Logotype → Charte Graphique → Guidelines : Complet",
       deliverables: ["Logotype principal & variantes", "Palette chromatique & typographies", "Guidelines d'usage", "Templates réseaux sociaux"],
       priceIndication: "À partir de 300 000 FCFA / 450 €",
+      color: "purple",
+      icon: Palette,
     },
     {
+      categoryType: "APPLICATION E-COMMERCE",
+      badge: "★ MOBILE MONEY",
       title: "E-Commerce Headless & Mobile Money",
       subtitle: "Boutiques en ligne modernes intégrées aux paiements locaux & mondiaux",
+      step: "Panier Fluide → Wave/Orange/MTN → Gestion : En Ligne",
       deliverables: ["Catalogue produits temps réel", "Paniers ultra-fluides", "Paiement Mobile Money + Carte", "Backoffice de gestion"],
       priceIndication: "À partir de 850 000 FCFA / 1 300 €",
+      color: "emerald",
+      icon: Smartphone,
     },
     {
+      categoryType: "AUDIT & PERFORMANCE",
+      badge: "★ EXPERTISE",
       title: "Audit UX, Performance & Refonte",
       subtitle: "Diagnostic complet et optimisation drastique de votre produit existant",
+      step: "Audit Heuristique → Vitesse → Accessibilité : Plan d'Action",
       deliverables: ["Rapport d'audit UX & heuristiques", "Optimisation de la vitesse de chargement", "Amélioration de l'accessibilité", "Plan d'action prioritaire"],
       priceIndication: "À partir de 250 000 FCFA / 390 €",
+      color: "indigo",
+      icon: Zap,
     },
   ],
   testimonials: [
     {
+      category: "TÉMOIGNAGE VÉRIFIÉ",
+      badge: "★ 5.0 / 5.0",
       name: "Marc Dubois",
       role: "CEO & Co-fondateur",
       company: "FinTech Pulse",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
       content:
         "Un sens du design hors du commun couplé à une rigueur d'ingénierie exemplaire. Notre plateforme a gagné en crédibilité instantanément auprès de nos investisseurs.",
+      step: "Projet → Super-App Mobile Money → Satisfaction : 100%",
       stars: 5,
+      color: "amber",
     },
     {
+      category: "TÉMOIGNAGE VÉRIFIÉ",
+      badge: "★ 5.0 / 5.0",
       name: "Aminata Koné",
       role: "Directrice Produit",
       company: "InnovAfrique",
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
       content:
         "Notre taux de conversion a bondi de 34% après la mise en ligne du nouveau site. La collaboration a été fluide, professionnelle et ponctuée de précieux conseils stratégiques.",
+      step: "Refonte → +34% Conversion → Collaboration : Fluide",
       stars: 5,
+      color: "blue",
     },
     {
+      category: "TÉMOIGNAGE VÉRIFIÉ",
+      badge: "★ 5.0 / 5.0",
       name: "David Laurent",
       role: "Directeur Technique",
       company: "SaaS Studio Paris",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
       content:
         "Le code livré en Next.js et TypeScript est propre, modulaire et remarquablement bien documenté. Travailler avec Alexandre a été un réel plaisir d'ingénieur.",
+      step: "Next.js & TypeScript → Architecture → Qualité : 10/10",
       stars: 5,
+      color: "emerald",
     },
     {
+      category: "TÉMOIGNAGE VÉRIFIÉ",
+      badge: "★ 5.0 / 5.0",
       name: "Sarah Meyer",
       role: "Responsable Brand & Marketing",
       company: "Luxe & Tradition",
       avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80",
       content:
         "Une vision artistique remarquable et une écoute irréprochable. Notre nouvelle identité visuelle suscite des compliments quotidiens de nos clients internationaux.",
+      step: "Branding Luxe → Identité Visuelle → Retours : Unanimes",
       stars: 5,
+      color: "purple",
     },
   ],
 };
@@ -694,30 +896,58 @@ export default function PortfolioLandingPage() {
             </p>
           </div>
 
-          {/* 3 Piliers de Valeurs */}
+          {/* 3 Piliers de Valeurs - Format Exact du Mockup SaaS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PORTFOLIO_CONFIG.values.map((v, idx) => {
               const IconComp = v.icon;
+              const themeStyle = getCardTheme(v.color);
               return (
                 <div
                   key={idx}
-                  className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:scale-[1.02] ${
+                  className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between ${
+                    themeStyle.topBorder
+                  } ${
                     isDark
-                      ? "bg-[#14161f] border-slate-800 hover:border-blue-500/50 shadow-lg"
-                      : "bg-white border-slate-200 hover:border-blue-400 shadow-sm"
+                      ? "bg-[#14161f] border-slate-800 hover:border-slate-700 shadow-xl"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/25 flex items-center justify-center text-blue-500 mb-5">
-                    <IconComp className="w-6 h-6" />
+                  <div className="space-y-3.5">
+                    {/* En-tête Format Exact Image : Icône à gauche, Catégorie + Badge + Titre à droite */}
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                            {v.category}
+                          </span>
+                          {v.badge && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                              {v.badge}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                          {v.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Texte descriptif */}
+                    <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                      {v.desc}
+                    </p>
                   </div>
-                  <h3 className="font-extrabold text-base sm:text-lg mb-2">{v.title}</h3>
-                  <p
-                    className={`text-xs sm:text-sm leading-relaxed ${
-                      isDark ? "text-slate-400" : "text-slate-600"
-                    }`}
-                  >
-                    {v.desc}
-                  </p>
+
+                  {/* Ligne Format Image : Étape > Pédagogie → Matière → Conduite */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                      <span className="truncate">{v.step}</span>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -726,7 +956,7 @@ export default function PortfolioLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. GRILLE DE COMPÉTENCES & STACK (6 PÔLES)                                */}
+      {/* 4. GRILLE DE COMPÉTENCES & STACK (6 PÔLES) - FORMAT EXACT DU MOCKUP        */}
       {/* ========================================================================= */}
       <section id="competences" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
@@ -743,35 +973,72 @@ export default function PortfolioLandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {PORTFOLIO_CONFIG.skills.map((cluster, idx) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-3xl border transition-all ${
-                  isDark
-                    ? "bg-[#121318] border-slate-800/90 hover:border-indigo-500/40"
-                    : "bg-white border-slate-200 hover:border-indigo-300 shadow-sm"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <h3 className="font-bold text-sm sm:text-base">{cluster.domain}</h3>
+            {PORTFOLIO_CONFIG.skills.map((cluster, idx) => {
+              const IconComp = cluster.icon;
+              const themeStyle = getCardTheme(cluster.color);
+              return (
+                <div
+                  key={idx}
+                  className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between ${
+                    themeStyle.topBorder
+                  } ${
+                    isDark
+                      ? "bg-[#14161f] border-slate-800 hover:border-slate-700 shadow-xl"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                  }`}
+                >
+                  <div className="space-y-3.5">
+                    {/* En-tête Format Exact Image */}
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                            {cluster.category}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                            {cluster.badge}
+                          </span>
+                        </div>
+                        <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                          {cluster.domain}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                      {cluster.desc}
+                    </p>
+
+                    {/* Outils & Technologies Pills */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {cluster.tools.map((tool, i) => (
+                        <span
+                          key={i}
+                          className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition-all cursor-default hover:scale-105 ${
+                            isDark
+                              ? "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-blue-500 hover:text-white"
+                              : "bg-slate-100 border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600"
+                          }`}
+                        >
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ligne Format Image : Étape > Pédagogie → Matière */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                      <span className="truncate">{cluster.step}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {cluster.tools.map((tool, i) => (
-                    <span
-                      key={i}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-default hover:scale-105 ${
-                        isDark
-                          ? "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-blue-500 hover:text-white"
-                          : "bg-slate-100 border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600"
-                      }`}
-                    >
-                      {tool}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -817,67 +1084,62 @@ export default function PortfolioLandingPage() {
             </div>
           </div>
 
-          {/* Grille des 6 Projets Bien Rangée & Compacte */}
+          {/* Grille des 6 Projets - Format Exact du Mockup SaaS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {filteredProjects.map((proj) => (
-              <div
-                key={proj.id}
-                className={`group rounded-2xl border overflow-hidden transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between ${
-                  isDark
-                    ? "bg-[#14151d] border-slate-800/90 hover:border-blue-500/50 shadow-lg"
-                    : "bg-white border-slate-200 hover:border-blue-400 shadow-sm"
-                }`}
-              >
-                <div>
-                  {/* Barre d'En-tête Style Fenêtre macOS (Propre & Bien Rangée) */}
-                  <div
-                    className={`px-3.5 py-2 flex items-center justify-between border-b ${
-                      isDark ? "bg-[#0f1015] border-slate-800" : "bg-slate-100/90 border-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500/70" />
-                      <span className="w-2 h-2 rounded-full bg-amber-500/70" />
-                      <span className="w-2 h-2 rounded-full bg-emerald-500/70" />
+            {filteredProjects.map((proj) => {
+              const IconComp = proj.icon;
+              const themeStyle = getCardTheme(proj.color);
+              return (
+                <div
+                  key={proj.id}
+                  className={`group rounded-3xl border overflow-hidden transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between shadow-sm hover:shadow-2xl ${
+                    themeStyle.topBorder
+                  } ${
+                    isDark
+                      ? "bg-[#14151d] border-slate-800/90 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="p-5 sm:p-6 space-y-3.5">
+                    {/* En-tête Format Exact Image */}
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                            {proj.categoryType}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                            {proj.badge}
+                          </span>
+                        </div>
+                        <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5 line-clamp-1">
+                          {proj.title}
+                        </h3>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400 tracking-tight">
-                      {proj.category.toLowerCase()}.app
-                    </span>
-                    <span
-                      className={`text-[9.5px] font-black uppercase px-2 py-0.5 rounded-md ${
-                        isDark ? "bg-slate-800 text-blue-400" : "bg-blue-50 text-blue-700"
-                      }`}
-                    >
-                      {proj.category}
-                    </span>
-                  </div>
 
-                  {/* Mockup Image Réduite & Bien Calibrée */}
-                  <div className="relative h-40 sm:h-44 w-full overflow-hidden bg-slate-950">
-                    <img
-                      src={proj.imageUrl}
-                      alt={proj.title}
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-40" />
-                  </div>
+                    {/* Mockup Image Réduite & Bords Arrondis */}
+                    <div className="relative h-36 sm:h-40 w-full overflow-hidden rounded-2xl bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+                      <img
+                        src={proj.imageUrl}
+                        alt={proj.title}
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-40" />
+                    </div>
 
-                  {/* Contenu Projet Net & Compact */}
-                  <div className="p-4 sm:p-5 space-y-2.5">
-                    <h3 className="font-extrabold text-sm sm:text-base group-hover:text-blue-400 transition-colors line-clamp-1">
-                      {proj.title}
-                    </h3>
-                    <p
-                      className={`text-xs leading-relaxed line-clamp-2 ${
-                        isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                    >
+                    {/* Contenu Projet Net & Compact */}
+                    <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                       {proj.subtitle}
                     </p>
 
-                    {/* Métrique / Impact */}
-                    <div className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10.5px] font-bold">
-                      {proj.metrics}
+                    {/* Ligne Format Image : Étape > Pédagogie → Matière */}
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                      <span className="truncate">{proj.step}</span>
                     </div>
 
                     {/* Tags */}
@@ -894,20 +1156,19 @@ export default function PortfolioLandingPage() {
                       ))}
                     </div>
                   </div>
-                </div>
 
-                {/* Bouton Action Aligné en Bas */}
-                <div className="px-4 sm:px-5 pb-4 pt-1">
-                  <a
-                    href="#contact"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors"
-                  >
-                    <span>Discuter d'un projet similaire</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </a>
+                  {/* Bouton Action Pleine Largeur Style "➜ Accéder au module" de l'Image */}
+                  <div className="px-5 sm:px-6 pb-5 pt-1">
+                    <a
+                      href="#contact"
+                      className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
+                    >
+                      <span>➜ Accéder au projet</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -990,61 +1251,89 @@ export default function PortfolioLandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {PORTFOLIO_CONFIG.services.map((srv, idx) => (
-              <div
-                key={idx}
-                className={`p-7 rounded-3xl border flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] ${
-                  isDark
-                    ? "bg-[#14151d] border-slate-800 hover:border-emerald-500/40 shadow-xl"
-                    : "bg-white border-slate-200 hover:border-emerald-400 shadow-md"
-                }`}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-lg sm:text-xl text-white">{srv.title}</h3>
-                    <p
-                      className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-                    >
+            {PORTFOLIO_CONFIG.services.map((srv, idx) => {
+              const IconComp = srv.icon;
+              const themeStyle = getCardTheme(srv.color);
+              return (
+                <div
+                  key={idx}
+                  className={`p-6 sm:p-7 rounded-3xl border flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-2xl ${
+                    themeStyle.topBorder
+                  } ${
+                    isDark
+                      ? "bg-[#14151d] border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="space-y-4">
+                    {/* En-tête Format Exact Image */}
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                            {srv.categoryType}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                            {srv.badge}
+                          </span>
+                        </div>
+                        <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                          {srv.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                       {srv.subtitle}
                     </p>
+
+                    {/* Étape Style Image */}
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                      <span className="truncate">{srv.step}</span>
+                    </div>
+
+                    {/* Livrables inclus */}
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-400">
+                        Livrables inclus :
+                      </span>
+                      {srv.deliverables.map((d, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span className={isDark ? "text-slate-300" : "text-slate-700"}>{d}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="h-px bg-slate-800 my-2" />
-
-                  {/* Livrables inclus */}
-                  <div className="space-y-2">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                      Livrables inclus :
-                    </span>
-                    {srv.deliverables.map((d, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span className={isDark ? "text-slate-300" : "text-slate-700"}>{d}</span>
-                      </div>
-                    ))}
+                  <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase">Tarif indicatif</span>
+                      <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-emerald-400">
+                        {srv.priceIndication}
+                      </span>
+                    </div>
+                    {/* Bouton Pleine Largeur Style "➜ Accéder au module" de l'Image */}
+                    <a
+                      href="#contact"
+                      className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
+                    >
+                      <span>➜ Commander ce module</span>
+                    </a>
                   </div>
                 </div>
-
-                <div className="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-[11.5px] font-black text-emerald-400">
-                    {srv.priceIndication}
-                  </span>
-                  <a
-                    href="#contact"
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition-all"
-                  >
-                    <span>Commander</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 8. TÉMOIGNAGES & PREUVE SOCIALE (4 AVIS)                                  */}
+      {/* 8. TÉMOIGNAGES & PREUVE SOCIALE (4 AVIS) - FORMAT EXACT DU MOCKUP         */}
       {/* ========================================================================= */}
       <section id="temoignages" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
@@ -1058,45 +1347,60 @@ export default function PortfolioLandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {PORTFOLIO_CONFIG.testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className={`p-7 rounded-3xl border space-y-4 ${
-                  isDark
-                    ? "bg-[#121318] border-slate-800/90 shadow-lg"
-                    : "bg-white border-slate-200 shadow-sm"
-                }`}
-              >
-                {/* Étoiles */}
-                <div className="flex items-center gap-1">
-                  {[...Array(t.stars)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-
-                <p
-                  className={`text-sm italic leading-relaxed ${
-                    isDark ? "text-slate-300" : "text-slate-700"
+            {PORTFOLIO_CONFIG.testimonials.map((t, idx) => {
+              const themeStyle = getCardTheme(t.color);
+              return (
+                <div
+                  key={idx}
+                  className={`p-6 sm:p-7 rounded-3xl border space-y-4 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between ${
+                    themeStyle.topBorder
+                  } ${
+                    isDark
+                      ? "bg-[#14151d] border-slate-800/90"
+                      : "bg-white border-slate-200"
                   }`}
                 >
-                  « {t.content} »
-                </p>
+                  <div className="space-y-3.5">
+                    {/* En-tête Format Exact Image */}
+                    <div className="flex items-start gap-3.5">
+                      <img
+                        src={t.avatar}
+                        alt={t.name}
+                        className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                            {t.category}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                            {t.badge}
+                          </span>
+                        </div>
+                        <h4 className="font-black text-base text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                          {t.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          {t.role} • <span className="text-blue-500 font-bold">{t.company}</span>
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-3 pt-2">
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="w-10 h-10 rounded-full object-cover border border-blue-500/30"
-                  />
-                  <div>
-                    <h4 className="font-bold text-xs sm:text-sm text-white">{t.name}</h4>
-                    <p className="text-[11px] text-slate-400">
-                      {t.role} • <span className="text-blue-400">{t.company}</span>
+                    <p className={`text-xs sm:text-sm italic leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                      « {t.content} »
                     </p>
                   </div>
+
+                  {/* Étape Style Image */}
+                  <div className="pt-2">
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                      <span className="truncate">{t.step}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

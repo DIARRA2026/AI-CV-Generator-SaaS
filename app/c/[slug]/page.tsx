@@ -45,8 +45,75 @@ import {
   ArrowUpRight,
   Github,
   Home,
+  Code2,
+  Layers,
+  Smartphone,
+  TrendingUp,
 } from "lucide-react";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
+
+/**
+ * CONFIGURATION DU THÈME DES CARTES (Format exact Inspiré du Mockup SaaS)
+ */
+const getCardTheme = (color?: string) => {
+  switch (color) {
+    case "amber":
+      return {
+        topBorder: "border-t-4 border-t-amber-500",
+        iconBox: "bg-amber-50 dark:bg-amber-500/10 border-amber-200/80 dark:border-amber-500/25 text-amber-600 dark:text-amber-400",
+        tag: "text-amber-600 dark:text-amber-400",
+        badge: "bg-amber-500 text-white",
+        btn: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/25",
+        stepArrow: "text-amber-500",
+      };
+    case "blue":
+      return {
+        topBorder: "border-t-4 border-t-blue-500",
+        iconBox: "bg-blue-50 dark:bg-blue-500/10 border-blue-200/80 dark:border-blue-500/25 text-blue-600 dark:text-blue-400",
+        tag: "text-blue-600 dark:text-blue-400",
+        badge: "bg-blue-600 text-white",
+        btn: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/25",
+        stepArrow: "text-blue-500",
+      };
+    case "cyan":
+      return {
+        topBorder: "border-t-4 border-t-cyan-500",
+        iconBox: "bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200/80 dark:border-cyan-500/25 text-cyan-600 dark:text-cyan-400",
+        tag: "text-cyan-600 dark:text-cyan-400",
+        badge: "bg-cyan-600 text-white",
+        btn: "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-600/25",
+        stepArrow: "text-cyan-500",
+      };
+    case "emerald":
+      return {
+        topBorder: "border-t-4 border-t-emerald-500",
+        iconBox: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200/80 dark:border-emerald-500/25 text-emerald-600 dark:text-emerald-400",
+        tag: "text-emerald-600 dark:text-emerald-400",
+        badge: "bg-emerald-600 text-white",
+        btn: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/25",
+        stepArrow: "text-emerald-500",
+      };
+    case "purple":
+      return {
+        topBorder: "border-t-4 border-t-purple-500",
+        iconBox: "bg-purple-50 dark:bg-purple-500/10 border-purple-200/80 dark:border-purple-500/25 text-purple-600 dark:text-purple-400",
+        tag: "text-purple-600 dark:text-purple-400",
+        badge: "bg-purple-600 text-white",
+        btn: "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-purple-600/25",
+        stepArrow: "text-purple-500",
+      };
+    case "indigo":
+    default:
+      return {
+        topBorder: "border-t-4 border-t-indigo-500",
+        iconBox: "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200/80 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400",
+        tag: "text-indigo-600 dark:text-indigo-400",
+        badge: "bg-indigo-600 text-white",
+        btn: "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-600/25",
+        stepArrow: "text-indigo-500",
+      };
+  }
+};
 
 export default function PublicCandidateCVPage() {
   const params = useParams();
@@ -158,14 +225,19 @@ export default function PublicCandidateCVPage() {
         },
       ];
 
-  // Projets / Réalisations
+  // Projets / Réalisations (Format Exact Inspiré du Mockup SaaS)
   const candidateProjects = [
     {
       id: "cp1",
       title: "Plateforme Numérique & Optimisation de Conversion",
       category: "Web",
+      categoryType: "APPLICATION WEB",
+      badge: "★ PROJET CLÉ",
+      color: "blue",
+      icon: Globe,
       subtitle: "Refonte architecturale avec amélioration de 40% des temps de réponse",
       metrics: "+35% de productivité • Normes Internationales",
+      step: "Spécification → Architecture → Livraison : 100%",
       tags: ["Next.js", "Performance", "Cloud", "Méthode STAR"],
       imageUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=700&auto=format&fit=crop&q=80",
     },
@@ -173,8 +245,13 @@ export default function PublicCandidateCVPage() {
       id: "cp2",
       title: "Système de Gestion & Automatisation des Données",
       category: "Mobile",
+      categoryType: "SYSTÈME MOBILE",
+      badge: "★ TEMPS RÉEL",
+      color: "emerald",
+      icon: Smartphone,
       subtitle: "Déploiement d'une solution intuitive avec dashboard en temps réel",
       metrics: "Satisfaction Client 99.8% • Zéro Anomalie",
+      step: "Analyse → API Backend → Interface : Validé",
       tags: ["React Native", "API REST", "Sécurité", "UX Design"],
       imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=700&auto=format&fit=crop&q=80",
     },
@@ -182,8 +259,13 @@ export default function PublicCandidateCVPage() {
       id: "cp3",
       title: "Design System & Cohérence d'Expérience Client",
       category: "UI/UX",
+      categoryType: "ERGONOMIE & UX",
+      badge: "★ DESIGN SYSTEM",
+      color: "purple",
+      icon: Palette,
       subtitle: "Bibliothèque de composants modulaires et charte graphique interactive",
       metrics: "Gain de 50% sur les cycles de livraison",
+      step: "Audit UX → Composants → Déploiement : Validé",
       tags: ["Figma Tokens", "Accessibilité WCAG", "Ergonomie"],
       imageUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=700&auto=format&fit=crop&q=80",
     },
@@ -633,41 +715,82 @@ export default function PublicCandidateCVPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
                   {
                     title: "Excellence du détail",
                     desc: "Une attention constante portée à la qualité du livrable, au balisage sémantique et à l'ergonomie globale.",
                     icon: Palette,
+                    category: "CONCEPTION",
+                    badge: "★ QUALITÉ",
+                    step: "Architecture → Conception : Validé",
+                    color: "amber",
                   },
                   {
                     title: "Orientation Résultats",
                     desc: "Des actions orientées vers le retour sur investissement, la conversion et l'efficacité quotidienne.",
                     icon: Zap,
+                    category: "PERFORMANCE",
+                    badge: "★ IMPACT",
+                    step: "Objectif → Métriques → ROI : 100%",
+                    color: "blue",
                   },
                   {
                     title: "Communication Fluide",
                     desc: "Transparence, écoute active et réactivité constante pour bâtir une confiance pérenne avec les recruteurs.",
                     icon: Users,
+                    category: "COLLABORATION",
+                    badge: "★ TRANSPARENCE",
+                    step: "Écoute → Rigueur → Confiance : Actif",
+                    color: "emerald",
                   },
                 ].map((val, idx) => {
                   const IconComp = val.icon;
+                  const themeStyle = getCardTheme(val.color);
                   return (
                     <div
                       key={idx}
-                      className={`p-5 rounded-2xl border transition-all hover:scale-[1.02] ${
+                      className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between ${
+                        themeStyle.topBorder
+                      } ${
                         isDark
-                          ? "bg-[#14161f] border-slate-800 hover:border-blue-500/40 shadow-lg"
-                          : "bg-white border-slate-200 hover:border-blue-300 shadow-xs"
+                          ? "bg-[#14161f] border-slate-800 hover:border-slate-700 shadow-xl"
+                          : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-500 mb-3">
-                        <IconComp className="w-4 h-4" />
+                      <div className="space-y-3.5">
+                        {/* En-tête Format Exact Image */}
+                        <div className="flex items-start gap-3.5">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                            <IconComp className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                                {val.category}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                {val.badge}
+                              </span>
+                            </div>
+                            <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                              {val.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                          {val.desc}
+                        </p>
                       </div>
-                      <h3 className="font-extrabold text-sm sm:text-base mb-1">{val.title}</h3>
-                      <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-                        {val.desc}
-                      </p>
+
+                      {/* Étape Style Image */}
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                          <span className="truncate">{val.step}</span>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -688,36 +811,71 @@ export default function PublicCandidateCVPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {skillsList.map((sk, idx) => (
-                <div
-                  key={idx}
-                  className={`p-5 rounded-2xl border transition-all ${
-                    isDark
-                      ? "bg-[#121318] border-slate-800 hover:border-indigo-500/40"
-                      : "bg-white border-slate-200 hover:border-indigo-300 shadow-xs"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <h3 className="font-bold text-sm sm:text-base">{sk.category}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {skillsList.map((sk, idx) => {
+                const skillPalette = ["amber", "blue", "cyan", "emerald", "purple", "indigo"];
+                const skillIcons = [Code2, Layers, Zap, Palette, Award, ShieldCheck];
+                const themeStyle = getCardTheme(skillPalette[idx % skillPalette.length]);
+                const IconComp = skillIcons[idx % skillIcons.length];
+                return (
+                  <div
+                    key={idx}
+                    className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between ${
+                      themeStyle.topBorder
+                    } ${
+                      isDark
+                        ? "bg-[#14161f] border-slate-800 hover:border-slate-700 shadow-xl"
+                        : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                    }`}
+                  >
+                    <div className="space-y-3.5">
+                      {/* En-tête Format Exact Image */}
+                      <div className="flex items-start gap-3.5">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                          <IconComp className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                              EXPERTISE TECHNIQUE
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                              ★ MAÎTRISÉ
+                            </span>
+                          </div>
+                          <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                            {sk.category}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Pills */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {sk.items.map((item, i) => (
+                          <span
+                            key={i}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition-all cursor-default hover:scale-105 ${
+                              isDark
+                                ? "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-blue-500 hover:text-white"
+                                : "bg-slate-100 border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600"
+                            }`}
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Étape Style Image */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                        <span className="truncate">Savoir-faire → Pratique → Niveau : Avancé</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sk.items.map((item, i) => (
-                      <span
-                        key={i}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-default hover:scale-105 ${
-                          isDark
-                            ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-blue-500"
-                            : "bg-slate-100 border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-400"
-                        }`}
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
@@ -762,55 +920,53 @@ export default function PublicCandidateCVPage() {
                 </div>
               </div>
 
-              {/* Grille des Projets Compacte & Alignée */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProjects.map((proj) => (
-                  <div
-                    key={proj.id}
-                    className={`group rounded-2xl border overflow-hidden transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between ${
-                      isDark
-                        ? "bg-[#14151d] border-slate-800/90 hover:border-blue-500/50 shadow-lg"
-                        : "bg-white border-slate-200 hover:border-blue-400 shadow-xs"
-                    }`}
-                  >
-                    <div>
-                      {/* En-tête macOS Propre & Tidy */}
-                      <div
-                        className={`px-3 py-1.5 flex items-center justify-between border-b ${
-                          isDark ? "bg-[#0f1015] border-slate-800" : "bg-slate-100/90 border-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-rose-500/70" />
-                          <span className="w-2 h-2 rounded-full bg-amber-500/70" />
-                          <span className="w-2 h-2 rounded-full bg-emerald-500/70" />
+              {/* Grille des Projets - Format Exact du Mockup SaaS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                {filteredProjects.map((proj) => {
+                  const IconComp = proj.icon || Globe;
+                  const themeStyle = getCardTheme(proj.color || "blue");
+                  return (
+                    <div
+                      key={proj.id}
+                      className={`group rounded-3xl border overflow-hidden transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between shadow-sm hover:shadow-2xl ${
+                        themeStyle.topBorder
+                      } ${
+                        isDark
+                          ? "bg-[#14151d] border-slate-800/90 hover:border-slate-700"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="p-5 sm:p-6 space-y-3.5">
+                        {/* En-tête Format Exact Image */}
+                        <div className="flex items-start gap-3.5">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                            <IconComp className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                                {proj.categoryType || proj.category}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                {proj.badge || "★ RÉALISÉ"}
+                              </span>
+                            </div>
+                            <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5 line-clamp-1">
+                              {proj.title}
+                            </h3>
+                          </div>
                         </div>
-                        <span className="text-[9.5px] font-mono text-slate-400">
-                          {proj.category.toLowerCase()}.preview
-                        </span>
-                        <span
-                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
-                            isDark ? "bg-slate-800 text-blue-400" : "bg-blue-50 text-blue-700"
-                          }`}
-                        >
-                          {proj.category}
-                        </span>
-                      </div>
 
-                      {/* Mockup Compact */}
-                      <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-950">
-                        <img
-                          src={proj.imageUrl}
-                          alt={proj.title}
-                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-40" />
-                      </div>
+                        {/* Mockup Compact Bords Arrondis */}
+                        <div className="relative h-36 sm:h-40 w-full overflow-hidden rounded-2xl bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+                          <img
+                            src={proj.imageUrl}
+                            alt={proj.title}
+                            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-40" />
+                        </div>
 
-                      <div className="p-3.5 sm:p-4 space-y-2">
-                        <h3 className="font-extrabold text-sm sm:text-base group-hover:text-blue-400 transition-colors line-clamp-1">
-                          {proj.title}
-                        </h3>
                         <p
                           className={`text-xs leading-relaxed line-clamp-2 ${
                             isDark ? "text-slate-400" : "text-slate-600"
@@ -818,14 +974,19 @@ export default function PublicCandidateCVPage() {
                         >
                           {proj.subtitle}
                         </p>
-                        <div className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold">
-                          {proj.metrics}
+
+                        {/* Métriques ou Étape */}
+                        <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                          <span className="truncate">{proj.step || proj.metrics}</span>
                         </div>
-                        <div className="flex flex-wrap gap-1 pt-0.5">
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
                           {proj.tags.map((t, idx) => (
                             <span
                               key={idx}
-                              className={`text-[9px] font-semibold px-2 py-0.5 rounded-md ${
+                              className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md ${
                                 isDark ? "bg-slate-900 text-slate-400" : "bg-slate-100 text-slate-600"
                               }`}
                             >
@@ -834,19 +995,19 @@ export default function PublicCandidateCVPage() {
                           ))}
                         </div>
                       </div>
-                    </div>
 
-                    <div className="px-3.5 sm:px-4 pb-3.5 pt-0.5">
-                      <a
-                        href="#contact"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors"
-                      >
-                        <span>Échanger sur ce projet</span>
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </a>
+                      {/* Bouton Action Pleine Largeur Style Image "➜ Accéder au module" */}
+                      <div className="px-5 sm:px-6 pb-5 pt-1">
+                        <a
+                          href="#contact"
+                          className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
+                        >
+                          <span>➜ Échanger sur ce projet</span>
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -938,60 +1099,118 @@ export default function PublicCandidateCVPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
                   {
                     title: "Recrutement CDI / CDD",
+                    categoryType: "POSTE PERMANENT",
+                    badge: "★ DISPONIBLE",
+                    color: "blue",
+                    icon: Briefcase,
+                    step: "Profil → Entretien → Intégration : Immédiat",
                     subtitle: "Intégration au sein d'une équipe produit ou technique",
-                    deliverables: ["Disponibilité immédiate", "Autonomie opérationnelle", "Adhésion aux objectifs d'entreprise", "Rapport hebdomadaire"],
+                    deliverables: ["Disponibilité immédiate", "Autonomie opérationnelle", "Adhésion aux objectifs", "Reporting régulier"],
+                    priceIndication: "Selon contrat & grille",
                   },
                   {
                     title: "Consulting & Mission Freelance",
+                    categoryType: "PRESTATION EXPERTE",
+                    badge: "★ SUR-MESURE",
+                    color: "emerald",
+                    icon: Zap,
+                    step: "Cadrage → Sprints → Livrables : Garanti",
                     subtitle: "Intervention ciblée sur vos chantiers prioritaires",
                     deliverables: ["Audit des besoins", "Livrables clés en main", "Transfert de compétences", "Support post-livraison"],
+                    priceIndication: "TJM ou Forfait négocié",
                   },
                   {
                     title: "Conception & Direction de Projet",
+                    categoryType: "PILOTAGE STRATÉGIQUE",
+                    badge: "★ LEADERSHIP",
+                    color: "purple",
+                    icon: Award,
+                    step: "Stratégie → Jalons Agiles → Recette : 100%",
                     subtitle: "De la formalisation du besoin au déploiement en production",
-                    deliverables: ["Spécifications détaillées", "Suivi des jalons agiles", "Validation de la qualité", "Documentation complète"],
+                    deliverables: ["Spécifications détaillées", "Suivi des jalons agiles", "Contrôle qualité", "Documentation complète"],
+                    priceIndication: "Sur cahier des charges",
                   },
-                ].map((srv, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-5 rounded-2xl border flex flex-col justify-between transition-all hover:scale-[1.02] ${
-                      isDark
-                        ? "bg-[#14151d] border-slate-800 hover:border-emerald-500/40 shadow-lg"
-                        : "bg-white border-slate-200 hover:border-emerald-400 shadow-xs"
-                    }`}
-                  >
-                    <div className="space-y-2.5">
-                      <h3 className="font-extrabold text-sm sm:text-base">{srv.title}</h3>
-                      <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-                        {srv.subtitle}
-                      </p>
-                      <div className="h-px bg-slate-800 my-1" />
-                      <div className="space-y-1.5">
-                        {srv.deliverables.map((d, i) => (
-                          <div key={i} className="flex items-center gap-1.5 text-xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span className={isDark ? "text-slate-300" : "text-slate-700"}>{d}</span>
+                ].map((srv, idx) => {
+                  const IconComp = srv.icon;
+                  const themeStyle = getCardTheme(srv.color);
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-6 sm:p-7 rounded-3xl border flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-2xl ${
+                        themeStyle.topBorder
+                      } ${
+                        isDark
+                          ? "bg-[#14151d] border-slate-800 hover:border-slate-700"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="space-y-4">
+                        {/* En-tête Format Exact Image */}
+                        <div className="flex items-start gap-3.5">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${themeStyle.iconBox}`}>
+                            <IconComp className="w-6 h-6" />
                           </div>
-                        ))}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider ${themeStyle.tag}`}>
+                                {srv.categoryType}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                {srv.badge}
+                              </span>
+                            </div>
+                            <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white tracking-tight leading-snug mt-0.5">
+                              {srv.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                          {srv.subtitle}
+                        </p>
+
+                        {/* Étape Style Image */}
+                        <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 text-[10.5px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <span className={`font-bold ${themeStyle.stepArrow}`}>&gt;</span>
+                          <span className="truncate">{srv.step}</span>
+                        </div>
+
+                        {/* Livrables inclus */}
+                        <div className="space-y-2 pt-1">
+                          <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-400">
+                            Engagements inclus :
+                          </span>
+                          {srv.deliverables.map((d, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span className={isDark ? "text-slate-300" : "text-slate-700"}>{d}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase">Modalité</span>
+                          <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-emerald-400">
+                            {srv.priceIndication}
+                          </span>
+                        </div>
+                        {/* Bouton Pleine Largeur Style Image "➜ Accéder au module" */}
+                        <a
+                          href="#contact"
+                          className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
+                        >
+                          <span>➜ Proposer cette collaboration</span>
+                        </a>
                       </div>
                     </div>
-
-                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="text-xs font-black text-emerald-400">Devis sous 24h</span>
-                      <a
-                        href="#contact"
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition-all"
-                      >
-                        <span>Discuter</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>

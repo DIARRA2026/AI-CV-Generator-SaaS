@@ -41,16 +41,11 @@ export const CountryCityPicker: React.FC<Props> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Changement de pays : réinitialiser ou proposer la première ville
+  // Changement de pays : réinitialiser pour afficher le placeholder spécifique au pays
   const handleSelectCountry = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCountry = e.target.value;
     onCountryChange(newCountry);
-    const newCities = getCitiesForCountry(newCountry);
-    if (newCities.length > 0) {
-      onCityChange(newCities[0]);
-    } else {
-      onCityChange("");
-    }
+    onCityChange("");
     setIsOpen(false);
   };
 

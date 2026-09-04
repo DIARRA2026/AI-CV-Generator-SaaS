@@ -33,7 +33,7 @@ export const AuthModal: React.FC<Props> = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("Côte d'Ivoire");
-  const [city, setCity] = useState("Abidjan");
+  const [city, setCity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -89,7 +89,7 @@ export const AuthModal: React.FC<Props> = ({
       setNewPassword("");
       setConfirmNewPassword("");
       setCountry("Côte d'Ivoire");
-      setCity("Abidjan");
+      setCity("");
       setRememberMe(false);
       StorageManager.clearRememberedCreds();
     }
@@ -103,6 +103,7 @@ export const AuthModal: React.FC<Props> = ({
     setFirstName("");
     setLastName("");
     setPhone("");
+    setCity("");
     setConfirmPassword("");
     setNewPassword("");
     setConfirmNewPassword("");

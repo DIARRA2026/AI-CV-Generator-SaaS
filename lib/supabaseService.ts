@@ -246,4 +246,25 @@ export class SupabaseService {
     }
     return StorageManager.getResumes();
   }
+
+  /**
+   * Renvoi d'un email de confirmation
+   */
+  static async resendConfirmationEmail(email: string): Promise<{ success: boolean; message: string }> {
+    if (this.isAvailable() && supabase) {
+      try {
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email: email.toLowerCase().trim(),
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true, message: "Un nouveau lien d'activation a été envoyé. Vérifiez vos spams." };
+      } catch (err: any) {
+        return { success: false, message: err?.message || "Erreur lors du renvoi." };
+      }
+    }
+    return { success: false, message: "Service Supabase non connecté." };
+  }
 }

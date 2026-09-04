@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
-  KeyRound, AlertTriangle, ArrowLeft
+  KeyRound, AlertTriangle, ArrowLeft, RefreshCw
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
@@ -49,6 +49,8 @@ export const AuthModal: React.FC<Props> = ({
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [emailVerificationPending, setEmailVerificationPending] = useState<string | null>(null);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [resendEmailMessage, setResendEmailMessage] = useState<string | null>(null);
 
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -154,6 +156,16 @@ export const AuthModal: React.FC<Props> = ({
 
   const handleCountryChange = (newCountry: string) => {
     setCountry(newCountry);
+  };
+
+  const handleResendEmail = async () => {
+    const targetEmail = emailVerificationPending || email;
+    if (!targetEmail) return;
+    setIsResendingEmail(true);
+    setResendEmailMessage(null);
+    const res = await SupabaseService.resendConfirmationEmail(targetEmail);
+    setIsResendingEmail(false);
+    setResendEmailMessage(res.message);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -420,9 +432,27 @@ export const AuthModal: React.FC<Props> = ({
           <div className="my-2.5 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-blue-600 break-all inline-block border border-slate-200">
             {emailVerificationPending}
           </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed mb-5">
-            Veuillez cliquer sur le lien dans le message pour activer votre compte. Vérifiez également vos courriers indésirables (spams).
+          <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
+            Veuillez cliquer sur le lien dans le message pour activer votre compte. Vérifiez également votre dossier <strong>Spam / Courriers indésirables</strong>.
           </p>
+
+          {/* Bouton Renvoyer le mail de confirmation */}
+          <div className="space-y-2 mb-4">
+            <button
+              type="button"
+              disabled={isResendingEmail}
+              onClick={handleResendEmail}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isResendingEmail ? "animate-spin text-blue-600" : "text-slate-500"}`} />
+              <span>{isResendingEmail ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}</span>
+            </button>
+            {resendEmailMessage && (
+              <p className="text-[10.5px] font-semibold text-blue-700 bg-blue-50 py-1.5 px-2.5 rounded-lg border border-blue-200">
+                {resendEmailMessage}
+              </p>
+            )}
+          </div>
 
           <button
             type="button"

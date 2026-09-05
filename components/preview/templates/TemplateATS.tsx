@@ -11,27 +11,43 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="px-10 pt-9 pb-7 min-h-[297mm] h-full flex-1 bg-white text-black font-sans leading-normal flex flex-col justify-between">
-      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
+    <div
+      className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-black font-sans leading-normal flex flex-col justify-between overflow-hidden"
+      style={{ padding: density.spacing.pagePadding }}
+    >
+      <div
+        className="flex-1 flex flex-col justify-between min-h-0"
+        style={{ gap: density.spacing.sectionGap }}
+      >
         {/* Header ATS — centré, sobre, standardisé */}
-        <div className="text-center pb-4 mb-5 border-b-2 border-black">
+        <div className="text-center pb-2.5 mb-1.5 border-b-2 border-black">
           {design.showPhoto && personal.photoUrl && (
-            <div className="mb-2.5 flex justify-center">
+            <div className="mb-2 flex justify-center">
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
-                className="w-20 h-20 rounded-full object-cover border border-black"
+                style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
+                className="rounded-full object-cover border border-black shrink-0"
                 crossOrigin="anonymous"
               />
             </div>
           )}
-          <h1 className="text-[22px] font-bold uppercase tracking-tight text-black leading-tight">
+          <h1
+            style={{ fontSize: density.fontSize.title }}
+            className="font-bold uppercase tracking-tight text-black leading-tight"
+          >
             {personal.firstName} {personal.lastName}
           </h1>
-          <p className="text-[10.5px] font-semibold text-black mt-0.5">
+          <p
+            style={{ fontSize: density.fontSize.role }}
+            className="font-semibold text-black mt-0.5"
+          >
             {personal.title}
           </p>
-          <p className="text-[10px] text-black mt-1.5 leading-snug">
+          <p
+            style={{ fontSize: density.fontSize.xs }}
+            className="text-black mt-1 leading-snug"
+          >
             {[
               personal.email,
               personal.phone,
@@ -52,10 +68,19 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
         {/* Résumé Professionnel */}
         {summary && (
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
+            >
               RÉSUMÉ PROFESSIONNEL
             </h2>
-            <p className={`${density.summaryTextSize} ${density.lineHeight} text-black text-justify`}>
+            <p
+              style={{
+                fontSize: density.fontSize.summary,
+                lineHeight: density.lineHeight,
+              }}
+              className="text-black cv-pro-text"
+            >
               {summary}
             </p>
           </div>
@@ -64,25 +89,47 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
         {/* Expérience Professionnelle */}
         {experiences && experiences.length > 0 && (
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
+            >
               EXPÉRIENCE PROFESSIONNELLE
             </h2>
-            <div className={density.itemGap}>
+            <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {experiences.map((exp) => (
                 <div key={exp.id}>
-                  <div className="flex justify-between items-baseline font-bold text-[11px] text-black">
+                  <div
+                    style={{ fontSize: density.fontSize.base }}
+                    className="flex justify-between items-baseline font-bold text-black"
+                  >
                     <span>{exp.role}</span>
-                    <span className="font-semibold text-[10px]">
+                    <span style={{ fontSize: density.fontSize.xs }} className="font-semibold shrink-0">
                       {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                     </span>
                   </div>
-                  <div className="flex justify-between text-[10px] text-black mb-1">
+                  <div
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="flex justify-between text-black mb-1"
+                  >
                     <span className="italic font-medium">{exp.company}</span>
                     {exp.city && <span className="italic">{exp.city}</span>}
                   </div>
-                  <ul className={`list-disc list-outside ml-5 ${density.bulletGap} ${density.bodyTextSize} text-black`}>
+                  <ul
+                    style={{ gap: density.spacing.bulletGap }}
+                    className="flex flex-col text-black"
+                  >
                     {exp.highlights.map((h, idx) => (
-                      <li key={idx} className="leading-snug">{h}</li>
+                      <li
+                        key={idx}
+                        style={{
+                          fontSize: density.fontSize.base,
+                          lineHeight: density.lineHeight,
+                        }}
+                        className="flex items-start gap-1.5 cv-pro-text"
+                      >
+                        <span className="font-bold shrink-0 mt-[-1px]">•</span>
+                        <span className="flex-1">{h}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -93,21 +140,36 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
+            >
               FORMATION & DIPLÔMES
             </h2>
-            <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
+            <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {educations.map((edu) => (
-                <div key={edu.id} className="flex justify-between items-start text-[10.5px] text-black">
+                <div
+                  key={edu.id}
+                  style={{ fontSize: density.fontSize.base }}
+                  className="flex justify-between items-start text-black"
+                >
                   <div>
                     <span className="font-bold">{edu.degree}</span>
                     {edu.field && <span> — {edu.field}</span>}
-                    <span className="italic block text-[10px] mt-0.5">
+                    <span
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="italic block mt-0.5"
+                    >
                       {edu.school}{edu.city ? `, ${edu.city}` : ""}
                     </span>
                   </div>
-                  <span className="font-semibold text-[10px] shrink-0">{edu.year}</span>
+                  <span
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="font-semibold shrink-0"
+                  >
+                    {edu.year}
+                  </span>
                 </div>
               ))}
             </div>
@@ -116,11 +178,14 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Compétences */}
         {skills && skills.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
+          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
+            >
               COMPÉTENCES TECHNIQUES & LOGICIELS
             </h2>
-            <div className="space-y-1 text-[10px] text-black">
+            <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {skills.map((cat) => (
                 <div key={cat.id} className="flex items-start gap-1">
                   <span className="font-bold shrink-0">{cat.category} :</span>
@@ -133,23 +198,29 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Langues */}
         {languages && languages.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
+          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
+            >
               LANGUES
             </h2>
-            <p className="text-[10px] text-black">
+            <p style={{ fontSize: density.fontSize.xs }} className="text-black">
               {languages.map((l) => `${l.name} (${l.level})`).join("  |  ")}
             </p>
           </div>
         )}
 
         {/* Certifications */}
-        {sections.certifications && sections.certifications.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+        {sections?.certifications && sections.certifications.length > 0 && (
+          <div className="pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
+            >
               CERTIFICATIONS
             </h2>
-            <div className="space-y-1 text-[10px] text-black">
+            <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {sections.certifications.map((c) => (
                 <div key={c.id} className="flex items-start gap-1">
                   <span className="font-bold shrink-0">–</span>
@@ -161,12 +232,15 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
         )}
 
         {/* Projets */}
-        {sections.projects && sections.projects.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+        {sections?.projects && sections.projects.length > 0 && (
+          <div className="pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
+            >
               PROJETS & RÉALISATIONS
             </h2>
-            <div className="space-y-1.5 text-[10px] text-black">
+            <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {sections.projects.map((p) => (
                 <div key={p.id} className="flex items-start gap-1">
                   <span className="font-bold shrink-0">–</span>
@@ -178,7 +252,10 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
         )}
       </div>
 
-      <div className="text-center text-[8px] text-gray-500 pt-3 border-t border-gray-300 mt-4">
+      <div
+        style={{ fontSize: density.fontSize.xs }}
+        className="text-center text-gray-500 pt-2 border-t border-gray-300 mt-2 shrink-0"
+      >
         CV Optimisé ATS (Applicant Tracking System) · MonCV.ai
       </div>
     </div>

@@ -4,144 +4,216 @@ export type DensityMode = "spacious" | "balanced" | "compact";
 
 export interface DensitySettings {
   mode: DensityMode;
-  // Marges et espacements de section
+  scale: number;
+  totalLines: number;
+
+  // Typographie calculée en pixels par formule de composition (Desktop Publishing / PAO)
+  fontSize: {
+    title: string;
+    role: string;
+    heading: string;
+    summary: string;
+    base: string;
+    sm: string;
+    xs: string;
+  };
+  lineHeight: number;
+
+  // Espacements géométriques calculés en pixels (justification verticale)
+  spacing: {
+    pagePadding: string;
+    sidebarPadding: string;
+    sectionGap: string;
+    itemGap: string;
+    bulletGap: string;
+    cardPadding: string;
+    summaryPadding: string;
+    photoSize: string;
+  };
+
+  // Rétrocompatibilité Tailwind pour les classes existantes
   sectionGap: string;
   itemGap: string;
   bulletGap: string;
   headerMargin: string;
-  // Remplissage intérieur des cartes
   cardPadding: string;
   summaryPadding: string;
-  // Typographie adaptable
   bodyTextSize: string;
   summaryTextSize: string;
   titleSize: string;
   roleSize: string;
-  lineHeight: string;
-  // Badges & détails
   showDecorativeBadges: boolean;
   expandSummary: boolean;
 }
 
 /**
- * Analyse le volume total d'informations saisies dans le CV
- * et détermine le mode d'adaptation de densité pour occuper
- * 100% de la hauteur de la page A4 (297 mm) de façon équilibrée et élégante.
+ * Moteur Typographique & Formules Mathématiques de Traitement de Texte (Desktop Publishing).
+ * Calcule le budget vertical exact de la page A4 (297 mm) et dérive un facteur
+ * d'échelle continu S afin de confiner et d'ajuster parfaitement l'écriture.
  */
 export function getResumeDensity(data: ResumeData): DensitySettings {
-  const { summary, experiences, educations, skills, sections, languages } = data;
+  const { personal, summary, experiences, educations, skills, languages, sections } = data;
 
-  // 1. Calcul du score de contenu
-  let contentScore = 0;
+  // 1. Budget de lignes équivalentes (Line-Budget Formulation)
+  // Overhead fixe : En-tête, identité, marges de sécurité
+  let totalLines = 7;
 
-  // Profil
-  const summaryLength = summary ? summary.trim().length : 0;
-  if (summaryLength > 300) contentScore += 4;
-  else if (summaryLength > 150) contentScore += 2.5;
-  else if (summaryLength > 0) contentScore += 1.5;
+  // Contact et métadonnées
+  let contactFieldsCount = 0;
+  if (personal?.email) contactFieldsCount++;
+  if (personal?.phone) contactFieldsCount++;
+  if (personal?.city || personal?.country) contactFieldsCount++;
+  if (personal?.birthDate || personal?.birthPlace) contactFieldsCount++;
+  if (personal?.maritalStatus) contactFieldsCount++;
+  if (personal?.linkedin) contactFieldsCount++;
+  if (personal?.website) contactFieldsCount++;
+  totalLines += contactFieldsCount * 0.7;
 
-  // Expériences & puces
+  // Résumé / Profil (environ 75 caractères par ligne imprimée)
+  if (summary && summary.trim().length > 0) {
+    const summaryClean = summary.trim();
+    const summaryLines = Math.max(1, Math.ceil(summaryClean.length / 75));
+    totalLines += summaryLines + 2.2; // + titre et padding
+  }
+
+  // Expériences professionnelles
   if (experiences && experiences.length > 0) {
+    totalLines += 2.2; // Titre de section
     experiences.forEach((exp) => {
-      contentScore += 2;
-      const highlightsCount = exp.highlights?.length || 0;
-      contentScore += highlightsCount * 1.2;
+      totalLines += 2.0; // Rôle, entreprise, dates
+      if (exp.highlights && exp.highlights.length > 0) {
+        exp.highlights.forEach((h) => {
+          const hLines = Math.max(1, Math.ceil(h.length / 68));
+          totalLines += hLines;
+        });
+      }
+      totalLines += 0.5; // Espacement inter-poste
     });
   }
 
-  // Formations
+  // Formations & Diplômes
   if (educations && educations.length > 0) {
-    contentScore += educations.length * 1.8;
+    totalLines += 2.0; // Titre de section
+    educations.forEach(() => {
+      totalLines += 1.9; // Diplôme, école, année
+    });
   }
 
   // Compétences
   if (skills && skills.length > 0) {
+    totalLines += 2.0; // Titre de section
     skills.forEach((cat) => {
-      contentScore += 1;
-      contentScore += (cat.items?.length || 0) * 0.3;
+      const itemsCount = cat.items?.length || 0;
+      totalLines += 1.2 + Math.ceil(itemsCount / 5) * 0.8;
     });
   }
 
-  // Langues & autres sections
+  // Langues
   if (languages && languages.length > 0) {
-    contentScore += languages.length * 0.8;
+    totalLines += 1.5; // Titre
+    totalLines += languages.length * 0.85;
   }
+
+  // Certifications & Projets
   if (sections?.certifications && sections.certifications.length > 0) {
-    contentScore += sections.certifications.length * 1.2;
+    totalLines += 1.5 + sections.certifications.length * 1.3;
   }
   if (sections?.projects && sections.projects.length > 0) {
-    contentScore += sections.projects.length * 1.5;
+    totalLines += 1.5 + sections.projects.length * 1.5;
   }
   if (sections?.interests && sections.interests.length > 0) {
-    contentScore += 1;
+    totalLines += 1.5 + Math.ceil(sections.interests.length / 4) * 0.8;
   }
 
-  // 2. Attribution du mode
-  let mode: DensityMode = "balanced";
+  // 2. Formule Mathématique d'Échelle Typographique (Power-law Type Scaling)
+  // Baseline = 33 lignes idéales pour un document A4 standard
+  const baselineLines = 33;
+  const rawScale = Math.pow(baselineLines / Math.max(12, totalLines), 0.38);
+  // Clamping de sécurité typographique : lisibilité minimale 0.76, élégance maximale 1.22
+  const scale = Math.max(0.76, Math.min(1.22, rawScale));
 
-  if (contentScore < 13) {
+  // 3. Calcul continu des grandeurs typographiques et géométriques
+  const fontSize = {
+    title: `${Math.round(22 * Math.min(1.15, scale))}px`,
+    role: `${(10.5 * scale).toFixed(1)}px`,
+    heading: `${(11.0 * scale).toFixed(1)}px`,
+    summary: `${(10.0 * scale).toFixed(1)}px`,
+    base: `${(9.5 * scale).toFixed(1)}px`,
+    sm: `${(9.0 * scale).toFixed(1)}px`,
+    xs: `${(8.2 * scale).toFixed(1)}px`,
+  };
+
+  // Formule d'interlignage proportionnel amorti
+  const lineHeight = Math.min(1.58, Math.max(1.24, 1.35 * Math.pow(scale, 0.35)));
+
+  // Espacements géométriques
+  const spacing = {
+    pagePadding: `${Math.round(24 * scale)}px`,
+    sidebarPadding: `${Math.round(20 * scale)}px`,
+    sectionGap: `${Math.max(6, Math.round(14 * scale))}px`,
+    itemGap: `${Math.max(4, Math.round(8 * scale))}px`,
+    bulletGap: `${Math.max(2, Math.round(3.5 * scale))}px`,
+    cardPadding: `${Math.max(4, Math.round(8 * scale))}px`,
+    summaryPadding: `${Math.max(6, Math.round(10 * scale))}px`,
+    photoSize: `${Math.round(80 * Math.min(1.2, Math.max(0.8, scale)))}px`,
+  };
+
+  // 4. Catégorisation pour rétrocompatibilité
+  let mode: DensityMode = "balanced";
+  if (scale > 1.08) {
     mode = "spacious";
-  } else if (contentScore > 22) {
+  } else if (scale < 0.92) {
     mode = "compact";
   } else {
     mode = "balanced";
   }
 
-  // 3. Configurations graphiques par mode
-  switch (mode) {
-    case "spacious":
-      return {
-        mode: "spacious",
-        sectionGap: "gap-6 sm:gap-8",
-        itemGap: "space-y-4",
-        bulletGap: "space-y-2",
-        headerMargin: "mb-4",
-        cardPadding: "p-4 sm:p-5",
-        summaryPadding: "p-4 sm:p-5",
-        bodyTextSize: "text-[11px]",
-        summaryTextSize: "text-[11px]",
-        titleSize: "text-2xl sm:text-3xl",
-        roleSize: "text-xs sm:text-[12.5px]",
-        lineHeight: "leading-relaxed",
-        showDecorativeBadges: true,
-        expandSummary: true,
-      };
+  // Retour complet
+  return {
+    mode,
+    scale,
+    totalLines,
+    fontSize,
+    lineHeight,
+    spacing,
 
-    case "compact":
-      return {
-        mode: "compact",
-        sectionGap: "gap-2.5 sm:gap-3",
-        itemGap: "space-y-2",
-        bulletGap: "space-y-0.5",
-        headerMargin: "mb-1.5",
-        cardPadding: "p-2 sm:p-2.5",
-        summaryPadding: "p-2 sm:p-2.5",
-        bodyTextSize: "text-[9.5px]",
-        summaryTextSize: "text-[9.5px]",
-        titleSize: "text-xl",
-        roleSize: "text-[10px]",
-        lineHeight: "leading-snug",
-        showDecorativeBadges: false,
-        expandSummary: false,
-      };
-
-    case "balanced":
-    default:
-      return {
-        mode: "balanced",
-        sectionGap: "gap-4 sm:gap-5",
-        itemGap: "space-y-3",
-        bulletGap: "space-y-1",
-        headerMargin: "mb-2.5",
-        cardPadding: "p-3",
-        summaryPadding: "p-3.5",
-        bodyTextSize: "text-[10px]",
-        summaryTextSize: "text-[10.5px]",
-        titleSize: "text-2xl",
-        roleSize: "text-[11px]",
-        lineHeight: "leading-normal",
-        showDecorativeBadges: true,
-        expandSummary: false,
-      };
-  }
+    // Propriétés rétrocompatibles
+    sectionGap:
+      mode === "spacious"
+        ? "gap-6 sm:gap-8"
+        : mode === "compact"
+        ? "gap-2.5 sm:gap-3"
+        : "gap-4 sm:gap-5",
+    itemGap:
+      mode === "spacious"
+        ? "space-y-4"
+        : mode === "compact"
+        ? "space-y-1.5"
+        : "space-y-2.5",
+    bulletGap:
+      mode === "spacious"
+        ? "space-y-2"
+        : mode === "compact"
+        ? "space-y-0.5"
+        : "space-y-1",
+    headerMargin: mode === "spacious" ? "mb-4" : mode === "compact" ? "mb-1.5" : "mb-2.5",
+    cardPadding: mode === "spacious" ? "p-4 sm:p-5" : mode === "compact" ? "p-2" : "p-3",
+    summaryPadding: mode === "spacious" ? "p-4 sm:p-5" : mode === "compact" ? "p-2.5" : "p-3.5",
+    bodyTextSize:
+      mode === "spacious"
+        ? "text-[11px]"
+        : mode === "compact"
+        ? "text-[9px]"
+        : "text-[10px]",
+    summaryTextSize:
+      mode === "spacious"
+        ? "text-[11px]"
+        : mode === "compact"
+        ? "text-[9.5px]"
+        : "text-[10.5px]",
+    titleSize: mode === "spacious" ? "text-2xl sm:text-3xl" : mode === "compact" ? "text-xl" : "text-2xl",
+    roleSize: mode === "spacious" ? "text-xs sm:text-[12.5px]" : mode === "compact" ? "text-[10px]" : "text-[11px]",
+    showDecorativeBadges: mode !== "compact",
+    expandSummary: mode === "spacious",
+  };
 }

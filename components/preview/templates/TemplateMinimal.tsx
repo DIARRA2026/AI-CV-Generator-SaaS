@@ -12,16 +12,28 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="p-10 min-h-[297mm] h-full flex-1 bg-white text-zinc-800 font-sans leading-relaxed flex flex-col justify-between">
-      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
+    <div
+      className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-zinc-800 font-sans leading-relaxed flex flex-col justify-between overflow-hidden"
+      style={{ padding: density.spacing.pagePadding }}
+    >
+      <div
+        className="flex-1 flex flex-col justify-between min-h-0"
+        style={{ gap: density.spacing.sectionGap }}
+      >
         {/* Header minimaliste */}
-        <div className="mb-7">
+        <div className="mb-2">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-[26px] font-light tracking-tight text-zinc-900 leading-none">
+              <h1
+                style={{ fontSize: density.fontSize.title }}
+                className="font-light tracking-tight text-zinc-900 leading-none"
+              >
                 <span className="font-bold">{personal.firstName}</span> {personal.lastName}
               </h1>
-              <p className="text-[10.5px] tracking-widest text-zinc-500 mt-1.5 uppercase font-medium">
+              <p
+                style={{ fontSize: density.fontSize.role }}
+                className="tracking-widest text-zinc-500 mt-1 uppercase font-medium"
+              >
                 {personal.title}
               </p>
             </div>
@@ -29,14 +41,18 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
-                className="w-16 h-16 rounded-full grayscale object-cover border border-zinc-300"
+                style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
+                className="rounded-full grayscale object-cover border border-zinc-300 shrink-0"
                 crossOrigin="anonymous"
               />
             )}
           </div>
 
           {/* Contact en ligne */}
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[9.5px] text-zinc-500 mt-4 pt-3 border-t border-zinc-200">
+          <div
+            style={{ fontSize: density.fontSize.xs }}
+            className="flex flex-wrap gap-x-3 gap-y-1 text-zinc-500 mt-2.5 pt-2 border-t border-zinc-200"
+          >
             {personal.email && <span>{personal.email}</span>}
             {personal.phone && <span>· {personal.phone}</span>}
             {(personal.city || personal.country) && (
@@ -59,10 +75,19 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         {/* Profil */}
         {summary && (
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
+            >
               À Propos
             </h2>
-            <p className={`text-zinc-700 ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
+            <p
+              style={{
+                fontSize: density.fontSize.summary,
+                lineHeight: density.lineHeight,
+              }}
+              className="text-zinc-700 cv-pro-text"
+            >
               {summary}
             </p>
           </div>
@@ -71,26 +96,49 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         {/* Expérience */}
         {experiences && experiences.length > 0 && (
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
+            >
               Expérience
             </h2>
-            <div className={density.itemGap}>
+            <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {experiences.map((exp) => (
-                <div key={exp.id} className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1 text-[9.5px] text-zinc-400 pt-0.5 leading-snug">
-                    {exp.startDate} –{" "}
-                    {exp.current ? "Présent" : exp.endDate}
+                <div key={exp.id} className="grid grid-cols-4 gap-3">
+                  <div
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="col-span-1 text-zinc-400 pt-0.5 leading-snug"
+                  >
+                    {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                   </div>
                   <div className="col-span-3">
-                    <h3 className={`font-semibold text-zinc-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"} leading-tight`}>{exp.role}</h3>
-                    <p className="text-[10px] text-zinc-600 mb-1 font-medium mt-0.5">
+                    <h3
+                      style={{ fontSize: density.fontSize.base }}
+                      className="font-semibold text-zinc-900 leading-tight"
+                    >
+                      {exp.role}
+                    </h3>
+                    <p
+                      style={{ fontSize: density.fontSize.sm }}
+                      className="text-zinc-600 mb-1 font-medium mt-0.5"
+                    >
                       {exp.company}{exp.city ? ` — ${exp.city}` : ""}
                     </p>
-                    <ul className={`${density.bulletGap} text-zinc-600 ${density.bodyTextSize}`}>
+                    <ul
+                      style={{ gap: density.spacing.bulletGap }}
+                      className="flex flex-col text-zinc-600"
+                    >
                       {exp.highlights.map((h, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5 leading-snug">
+                        <li
+                          key={idx}
+                          style={{
+                            fontSize: density.fontSize.base,
+                            lineHeight: density.lineHeight,
+                          }}
+                          className="flex items-start gap-1.5 cv-pro-text"
+                        >
                           <span className="text-zinc-400 font-bold shrink-0">–</span>
-                          <span>{h}</span>
+                          <span className="flex-1">{h}</span>
                         </li>
                       ))}
                     </ul>
@@ -103,21 +151,33 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+            <h2
+              style={{ fontSize: density.fontSize.heading }}
+              className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
+            >
               Formation
             </h2>
-            <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
+            <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {educations.map((edu) => (
-                <div key={edu.id} className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1 text-[9.5px] text-zinc-400 pt-0.5">
+                <div key={edu.id} className="grid grid-cols-4 gap-3">
+                  <div
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="col-span-1 text-zinc-400 pt-0.5"
+                  >
                     {edu.year}
                   </div>
                   <div className="col-span-3">
-                    <h3 className={`font-semibold text-zinc-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"} leading-tight`}>
+                    <h3
+                      style={{ fontSize: density.fontSize.base }}
+                      className="font-semibold text-zinc-900 leading-tight"
+                    >
                       {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                     </h3>
-                    <p className="text-[9.5px] text-zinc-500 mt-0.5">
+                    <p
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="text-zinc-500 mt-0.5"
+                    >
                       {edu.school}{edu.city ? ` (${edu.city})` : ""}
                     </p>
                   </div>
@@ -128,32 +188,42 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         )}
 
         {/* Compétences & Langues */}
-        <div className="grid grid-cols-2 gap-6 pt-4 border-t border-zinc-200">
+        <div className="grid grid-cols-2 gap-5 pt-2.5 border-t border-zinc-200">
           {skills && skills.length > 0 && (
             <div>
-              <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2.5">
+              <h2
+                style={{ fontSize: density.fontSize.heading }}
+                className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
+              >
                 Compétences
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {skills.map((s) => (
-                  <div key={s.id}>
-                    <span className="text-[9.5px] font-bold text-zinc-700">{s.category} : </span>
-                    <span className="text-[9.5px] text-zinc-500">{s.items.join(", ")}</span>
+                  <div key={s.id} style={{ fontSize: density.fontSize.xs }}>
+                    <span className="font-bold text-zinc-700">{s.category} : </span>
+                    <span className="text-zinc-500">{s.items.join(", ")}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {languages && languages.length > 0 && (
               <div>
-                <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2.5">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
+                >
                   Langues
                 </h2>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {languages.map((l) => (
-                    <div key={l.id} className="flex justify-between text-[9.5px] text-zinc-700">
+                    <div
+                      key={l.id}
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="flex justify-between text-zinc-700"
+                    >
                       <span className="font-medium">{l.name}</span>
                       <span className="text-zinc-500">{l.level}</span>
                     </div>
@@ -162,12 +232,18 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               </div>
             )}
 
-            {sections.interests && sections.interests.length > 0 && (
+            {sections?.interests && sections.interests.length > 0 && (
               <div>
-                <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
+                >
                   Intérêts
                 </h2>
-                <p className="text-[9.5px] text-zinc-500 leading-relaxed">
+                <p
+                  style={{ fontSize: density.fontSize.xs }}
+                  className="text-zinc-500 leading-relaxed"
+                >
                   {sections.interests.join(" · ")}
                 </p>
               </div>
@@ -176,7 +252,10 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         </div>
       </div>
 
-      <div className="pt-4 text-center text-[8px] text-zinc-400 border-t border-zinc-100">
+      <div
+        style={{ fontSize: density.fontSize.xs }}
+        className="pt-2 text-center text-zinc-400 border-t border-zinc-100 shrink-0"
+      >
         Généré avec MonCV.ai
       </div>
     </div>

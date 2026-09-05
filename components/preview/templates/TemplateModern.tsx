@@ -27,14 +27,14 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="flex flex-1 h-full min-h-[297mm] bg-white text-slate-800 font-sans leading-relaxed">
+    <div className="flex flex-1 h-full min-h-[297mm] max-h-[297mm] overflow-hidden bg-white text-slate-800 font-sans leading-relaxed">
       {/* Sidebar Gauche — 33% (Auto-équilibrée sur toute la hauteur A4) */}
       <div
-        className="w-[33%] p-6 text-white flex flex-col justify-between h-full min-h-[297mm] shrink-0"
-        style={{ backgroundColor: color }}
+        className="w-[33%] text-white flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
+        style={{ backgroundColor: color, padding: density.spacing.sidebarPadding }}
       >
         {/* Bloc supérieur : Photo + Contact */}
-        <div className="space-y-4">
+        <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
           {/* Photo */}
           {design.showPhoto && personal.photoUrl && (
             <div className="flex justify-center mb-1">
@@ -42,7 +42,8 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                 <img
                   src={personal.photoUrl}
                   alt={`${personal.firstName} ${personal.lastName}`}
-                  className={`${density.mode === "spacious" ? "w-28 h-28" : "w-24 h-24"} rounded-xl object-cover`}
+                  style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
+                  className="rounded-xl object-cover"
                   crossOrigin="anonymous"
                 />
               </div>
@@ -51,10 +52,13 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-[11px] uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5">
+            <h3
+              style={{ fontSize: density.fontSize.xs }}
+              className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5"
+            >
               Contact
             </h3>
-            <div className={`${density.mode === "spacious" ? "space-y-2.5" : "space-y-1.5"} text-[10px]`}>
+            <div className="space-y-1.5" style={{ fontSize: density.fontSize.xs }}>
               {personal.email && (
                 <div className="flex items-start gap-2">
                   <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
@@ -111,20 +115,27 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         {/* Bloc médian : Compétences */}
         {skills && skills.length > 0 && (
           <div className="my-auto py-2">
-            <h3 className="text-[11px] uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5">
+            <h3
+              style={{ fontSize: density.fontSize.xs }}
+              className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5"
+            >
               Compétences
             </h3>
-            <div className={`${density.mode === "spacious" ? "space-y-3.5" : "space-y-2"}`}>
+            <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {skills.map((cat) => (
-                <div key={cat.id} className="space-y-1.5">
-                  <p className="font-bold text-white/95 text-[9.5px] tracking-wider uppercase">
+                <div key={cat.id} className="space-y-1">
+                  <p
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="font-bold text-white/95 tracking-wider uppercase"
+                  >
                     {cat.category}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {cat.items.map((item, idx) => (
                       <span
                         key={idx}
-                        className={`inline-block ${density.mode === "spacious" ? "px-2.5 py-1 text-[10px]" : "px-2 py-0.5 text-[9px]"} rounded-md bg-white/20 border border-white/25 text-white font-semibold leading-tight shadow-xs`}
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="inline-block px-2 py-0.5 rounded-md bg-white/20 border border-white/25 text-white font-semibold leading-tight shadow-xs"
                       >
                         {item}
                       </span>
@@ -137,21 +148,28 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         )}
 
         {/* Bloc inférieur : Langues & Centres d'intérêt */}
-        <div className="space-y-4 pt-2">
+        <div className="space-y-3 pt-2">
           {/* Langues */}
           {languages && languages.length > 0 && (
             <div>
-              <h3 className="text-[11px] uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2">
+              <h3
+                style={{ fontSize: density.fontSize.xs }}
+                className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2"
+              >
                 Langues
               </h3>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {languages.map((lang) => (
                   <div
                     key={lang.id}
-                    className="flex justify-between items-center py-0.5 border-b border-white/10 last:border-0 text-[10px]"
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="flex justify-between items-center py-0.5 border-b border-white/10 last:border-0"
                   >
                     <span className="font-semibold text-white">{lang.name}</span>
-                    <span className="text-[9px] font-medium text-white/85 bg-white/15 px-2 py-0.5 rounded">
+                    <span
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="font-medium text-white/85 bg-white/15 px-2 py-0.5 rounded"
+                    >
                       {lang.level}
                     </span>
                   </div>
@@ -161,16 +179,20 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           )}
 
           {/* Centres d'intérêt */}
-          {sections.interests && sections.interests.length > 0 && (
+          {sections?.interests && sections.interests.length > 0 && (
             <div className="pt-2 border-t border-white/20">
-              <h4 className="text-[9.5px] uppercase font-extrabold tracking-widest text-white/80 mb-1.5">
+              <h4
+                style={{ fontSize: density.fontSize.xs }}
+                className="uppercase font-extrabold tracking-widest text-white/80 mb-1.5"
+              >
                 Centres d'intérêt
               </h4>
               <div className="flex flex-wrap gap-1">
                 {sections.interests.map((interest, i) => (
                   <span
                     key={i}
-                    className="inline-block px-2 py-0.5 bg-white/15 rounded text-[9px] text-white/90 leading-tight font-medium"
+                    style={{ fontSize: density.fontSize.xs }}
+                    className="inline-block px-2 py-0.5 bg-white/15 rounded text-white/90 leading-tight font-medium"
                   >
                     {interest}
                   </span>
@@ -181,15 +203,27 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Contenu Principal Droite — 67% (Remplissage A4 dynamique) */}
-      <div className="w-[67%] p-7 flex flex-col justify-between h-full min-h-[297mm]">
-        <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
+      {/* Contenu Principal Droite — 67% (Remplissage A4 dynamique avec justification de texte) */}
+      <div
+        className="w-[67%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
+        style={{ padding: density.spacing.pagePadding }}
+      >
+        <div
+          className="flex-1 flex flex-col justify-between min-h-0"
+          style={{ gap: density.spacing.sectionGap }}
+        >
           {/* Header Nom & Titre */}
-          <div className="border-b-2 pb-3" style={{ borderColor: `${color}30` }}>
-            <h1 className={`${density.titleSize} font-black text-slate-900 tracking-tight uppercase leading-tight`}>
+          <div className="border-b-2 pb-2.5" style={{ borderColor: `${color}30` }}>
+            <h1
+              style={{ fontSize: density.fontSize.title }}
+              className="font-black text-slate-900 tracking-tight uppercase leading-tight"
+            >
               {personal.firstName} <span style={{ color }}>{personal.lastName}</span>
             </h1>
-            <p className={`${density.roleSize} font-bold uppercase tracking-wider text-slate-600 mt-0.5`}>
+            <p
+              style={{ fontSize: density.fontSize.role }}
+              className="font-bold uppercase tracking-wider text-slate-600 mt-0.5"
+            >
               {personal.title}
             </p>
           </div>
@@ -197,13 +231,23 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {/* Profil Professionnel */}
           {summary && (
             <div className="flex-1 flex flex-col justify-center min-h-0">
-              <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="flex items-center gap-1.5 mb-1">
                 <Sparkles className="w-3.5 h-3.5" style={{ color }} />
-                <h2 className="font-bold text-[11px] uppercase tracking-wider text-slate-900">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="font-bold uppercase tracking-wider text-slate-900"
+                >
                   Profil Professionnel
                 </h2>
               </div>
-              <p className={`text-slate-600 ${density.summaryTextSize} ${density.lineHeight} text-justify bg-slate-50/80 ${density.summaryPadding} rounded-xl border border-slate-100`}>
+              <p
+                style={{
+                  fontSize: density.fontSize.summary,
+                  lineHeight: density.lineHeight,
+                  padding: density.spacing.summaryPadding,
+                }}
+                className="text-slate-700 cv-pro-text bg-slate-50/80 rounded-xl border border-slate-100"
+              >
                 {summary}
               </p>
             </div>
@@ -212,35 +256,58 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {/* Expériences */}
           {experiences && experiences.length > 0 && (
             <div className="flex-1 flex flex-col justify-center min-h-0">
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-1.5">
                 <Briefcase className="w-3.5 h-3.5" style={{ color }} />
-                <h2 className="font-bold text-[11px] uppercase tracking-wider text-slate-900">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="font-bold uppercase tracking-wider text-slate-900"
+                >
                   Expériences Professionnelles
                 </h2>
               </div>
-              <div className={density.itemGap}>
+              <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                 {experiences.map((exp) => (
                   <div
                     key={exp.id}
                     className="relative pl-3.5 border-l-2"
                     style={{ borderColor: `${color}50` }}
                   >
+                    {/* Alignement tabulaire Word Processor : Titre à gauche, dates à droite */}
                     <div className="flex justify-between items-baseline mb-0.5">
-                      <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"}`}>
+                      <h3
+                        style={{ fontSize: density.fontSize.base }}
+                        className="font-bold text-slate-900"
+                      >
                         {exp.role}
                       </h3>
-                      <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
+                      <span
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0"
+                      >
                         {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                       </span>
                     </div>
-                    <p className={`font-semibold ${density.mode === "spacious" ? "text-[10.5px]" : "text-[10px]"} mb-1`} style={{ color }}>
+                    <p
+                      style={{ color, fontSize: density.fontSize.sm }}
+                      className="font-semibold mb-1"
+                    >
                       {exp.company} {exp.city ? `— ${exp.city}` : ""}
                     </p>
-                    <ul className={`${density.bulletGap} text-slate-600 ${density.bodyTextSize}`}>
+                    <ul
+                      style={{ gap: density.spacing.bulletGap }}
+                      className="text-slate-600 flex flex-col"
+                    >
                       {exp.highlights.map((h, i) => (
-                        <li key={i} className="flex items-start gap-1.5 leading-snug">
-                          <span className="text-slate-400 font-bold mt-[-1px]">•</span>
-                          <span>{h}</span>
+                        <li
+                          key={i}
+                          style={{
+                            fontSize: density.fontSize.base,
+                            lineHeight: density.lineHeight,
+                          }}
+                          className="flex items-start gap-1.5 cv-pro-text"
+                        >
+                          <span className="text-slate-400 font-bold shrink-0 mt-[-1px]">•</span>
+                          <span className="flex-1">{h}</span>
                         </li>
                       ))}
                     </ul>
@@ -253,24 +320,40 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {/* Formations */}
           {educations && educations.length > 0 && (
             <div className="flex-1 flex flex-col justify-center min-h-0">
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-1.5">
                 <GraduationCap className="w-3.5 h-3.5" style={{ color }} />
-                <h2 className="font-bold text-[11px] uppercase tracking-wider text-slate-900">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="font-bold uppercase tracking-wider text-slate-900"
+                >
                   Formation & Diplômes
                 </h2>
               </div>
-              <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
+              <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                 {educations.map((edu) => (
-                  <div key={edu.id} className={`flex justify-between items-start bg-slate-50/60 ${density.cardPadding} rounded-xl border border-slate-100`}>
+                  <div
+                    key={edu.id}
+                    style={{ padding: density.spacing.cardPadding }}
+                    className="flex justify-between items-start bg-slate-50/60 rounded-xl border border-slate-100"
+                  >
                     <div>
-                      <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[10.5px]"}`}>
+                      <h3
+                        style={{ fontSize: density.fontSize.base }}
+                        className="font-bold text-slate-900"
+                      >
                         {edu.degree} {edu.field ? `— ${edu.field}` : ""}
                       </h3>
-                      <p className="text-[9.5px] text-slate-600 mt-0.5">
+                      <p
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="text-slate-600 mt-0.5"
+                      >
                         {edu.school} {edu.city ? `(${edu.city})` : ""}
                       </p>
                     </div>
-                    <span className="text-[9px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded">
+                    <span
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shrink-0"
+                    >
                       {edu.year}
                     </span>
                   </div>
@@ -280,26 +363,57 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           )}
 
           {/* Certifications & Projets */}
-          {((sections.certifications && sections.certifications.length > 0) ||
-            (sections.projects && sections.projects.length > 0)) && (
+          {((sections?.certifications && sections.certifications.length > 0) ||
+            (sections?.projects && sections.projects.length > 0)) && (
             <div className="flex-1 flex flex-col justify-center min-h-0">
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-1.5">
                 <Award className="w-3.5 h-3.5" style={{ color }} />
-                <h2 className="font-bold text-[11px] uppercase tracking-wider text-slate-900">
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="font-bold uppercase tracking-wider text-slate-900"
+                >
                   Certifications & Réalisations
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {sections.certifications?.map((c) => (
-                  <div key={c.id} className={`bg-slate-50 ${density.cardPadding} rounded-xl border border-slate-100`}>
-                    <p className="font-bold text-[9.5px] text-slate-900 leading-snug">{c.title}</p>
-                    <p className="text-[9px] text-slate-500 mt-0.5">{c.issuer} • {c.year}</p>
+                {sections?.certifications?.map((c) => (
+                  <div
+                    key={c.id}
+                    style={{ padding: density.spacing.cardPadding }}
+                    className="bg-slate-50 rounded-xl border border-slate-100"
+                  >
+                    <p
+                      style={{ fontSize: density.fontSize.sm }}
+                      className="font-bold text-slate-900 leading-snug"
+                    >
+                      {c.title}
+                    </p>
+                    <p
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="text-slate-500 mt-0.5"
+                    >
+                      {c.issuer} • {c.year}
+                    </p>
                   </div>
                 ))}
-                {sections.projects?.map((p) => (
-                  <div key={p.id} className={`bg-slate-50 ${density.cardPadding} rounded-xl border border-slate-100`}>
-                    <p className="font-bold text-[9.5px] text-slate-900 leading-snug">{p.name}</p>
-                    <p className="text-[9px] text-slate-500 mt-0.5 line-clamp-1">{p.description}</p>
+                {sections?.projects?.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{ padding: density.spacing.cardPadding }}
+                    className="bg-slate-50 rounded-xl border border-slate-100"
+                  >
+                    <p
+                      style={{ fontSize: density.fontSize.sm }}
+                      className="font-bold text-slate-900 leading-snug"
+                    >
+                      {p.name}
+                    </p>
+                    <p
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="text-slate-500 mt-0.5 line-clamp-1"
+                    >
+                      {p.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -308,7 +422,10 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         </div>
 
         {/* Footer info discrète */}
-        <div className="pt-3 text-center border-t border-slate-100 text-[8px] text-slate-400 mt-auto">
+        <div
+          style={{ fontSize: density.fontSize.xs }}
+          className="pt-2 text-center border-t border-slate-100 text-slate-400 mt-auto shrink-0"
+        >
           Document certifié conforme • MonCV.ai
         </div>
       </div>

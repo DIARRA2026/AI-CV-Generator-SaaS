@@ -46,10 +46,11 @@ export async function downloadResumePDF(
   offscreenContainer.style.left = "-10000px";
   offscreenContainer.style.top = "0";
   offscreenContainer.style.width = "794px"; // 210mm à 96 DPI
-  offscreenContainer.style.minHeight = "1123px"; // 297mm à 96 DPI
+  offscreenContainer.style.height = "1123px"; // 297mm à 96 DPI
+  offscreenContainer.style.maxHeight = "1123px";
   offscreenContainer.style.backgroundColor = "#ffffff";
   offscreenContainer.style.zIndex = "-9999";
-  offscreenContainer.style.overflow = "visible";
+  offscreenContainer.style.overflow = "hidden";
 
   // Cloner le CV source
   const clone = sourceElement.cloneNode(true) as HTMLElement;
@@ -58,7 +59,9 @@ export async function downloadResumePDF(
   clone.style.transformOrigin = "top left";
   clone.style.boxShadow = "none";
   clone.style.width = "794px";
-  clone.style.minHeight = "1123px";
+  clone.style.height = "1123px";
+  clone.style.maxHeight = "1123px";
+  clone.style.overflow = "hidden";
   clone.style.margin = "0";
   clone.style.padding = "0";
   clone.style.borderRadius = "0";

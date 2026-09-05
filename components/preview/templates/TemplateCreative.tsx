@@ -26,47 +26,66 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="min-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-relaxed flex flex-col justify-between">
-      <div className="flex-1 flex flex-col justify-between">
+    <div className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-relaxed flex flex-col justify-between overflow-hidden">
+      <div className="flex-1 flex flex-col justify-between min-h-0">
         {/* Banner supérieur coloré */}
-        <div className="px-8 pt-7 pb-6 text-white" style={{ backgroundColor: color }}>
-          <div className="flex items-center gap-5">
+        <div
+          className="text-white shrink-0"
+          style={{
+            backgroundColor: color,
+            paddingLeft: density.spacing.pagePadding,
+            paddingRight: density.spacing.pagePadding,
+            paddingTop: `${Math.round(18 * density.scale)}px`,
+            paddingBottom: `${Math.round(16 * density.scale)}px`,
+          }}
+        >
+          <div className="flex items-center gap-4">
             {design.showPhoto && personal.photoUrl && (
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-white/30 shadow-lg shrink-0"
+                style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
+                className="rounded-2xl object-cover border-2 border-white/30 shadow-lg shrink-0"
                 crossOrigin="anonymous"
               />
             )}
             <div className="flex-1 min-w-0">
-              <span className="inline-block bg-white/20 px-2.5 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wider uppercase mb-1.5">
+              <span
+                style={{ fontSize: density.fontSize.xs }}
+                className="inline-block bg-white/20 px-2.5 py-0.5 rounded-full font-semibold tracking-wider uppercase mb-1"
+              >
                 {personal.title}
               </span>
-              <h1 className="text-[22px] font-extrabold tracking-tight leading-tight">
+              <h1
+                style={{ fontSize: density.fontSize.title }}
+                className="font-extrabold tracking-tight leading-tight"
+              >
                 {personal.firstName} {personal.lastName}
               </h1>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[9.5px] text-white/90">
+              <div
+                style={{ fontSize: density.fontSize.xs }}
+                className="flex flex-wrap gap-x-3.5 gap-y-1 mt-1.5 text-white/90"
+              >
                 {personal.email && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Mail className="w-3 h-3 shrink-0" />
                     <span>{personal.email}</span>
                   </span>
                 )}
                 {personal.phone && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Phone className="w-3 h-3 shrink-0" />
                     <span>{personal.phone}</span>
                   </span>
                 )}
                 {(personal.city || personal.country) && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3 shrink-0" />
                     <span>{[personal.city, personal.country].filter(Boolean).join(", ")}</span>
                   </span>
                 )}
                 {(personal.birthDate || personal.birthPlace) && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3 shrink-0" />
                     <span>
                       {[
@@ -77,19 +96,19 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                   </span>
                 )}
                 {personal.maritalStatus && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Users className="w-3 h-3 shrink-0" />
                     <span>{personal.maritalStatus}</span>
                   </span>
                 )}
                 {personal.linkedin && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Linkedin className="w-3 h-3 shrink-0" />
                     <span>{personal.linkedin}</span>
                   </span>
                 )}
                 {personal.website && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <Globe className="w-3 h-3 shrink-0" />
                     <span>{personal.website}</span>
                   </span>
@@ -100,15 +119,33 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
         </div>
 
         {/* Corps du CV (Remplissage A4 dynamique) */}
-        <div className={`p-7 flex-1 flex flex-col justify-between ${density.sectionGap}`}>
+        <div
+          className="flex-1 flex flex-col justify-between min-h-0"
+          style={{
+            padding: density.spacing.pagePadding,
+            gap: density.spacing.sectionGap,
+          }}
+        >
           {/* Résumé */}
           {summary && (
-            <div className={`bg-slate-50/80 ${density.summaryPadding} rounded-xl border border-slate-100`}>
-              <div className="flex items-center gap-1.5 mb-1.5 font-bold text-[10.5px] uppercase tracking-wide" style={{ color }}>
+            <div
+              className="bg-slate-50/80 rounded-xl border border-slate-100"
+              style={{ padding: density.spacing.summaryPadding }}
+            >
+              <div
+                className="flex items-center gap-1.5 mb-1 font-bold uppercase tracking-wide"
+                style={{ color, fontSize: density.fontSize.heading }}
+              >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>À Propos de Moi</span>
               </div>
-              <p className={`text-slate-700 ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
+              <p
+                style={{
+                  fontSize: density.fontSize.summary,
+                  lineHeight: density.lineHeight,
+                }}
+                className="text-slate-700 cv-pro-text"
+              >
                 {summary}
               </p>
             </div>
@@ -117,16 +154,22 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
           {/* Corps en 2 colonnes */}
           <div className="grid grid-cols-12 gap-5 flex-1 min-h-0">
             {/* Gauche 7/12 — Expériences & Formation */}
-            <div className="col-span-7 flex flex-col justify-between h-full">
+            <div className="col-span-7 flex flex-col justify-between h-full min-h-0">
               {experiences && experiences.length > 0 && (
                 <div className="flex-1 flex flex-col justify-center min-h-0">
-                  <div className="flex items-center gap-1.5 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+                  <div
+                    className="flex items-center gap-1.5 mb-2 pb-1 border-b"
+                    style={{ borderColor: `${color}30` }}
+                  >
                     <Briefcase className="w-3.5 h-3.5 shrink-0" style={{ color }} />
-                    <h2 className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900">
+                    <h2
+                      style={{ fontSize: density.fontSize.heading }}
+                      className="font-bold uppercase tracking-wider text-slate-900"
+                    >
                       Expériences Professionnelles
                     </h2>
                   </div>
-                  <div className="space-y-4">
+                  <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                     {experiences.map((exp) => (
                       <div
                         key={exp.id}
@@ -134,19 +177,40 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                         style={{ borderColor: color }}
                       >
                         <div className="flex justify-between items-baseline mb-0.5">
-                          <h3 className="font-bold text-slate-900 text-[11px] leading-tight">{exp.role}</h3>
-                          <span className="text-[9px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
+                          <h3
+                            style={{ fontSize: density.fontSize.base }}
+                            className="font-bold text-slate-900 leading-tight"
+                          >
+                            {exp.role}
+                          </h3>
+                          <span
+                            style={{ fontSize: density.fontSize.xs }}
+                            className="font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0"
+                          >
                             {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                           </span>
                         </div>
-                        <p className="text-[10px] font-semibold mb-1.5" style={{ color }}>
+                        <p
+                          style={{ color, fontSize: density.fontSize.sm }}
+                          className="font-semibold mb-1"
+                        >
                           {exp.company}{exp.city ? ` · ${exp.city}` : ""}
                         </p>
-                        <ul className="space-y-0.5 text-slate-600 text-[9.5px]">
+                        <ul
+                          style={{ gap: density.spacing.bulletGap }}
+                          className="text-slate-600 flex flex-col"
+                        >
                           {exp.highlights.map((h, idx) => (
-                            <li key={idx} className="flex items-start gap-1.5 leading-snug">
-                              <span className="text-slate-400 font-bold shrink-0">•</span>
-                              <span>{h}</span>
+                            <li
+                              key={idx}
+                              style={{
+                                fontSize: density.fontSize.base,
+                                lineHeight: density.lineHeight,
+                              }}
+                              className="flex items-start gap-1.5 cv-pro-text"
+                            >
+                              <span className="text-slate-400 font-bold shrink-0 mt-[-1px]">•</span>
+                              <span className="flex-1">{h}</span>
                             </li>
                           ))}
                         </ul>
@@ -157,25 +221,44 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
               )}
 
               {educations && educations.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+                <div className="pt-1.5">
+                  <div
+                    className="flex items-center gap-1.5 mb-2 pb-1 border-b"
+                    style={{ borderColor: `${color}30` }}
+                  >
                     <GraduationCap className="w-3.5 h-3.5 shrink-0" style={{ color }} />
-                    <h2 className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900">
+                    <h2
+                      style={{ fontSize: density.fontSize.heading }}
+                      className="font-bold uppercase tracking-wider text-slate-900"
+                    >
                       Formation & Études
                     </h2>
                   </div>
-                  <div className="space-y-2.5">
+                  <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                     {educations.map((edu) => (
-                      <div key={edu.id} className="flex justify-between items-start bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                      <div
+                        key={edu.id}
+                        style={{ padding: density.spacing.cardPadding }}
+                        className="flex justify-between items-start bg-slate-50 rounded-lg border border-slate-100"
+                      >
                         <div>
-                          <h3 className="font-bold text-slate-900 text-[10.5px] leading-snug">
+                          <h3
+                            style={{ fontSize: density.fontSize.base }}
+                            className="font-bold text-slate-900 leading-snug"
+                          >
                             {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                           </h3>
-                          <p className="text-[9.5px] text-slate-500 mt-0.5">
+                          <p
+                            style={{ fontSize: density.fontSize.xs }}
+                            className="text-slate-500 mt-0.5"
+                          >
                             {edu.school}{edu.city ? ` (${edu.city})` : ""}
                           </p>
                         </div>
-                        <span className="text-[9px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded shrink-0">
+                        <span
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="font-medium text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded shrink-0"
+                        >
                           {edu.year}
                         </span>
                       </div>
@@ -186,27 +269,33 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
             </div>
 
             {/* Droite 5/12 — Compétences, Langues, Projets */}
-            <div className="col-span-5 flex flex-col justify-between h-full">
+            <div className="col-span-5 flex flex-col justify-between h-full min-h-0">
               {skills && skills.length > 0 && (
                 <div className="flex-1 flex flex-col justify-center min-h-0">
                   <h3
-                    className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b"
-                    style={{ borderColor: `${color}30` }}
+                    style={{ fontSize: density.fontSize.heading, borderColor: `${color}30` }}
+                    className="font-bold uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b"
                   >
                     Compétences & Outils
                   </h3>
-                  <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
+                  <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                     {skills.map((cat) => (
                       <div key={cat.id}>
-                        <h4 className="font-bold text-slate-800 text-[9.5px] uppercase tracking-wide mb-1.5">
+                        <h4
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="font-bold text-slate-800 uppercase tracking-wide mb-1"
+                        >
                           {cat.category}
                         </h4>
                         <div className="flex flex-wrap gap-1.5">
                           {cat.items.map((item, idx) => (
                             <span
                               key={idx}
-                              className="inline-block px-2.5 py-1 rounded-full text-[9px] font-semibold text-white leading-tight shadow-xs"
-                              style={{ backgroundColor: color }}
+                              style={{
+                                backgroundColor: color,
+                                fontSize: density.fontSize.xs,
+                              }}
+                              className="inline-block px-2 py-0.5 rounded-full font-semibold text-white leading-tight shadow-xs"
                             >
                               {item}
                             </span>
@@ -219,18 +308,22 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
               )}
 
               {languages && languages.length > 0 && (
-                <div>
+                <div className="pt-1.5">
                   <h3
-                    className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900 mb-2.5 pb-1 border-b"
-                    style={{ borderColor: `${color}30` }}
+                    style={{ fontSize: density.fontSize.heading, borderColor: `${color}30` }}
+                    className="font-bold uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b"
                   >
                     Langues
                   </h3>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {languages.map((l) => (
-                      <div key={l.id} className="flex justify-between items-center text-[10px] border-b border-slate-100 pb-1 last:border-0">
+                      <div
+                        key={l.id}
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="flex justify-between items-center border-b border-slate-100 pb-0.5 last:border-0"
+                      >
                         <span className="font-semibold text-slate-800">{l.name}</span>
-                        <span className="text-[9px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                        <span className="font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                           {l.level}
                         </span>
                       </div>
@@ -239,36 +332,62 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                 </div>
               )}
 
-              {sections.projects && sections.projects.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2.5 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              {sections?.projects && sections.projects.length > 0 && (
+                <div className="pt-1.5">
+                  <div
+                    className="flex items-center gap-1.5 mb-1.5 pb-1 border-b"
+                    style={{ borderColor: `${color}30` }}
+                  >
                     <FolderGit2 className="w-3.5 h-3.5 shrink-0" style={{ color }} />
-                    <h3 className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900">
+                    <h3
+                      style={{ fontSize: density.fontSize.heading }}
+                      className="font-bold uppercase tracking-wider text-slate-900"
+                    >
                       Projets Notables
                     </h3>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {sections.projects.map((p) => (
-                      <div key={p.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <p className="font-bold text-[10px] text-slate-900 leading-snug">{p.name}</p>
-                        <p className="text-[9px] text-slate-500 mt-0.5 leading-snug">{p.description}</p>
+                      <div
+                        key={p.id}
+                        style={{ padding: density.spacing.cardPadding }}
+                        className="rounded-lg bg-slate-50 border border-slate-100"
+                      >
+                        <p
+                          style={{ fontSize: density.fontSize.sm }}
+                          className="font-bold text-slate-900 leading-snug"
+                        >
+                          {p.name}
+                        </p>
+                        <p
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="text-slate-500 mt-0.5 leading-snug line-clamp-1"
+                        >
+                          {p.description}
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {sections.certifications && sections.certifications.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2.5 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              {sections?.certifications && sections.certifications.length > 0 && (
+                <div className="pt-1.5">
+                  <div
+                    className="flex items-center gap-1.5 mb-1.5 pb-1 border-b"
+                    style={{ borderColor: `${color}30` }}
+                  >
                     <Award className="w-3.5 h-3.5 shrink-0" style={{ color }} />
-                    <h3 className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900">
+                    <h3
+                      style={{ fontSize: density.fontSize.heading }}
+                      className="font-bold uppercase tracking-wider text-slate-900"
+                    >
                       Certifications
                     </h3>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {sections.certifications.map((c) => (
-                      <div key={c.id} className="text-[9.5px]">
+                      <div key={c.id} style={{ fontSize: density.fontSize.xs }}>
                         <p className="font-bold text-slate-800 leading-snug">{c.title}</p>
                         <p className="text-slate-500">{c.issuer} · {c.year}</p>
                       </div>
@@ -281,7 +400,10 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
         </div>
       </div>
 
-      <div className="px-7 py-3 text-center border-t border-slate-100 text-[8px] text-slate-400">
+      <div
+        style={{ fontSize: density.fontSize.xs }}
+        className="px-7 py-2 text-center border-t border-slate-100 text-slate-400 shrink-0"
+      >
         Créé avec MonCV.ai · Design Créatif
       </div>
     </div>

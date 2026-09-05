@@ -13,33 +13,52 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="p-9 min-h-[297mm] h-full flex-1 bg-white text-slate-800 font-serif leading-relaxed flex flex-col justify-between">
-      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
+    <div
+      className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-slate-800 font-serif leading-relaxed flex flex-col justify-between overflow-hidden"
+      style={{ padding: density.spacing.pagePadding }}
+    >
+      <div
+        className="flex-1 flex flex-col justify-between min-h-0"
+        style={{ gap: density.spacing.sectionGap }}
+      >
         {/* Header Centré Élégant */}
-        <div className="text-center pb-5 mb-5" style={{ borderBottom: `2px solid ${color}` }}>
+        <div
+          className="text-center pb-3 mb-2"
+          style={{ borderBottom: `2px solid ${color}` }}
+        >
           {design.showPhoto && personal.photoUrl && (
-            <div className="mb-3 flex justify-center">
+            <div className="mb-2 flex justify-center">
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
-                className="w-24 h-24 rounded-full object-cover p-0.5"
-                style={{ border: `2px solid ${color}` }}
+                style={{
+                  width: density.spacing.photoSize,
+                  height: density.spacing.photoSize,
+                  border: `2px solid ${color}`,
+                }}
+                className="rounded-full object-cover p-0.5 shrink-0"
                 crossOrigin="anonymous"
               />
             </div>
           )}
-          <h1 className="text-[22px] font-bold tracking-widest uppercase text-slate-900 leading-tight">
+          <h1
+            style={{ fontSize: density.fontSize.title }}
+            className="font-bold tracking-widest uppercase text-slate-900 leading-tight"
+          >
             {personal.firstName} {personal.lastName}
           </h1>
           <p
-            className="text-[10.5px] uppercase tracking-wider font-sans font-semibold mt-1 mb-3"
-            style={{ color }}
+            style={{ color, fontSize: density.fontSize.role }}
+            className="uppercase tracking-wider font-sans font-semibold mt-0.5 mb-1.5"
           >
             {personal.title}
           </p>
 
           {/* Barre de contact horizontale */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[9.5px] font-sans text-slate-600 mt-1">
+          <div
+            style={{ fontSize: density.fontSize.xs }}
+            className="flex flex-wrap justify-center gap-x-3 gap-y-1 font-sans text-slate-600 mt-1"
+          >
             {personal.email && (
               <span className="flex items-center gap-1">
                 <Mail className="w-3 h-3 text-slate-400 shrink-0" />
@@ -94,44 +113,86 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
         {summary && (
           <div className="flex-1 flex flex-col justify-center min-h-0">
             <h2
-              className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-2"
-              style={{ color, borderColor: `${color}30` }}
+              style={{
+                color,
+                borderColor: `${color}30`,
+                fontSize: density.fontSize.heading,
+              }}
+              className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
             >
               Profil Professionnel
             </h2>
-            <p className={`text-slate-700 italic ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
+            <p
+              style={{
+                fontSize: density.fontSize.summary,
+                lineHeight: density.lineHeight,
+              }}
+              className="text-slate-700 italic cv-pro-text"
+            >
               {summary}
             </p>
           </div>
         )}
 
         {/* Corps 2 colonnes (Remplissage A4 dynamique) */}
-        <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+        <div className="grid grid-cols-3 gap-5 flex-1 min-h-0">
           {/* Gauche — Expérience & Formation */}
-          <div className="col-span-2 flex flex-col justify-between h-full">
+          <div className="col-span-2 flex flex-col justify-between h-full min-h-0">
             {experiences && experiences.length > 0 && (
               <div className="flex-1 flex flex-col justify-center min-h-0">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-2"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
                 >
                   Expériences Professionnelles
                 </h2>
-                <div className={density.itemGap}>
+                <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                   {experiences.map((exp) => (
-                    <div key={exp.id} className="pl-3 border-l-2" style={{ borderColor: `${color}40` }}>
+                    <div
+                      key={exp.id}
+                      className="pl-3 border-l-2"
+                      style={{ borderColor: `${color}40` }}
+                    >
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"}`}>{exp.role}</h3>
-                        <span className="text-[9px] font-sans text-slate-500 italic shrink-0">
+                        <h3
+                          style={{ fontSize: density.fontSize.base }}
+                          className="font-bold text-slate-900"
+                        >
+                          {exp.role}
+                        </h3>
+                        <span
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="font-sans text-slate-500 italic shrink-0"
+                        >
                           {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                         </span>
                       </div>
-                      <p className="text-[10px] font-sans font-medium text-slate-600 mb-1">
+                      <p
+                        style={{ fontSize: density.fontSize.sm }}
+                        className="font-sans font-medium text-slate-600 mb-1"
+                      >
                         {exp.company}{exp.city ? ` | ${exp.city}` : ""}
                       </p>
-                      <ul className={`list-disc list-outside ml-4 ${density.bulletGap} text-slate-700 ${density.bodyTextSize} font-sans`}>
+                      <ul
+                        style={{ gap: density.spacing.bulletGap }}
+                        className="flex flex-col text-slate-700 font-sans"
+                      >
                         {exp.highlights.map((h, idx) => (
-                          <li key={idx} className="leading-snug">{h}</li>
+                          <li
+                            key={idx}
+                            style={{
+                              fontSize: density.fontSize.base,
+                              lineHeight: density.lineHeight,
+                            }}
+                            className="flex items-start gap-1.5 cv-pro-text"
+                          >
+                            <span className="text-slate-400 font-bold shrink-0 mt-[-1px]">•</span>
+                            <span className="flex-1">{h}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -141,25 +202,38 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             )}
 
             {educations && educations.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0 pt-2">
+              <div className="flex-1 flex flex-col justify-center min-h-0 pt-1.5">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-2"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
                 >
                   Formation & Diplômes
                 </h2>
-                <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
+                <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                   {educations.map((edu) => (
                     <div key={edu.id} className="flex justify-between items-start">
                       <div>
-                        <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"}`}>
+                        <h3
+                          style={{ fontSize: density.fontSize.base }}
+                          className="font-bold text-slate-900"
+                        >
                           {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                         </h3>
-                        <p className="text-[10px] font-sans text-slate-600 mt-0.5">
+                        <p
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="font-sans text-slate-600 mt-0.5"
+                        >
                           {edu.school}{edu.city ? ` (${edu.city})` : ""}
                         </p>
                       </div>
-                      <span className="text-[9.5px] font-sans text-slate-500 italic shrink-0">
+                      <span
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="font-sans text-slate-500 italic shrink-0"
+                      >
                         {edu.year}
                       </span>
                     </div>
@@ -170,26 +244,34 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
           </div>
 
           {/* Droite — Compétences, Langues, Intérêts */}
-          <div className="col-span-1 flex flex-col justify-between h-full">
+          <div className="col-span-1 flex flex-col justify-between h-full min-h-0">
             {skills && skills.length > 0 && (
               <div className="flex-1 flex flex-col justify-center min-h-0">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-2"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
                 >
                   Compétences
                 </h2>
-                <div className={`${density.mode === "spacious" ? "space-y-3" : "space-y-1.5"} font-sans`}>
+                <div style={{ gap: density.spacing.itemGap }} className="font-sans flex flex-col">
                   {skills.map((cat) => (
                     <div key={cat.id}>
-                      <h4 className="font-bold text-slate-800 text-[9.5px] uppercase tracking-wide mb-1">
+                      <h4
+                        style={{ fontSize: density.fontSize.xs }}
+                        className="font-bold text-slate-800 uppercase tracking-wide mb-1"
+                      >
                         {cat.category}
                       </h4>
                       <div className="flex flex-wrap gap-1">
                         {cat.items.map((item, idx) => (
                           <span
                             key={idx}
-                            className={`inline-block ${density.mode === "spacious" ? "px-2.5 py-1 text-[9.5px]" : "px-2 py-0.5 text-[9px]"} bg-slate-100 text-slate-700 rounded font-medium leading-tight border border-slate-200`}
+                            style={{ fontSize: density.fontSize.xs }}
+                            className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-medium leading-tight border border-slate-200"
                           >
                             {item}
                           </span>
@@ -204,47 +286,66 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             {languages && languages.length > 0 && (
               <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-2"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
                 >
                   Langues
                 </h2>
                 <div className="space-y-1 font-sans">
                   {languages.map((l) => (
-                    <div key={l.id} className="flex justify-between items-center text-[10px] border-b border-slate-100 pb-1 last:border-0">
+                    <div
+                      key={l.id}
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="flex justify-between items-center border-b border-slate-100 pb-0.5 last:border-0"
+                    >
                       <span className="font-semibold text-slate-800">{l.name}</span>
-                      <span className="text-slate-500 italic text-[9px]">{l.level}</span>
+                      <span className="text-slate-500 italic">{l.level}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {sections.interests && sections.interests.length > 0 && (
+            {sections?.interests && sections.interests.length > 0 && (
               <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-1.5"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1"
                 >
                   Intérêts
                 </h2>
-                <p className="text-[9.5px] font-sans text-slate-600 leading-relaxed">
+                <p
+                  style={{ fontSize: density.fontSize.xs }}
+                  className="font-sans text-slate-600 leading-relaxed"
+                >
                   {sections.interests.join(" • ")}
                 </p>
               </div>
             )}
 
-            {sections.certifications && sections.certifications.length > 0 && (
+            {sections?.certifications && sections.certifications.length > 0 && (
               <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
                 <h2
-                  className="text-[10px] uppercase tracking-widest font-bold font-sans border-b pb-1 mb-1.5"
-                  style={{ color, borderColor: `${color}30` }}
+                  style={{
+                    color,
+                    borderColor: `${color}30`,
+                    fontSize: density.fontSize.heading,
+                  }}
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1"
                 >
                   Certifications
                 </h2>
-                <div className="space-y-1.5 font-sans">
+                <div className="space-y-1 font-sans">
                   {sections.certifications.map((c) => (
-                    <div key={c.id} className="text-[9.5px]">
+                    <div key={c.id} style={{ fontSize: density.fontSize.xs }}>
                       <p className="font-bold text-slate-800 leading-snug">{c.title}</p>
                       <p className="text-slate-500">{c.issuer} — {c.year}</p>
                     </div>
@@ -256,7 +357,10 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
         </div>
       </div>
 
-      <div className="text-center font-sans text-[8px] text-slate-400 pt-3 border-t border-slate-100 mt-4">
+      <div
+        style={{ fontSize: density.fontSize.xs }}
+        className="text-center font-sans text-slate-400 pt-2 border-t border-slate-100 mt-2 shrink-0"
+      >
         CV Réalisé avec MonCV.ai
       </div>
     </div>

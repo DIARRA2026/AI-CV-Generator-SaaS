@@ -138,15 +138,16 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   const scale = Math.max(0.82, Math.min(1.04, rawScale));
 
   // 3. Calcul continu des grandeurs typographiques et géométriques (Normes d'Édition Pro — Calibrage Demandé)
+  // - Nom et Prénom : 54px (2X plus grand que 28px, imposant et prestigieux)
+  // - Titre du métier / Poste visé : 19.5px
+  // - Titres de rubriques (Expériences, Formations, etc.) : 20.0px
   // - Écritures principales (Puces, descriptions d'expériences, diplômes) : 18.0px
   // - Résumé / Profil Professionnel : 18.0px (avec un interlignage équilibré de 1.42)
-  // - Titres de rubriques (Expériences, Formations, etc.) : 20.0px
-  // - Titre du métier / Poste visé : 19.5px
-  // - Nom et Prénom : 28px
   // - Entreprises, écoles, dates et lieux : 16.5px
   // - Coordonnées, tags de compétences, permis et langues : 15.5px
+  // - Photo de profil : 140px (2X plus grande que 74px, portrait net et valorisé)
   const fontSize = {
-    title: `${Math.round(28 * Math.min(1.04, scale))}px`,
+    title: `${Math.round(54 * Math.min(1.04, scale))}px`,
     role: `${(19.5 * scale).toFixed(1)}px`,
     heading: `${(20.0 * scale).toFixed(1)}px`,
     summary: `${(18.0 * scale).toFixed(1)}px`,
@@ -172,7 +173,7 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
     bulletGap: `${Math.max(1.5, Math.round(2.5 * scale))}px`,
     cardPadding: `${Math.max(4, Math.round(5.5 * scale))}px`,
     summaryPadding: `${Math.max(5, Math.round(7 * scale))}px`,
-    photoSize: `${Math.round(74 * Math.min(1.04, Math.max(0.82, scale)))}px`,
+    photoSize: `${Math.round(140 * Math.min(1.04, Math.max(0.82, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

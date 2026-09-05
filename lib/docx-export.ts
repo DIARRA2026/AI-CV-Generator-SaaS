@@ -230,7 +230,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
           .join(" ")}`
       );
     }
-    if (personal.maritalStatus) contactLine2.push(`État civil : ${personal.maritalStatus}`);
+    if (personal.maritalStatus) contactLine2.push(`Situation matrimoniale : ${personal.maritalStatus}`);
     if (personal.driverLicense) contactLine2.push(`Permis : ${personal.driverLicense}`);
 
     if (contactLine2.length > 0) {

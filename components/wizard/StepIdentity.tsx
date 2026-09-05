@@ -292,7 +292,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             </div>
             <div>
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                État Civil & Naissance (Optionnel)
+                Situation Matrimoniale & Naissance (Optionnel)
               </h4>
               <p className="text-[11px] text-slate-500">
                 Date et lieu de naissance, situation matrimoniale pour votre CV.

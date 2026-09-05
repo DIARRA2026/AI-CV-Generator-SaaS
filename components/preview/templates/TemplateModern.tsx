@@ -130,15 +130,19 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
               </div>
             )}
 
-            {/* État Civil */}
+            {/* Situation Matrimoniale */}
             {personal.maritalStatus && (
               <div className="flex items-start gap-2.5">
                 <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                   <Users className="w-3 h-3 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">État Civil</span>
-                  <span className="font-semibold text-white leading-tight block">{personal.maritalStatus}</span>
+                  <span className="text-white/60 text-[9px] uppercase font-bold tracking-wider block leading-tight mb-0.5">
+                    Situation Matrimoniale
+                  </span>
+                  <span className="font-semibold text-white leading-tight block">
+                    {personal.maritalStatus}
+                  </span>
                 </div>
               </div>
             )}

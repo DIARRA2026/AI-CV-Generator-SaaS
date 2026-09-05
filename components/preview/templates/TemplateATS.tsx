@@ -34,6 +34,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               personal.email,
               personal.phone,
               [personal.city, personal.country].filter(Boolean).join(", "),
+              [
+                personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                personal.birthPlace ? `à ${personal.birthPlace}` : ""
+              ].filter(Boolean).join(" "),
+              personal.maritalStatus,
               personal.linkedin,
               personal.website,
             ]

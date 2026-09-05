@@ -105,6 +105,9 @@ export interface ResumeData {
     phone: string;
     city: string;
     country: string;
+    birthDate?: string;
+    birthPlace?: string;
+    maritalStatus?: string;
     linkedin: string;
     website: string;
     photoUrl: string;

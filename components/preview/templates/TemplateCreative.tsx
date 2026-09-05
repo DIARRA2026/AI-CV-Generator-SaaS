@@ -11,6 +11,8 @@ import {
   GraduationCap,
   Award,
   FolderGit2,
+  Calendar,
+  Users,
 } from "lucide-react";
 
 interface TemplateProps {
@@ -59,6 +61,23 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                   <span className="flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 shrink-0" />
                     <span>{[personal.city, personal.country].filter(Boolean).join(", ")}</span>
+                  </span>
+                )}
+                {(personal.birthDate || personal.birthPlace) && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 shrink-0" />
+                    <span>
+                      {[
+                        personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                        personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                      ].filter(Boolean).join(" ")}
+                    </span>
+                  </span>
+                )}
+                {personal.maritalStatus && (
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-3 h-3 shrink-0" />
+                    <span>{personal.maritalStatus}</span>
                   </span>
                 )}
                 {personal.linkedin && (

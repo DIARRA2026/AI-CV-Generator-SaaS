@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { ResumeData } from "@/lib/types";
-import { User, Mail, Phone, MapPin, Linkedin, Globe, Camera, Eye, EyeOff, Upload, Check } from "lucide-react";
+import { User, Mail, Phone, MapPin, Linkedin, Globe, Camera, Eye, EyeOff, Upload, Check, Calendar, Heart } from "lucide-react";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 
 interface StepIdentityProps {
@@ -282,6 +282,84 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             cityLabel="Ville / Commune"
             required={true}
           />
+        </div>
+
+        {/* Date, Lieu de naissance & Situation matrimoniale */}
+        <div className="sm:col-span-2 p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded-lg bg-blue-100 text-blue-700">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                État Civil & Naissance (Optionnel)
+              </h4>
+              <p className="text-[11px] text-slate-500">
+                Date et lieu de naissance, situation matrimoniale pour votre CV.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Date de naissance
+              </label>
+              <div className="relative">
+                <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Ex: 15/04/1995"
+                  value={personal.birthDate || ""}
+                  onChange={(e) => onChangePersonal("birthDate", e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Lieu de naissance
+              </label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Ex: Abidjan"
+                  value={personal.birthPlace || ""}
+                  onChange={(e) => onChangePersonal("birthPlace", e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Situation matrimoniale
+              </label>
+              <div className="relative">
+                <Heart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  list="marital-status-list"
+                  placeholder="Ex: Célibataire"
+                  value={personal.maritalStatus || ""}
+                  onChange={(e) => onChangePersonal("maritalStatus", e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                />
+                <datalist id="marital-status-list">
+                  <option value="Célibataire" />
+                  <option value="Marié(e)" />
+                  <option value="Divorcé(e)" />
+                  <option value="Veuf(ve)" />
+                  <option value="Pacsé(e)" />
+                  <option value="Marié(e), 1 enfant" />
+                  <option value="Marié(e), 2 enfants" />
+                  <option value="Marié(e), 3 enfants" />
+                </datalist>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>

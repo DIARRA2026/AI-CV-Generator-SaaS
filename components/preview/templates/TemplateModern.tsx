@@ -12,6 +12,8 @@ import {
   Award,
   CheckCircle2,
   FolderGit2,
+  Calendar,
+  Users,
 } from "lucide-react";
 
 interface TemplateProps {
@@ -68,6 +70,23 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                   <span className="font-medium leading-snug">
                     {[personal.city, personal.country].filter(Boolean).join(", ")}
                   </span>
+                </div>
+              )}
+              {(personal.birthDate || personal.birthPlace) && (
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                  <span className="font-medium leading-snug">
+                    {[
+                      personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                      personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                    ].filter(Boolean).join(" ")}
+                  </span>
+                </div>
+              )}
+              {personal.maritalStatus && (
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 shrink-0 text-white/80" />
+                  <span className="font-medium leading-snug">{personal.maritalStatus}</span>
                 </div>
               )}
               {personal.linkedin && (

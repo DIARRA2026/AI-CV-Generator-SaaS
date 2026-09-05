@@ -40,6 +40,15 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
             {(personal.city || personal.country) && (
               <span>· {[personal.city, personal.country].filter(Boolean).join(", ")}</span>
             )}
+            {(personal.birthDate || personal.birthPlace) && (
+              <span>
+                · {[
+                  personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                  personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                ].filter(Boolean).join(" ")}
+              </span>
+            )}
+            {personal.maritalStatus && <span>· {personal.maritalStatus}</span>}
             {personal.linkedin && <span>· {personal.linkedin}</span>}
             {personal.website && <span>· {personal.website}</span>}
           </div>

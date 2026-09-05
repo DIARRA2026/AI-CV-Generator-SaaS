@@ -1,6 +1,6 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
-import { Mail, Phone, MapPin, Linkedin, Globe } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Globe, Calendar, Users } from "lucide-react";
 
 interface TemplateProps {
   data: ResumeData;
@@ -54,6 +54,23 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                 <span>{[personal.city, personal.country].filter(Boolean).join(", ")}</span>
+              </span>
+            )}
+            {(personal.birthDate || personal.birthPlace) && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>
+                  {[
+                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                  ].filter(Boolean).join(" ")}
+                </span>
+              </span>
+            )}
+            {personal.maritalStatus && (
+              <span className="flex items-center gap-1">
+                <Users className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>{personal.maritalStatus}</span>
               </span>
             )}
             {personal.linkedin && (

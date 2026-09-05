@@ -42,6 +42,15 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
             {(personal.city || personal.country) && (
               <p>{[personal.city, personal.country].filter(Boolean).join(", ")}</p>
             )}
+            {(personal.birthDate || personal.birthPlace) && (
+              <p>
+                {[
+                  personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                  personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                ].filter(Boolean).join(" ")}
+              </p>
+            )}
+            {personal.maritalStatus && <p>{personal.maritalStatus}</p>}
             {personal.linkedin && <p className="text-slate-500">{personal.linkedin}</p>}
           </div>
         </div>

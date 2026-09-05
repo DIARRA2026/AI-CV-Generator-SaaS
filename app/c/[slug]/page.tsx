@@ -657,6 +657,23 @@ export default function PublicCandidateCVPage() {
                       <span>{p.phone}</span>
                     </span>
                   )}
+                  {(p.birthDate || p.birthPlace) && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>
+                        {[
+                          p.birthDate ? `Né(e) le ${p.birthDate}` : "",
+                          p.birthPlace ? `à ${p.birthPlace}` : ""
+                        ].filter(Boolean).join(" ")}
+                      </span>
+                    </span>
+                  )}
+                  {p.maritalStatus && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
+                      <Users className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>{p.maritalStatus}</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Bandeau Métriques Compact & Centré */}

@@ -19,9 +19,13 @@ export interface DensitySettings {
   };
   lineHeight: number;
 
-  // Espacements géométriques calculés en pixels (justification verticale)
+  // Espacements géométriques calculés (justification verticale A4)
   spacing: {
     pagePadding: string;
+    pagePaddingTop: string;
+    pagePaddingBottom: string;
+    pagePaddingLeft: string;
+    pagePaddingRight: string;
     sidebarPadding: string;
     sectionGap: string;
     itemGap: string;
@@ -125,12 +129,12 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
     totalLines += 1.5 + Math.ceil(sections.interests.length / 4) * 0.8;
   }
 
-  // 2. Formule Mathématique d'Échelle Typographique (Power-law Type Scaling)
-  // Baseline = 26 lignes idéales pour un document A4 standard
-  const baselineLines = 26;
-  const rawScale = Math.pow(baselineLines / Math.max(14, totalLines), 0.18);
-  // Clamping de sécurité typographique : cadrage strict pour préserver les tailles exactes
-  const scale = Math.max(0.95, Math.min(1.04, rawScale));
+  // 2. Formule Mathématique d'Échelle Typographique Responsive (A4 Marges 1.5 cm)
+  // Baseline pour une page A4 avec marges strictes de 1.5 cm (Hauteur imprimable : 26.7 cm)
+  const baselineLines = 24;
+  const rawScale = Math.pow(baselineLines / Math.max(14, totalLines), 0.24);
+  // Clamping de sécurité typographique : permet d'atteindre 18px pour un CV standard, tout en s'adaptant de façon responsive
+  const scale = Math.max(0.82, Math.min(1.04, rawScale));
 
   // 3. Calcul continu des grandeurs typographiques et géométriques (Normes d'Édition Pro — Calibrage Demandé)
   // - Écritures principales (Puces, descriptions d'expériences, diplômes) : 18.0px
@@ -153,16 +157,21 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   // Interlignage équilibré fixé à 1.42
   const lineHeight = 1.42;
 
-  // Espacements géométriques adaptés aux grandes polices (18px/20px) pour garantir le confinement parfait A4
+  // Espacements géométriques A4 normalisés :
+  // Haut = 1.5 cm | Bas = 1.5 cm | Gauche = 1.5 cm | Droite = 1.5 cm
   const spacing = {
-    pagePadding: `${Math.round(16 * scale)}px`,
-    sidebarPadding: `${Math.round(15 * scale)}px`,
-    sectionGap: `${Math.max(8, Math.round(11 * scale))}px`,
-    itemGap: `${Math.max(5, Math.round(7 * scale))}px`,
-    bulletGap: `${Math.max(2, Math.round(3 * scale))}px`,
-    cardPadding: `${Math.max(5, Math.round(7 * scale))}px`,
-    summaryPadding: `${Math.max(6, Math.round(8 * scale))}px`,
-    photoSize: `${Math.round(78 * Math.min(1.05, Math.max(0.88, scale)))}px`,
+    pagePadding: "1.5cm",
+    pagePaddingTop: "1.5cm",
+    pagePaddingBottom: "1.5cm",
+    pagePaddingLeft: "1.5cm",
+    pagePaddingRight: "1.5cm",
+    sidebarPadding: "1.5cm",
+    sectionGap: `${Math.max(6, Math.round(9 * scale))}px`,
+    itemGap: `${Math.max(4, Math.round(5.5 * scale))}px`,
+    bulletGap: `${Math.max(1.5, Math.round(2.5 * scale))}px`,
+    cardPadding: `${Math.max(4, Math.round(5.5 * scale))}px`,
+    summaryPadding: `${Math.max(5, Math.round(7 * scale))}px`,
+    photoSize: `${Math.round(74 * Math.min(1.04, Math.max(0.82, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

@@ -31,7 +31,13 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
       {/* Sidebar Gauche — 33% (Auto-équilibrée sur toute la hauteur A4) */}
       <div
         className="w-[33%] text-white flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
-        style={{ backgroundColor: color, padding: density.spacing.sidebarPadding }}
+        style={{
+          backgroundColor: color,
+          paddingTop: density.spacing.pagePaddingTop,
+          paddingBottom: density.spacing.pagePaddingBottom,
+          paddingLeft: density.spacing.pagePaddingLeft,
+          paddingRight: "0.8cm",
+        }}
       >
         {/* Bloc supérieur : Photo + Contact */}
         <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -206,7 +212,12 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
       {/* Contenu Principal Droite — 67% (Remplissage A4 ordonné avec justification de texte) */}
       <div
         className="w-[67%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
-        style={{ padding: density.spacing.pagePadding }}
+        style={{
+          paddingTop: density.spacing.pagePaddingTop,
+          paddingBottom: density.spacing.pagePaddingBottom,
+          paddingLeft: "0.8cm",
+          paddingRight: density.spacing.pagePaddingRight,
+        }}
       >
         <div
           className="flex flex-col min-h-0"

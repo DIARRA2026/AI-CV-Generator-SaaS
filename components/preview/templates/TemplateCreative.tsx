@@ -26,17 +26,25 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
   const density = getResumeDensity(data);
 
   return (
-    <div className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-normal flex flex-col justify-between overflow-hidden">
-      <div className="flex-1 flex flex-col min-h-0">
+    <div
+      className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-normal flex flex-col justify-between overflow-hidden"
+      style={{
+        paddingTop: density.spacing.pagePaddingTop,
+        paddingBottom: density.spacing.pagePaddingBottom,
+        paddingLeft: density.spacing.pagePaddingLeft,
+        paddingRight: density.spacing.pagePaddingRight,
+      }}
+    >
+      <div className="flex-1 flex flex-col min-h-0" style={{ gap: density.spacing.sectionGap }}>
         {/* Banner supérieur élégant et percutant */}
         <div
-          className="text-white shrink-0 shadow-sm"
+          className="text-white shrink-0 shadow-sm rounded-2xl overflow-hidden"
           style={{
             backgroundColor: color,
-            paddingLeft: density.spacing.pagePadding,
-            paddingRight: density.spacing.pagePadding,
-            paddingTop: `${Math.round(20 * density.scale)}px`,
-            paddingBottom: `${Math.round(18 * density.scale)}px`,
+            paddingLeft: "1.0cm",
+            paddingRight: "1.0cm",
+            paddingTop: `${Math.round(14 * density.scale)}px`,
+            paddingBottom: `${Math.round(13 * density.scale)}px`,
           }}
         >
           <div className="flex items-center gap-5">
@@ -127,7 +135,6 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
         <div
           className="flex-1 flex flex-col min-h-0"
           style={{
-            padding: density.spacing.pagePadding,
             gap: density.spacing.sectionGap,
           }}
         >
@@ -483,7 +490,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
       {/* Footer sobre et élégant */}
       <div
         style={{ fontSize: density.fontSize.xs }}
-        className="px-7 py-2 text-center border-t border-slate-100 text-slate-400 shrink-0"
+        className="text-center border-t border-slate-100 text-slate-400 pt-1.5 shrink-0"
       >
         Document certifié conforme • MonCV.ai
       </div>

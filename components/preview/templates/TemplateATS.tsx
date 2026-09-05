@@ -13,7 +13,12 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
   return (
     <div
       className="min-h-[297mm] max-h-[297mm] h-full flex-1 bg-white text-black font-sans leading-normal flex flex-col justify-between overflow-hidden"
-      style={{ padding: density.spacing.pagePadding }}
+      style={{
+        paddingTop: density.spacing.pagePaddingTop,
+        paddingBottom: density.spacing.pagePaddingBottom,
+        paddingLeft: density.spacing.pagePaddingLeft,
+        paddingRight: density.spacing.pagePaddingRight,
+      }}
     >
       <div
         className="flex-1 flex flex-col min-h-0"

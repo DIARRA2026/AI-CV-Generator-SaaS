@@ -128,34 +128,41 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   // 2. Formule Mathématique d'Échelle Typographique (Power-law Type Scaling)
   // Baseline = 26 lignes idéales pour un document A4 standard
   const baselineLines = 26;
-  const rawScale = Math.pow(baselineLines / Math.max(14, totalLines), 0.20);
-  // Clamping de sécurité typographique : variation maîtrisée autour de 14px
-  const scale = Math.max(0.95, Math.min(1.05, rawScale));
+  const rawScale = Math.pow(baselineLines / Math.max(14, totalLines), 0.18);
+  // Clamping de sécurité typographique : cadrage strict pour préserver les tailles exactes
+  const scale = Math.max(0.95, Math.min(1.04, rawScale));
 
-  // 3. Calcul continu des grandeurs typographiques et géométriques (Normes d'Édition Pro — Base 14px)
+  // 3. Calcul continu des grandeurs typographiques et géométriques (Normes d'Édition Pro — Calibrage Demandé)
+  // - Écritures principales (Puces, descriptions d'expériences, diplômes) : 18.0px
+  // - Résumé / Profil Professionnel : 18.0px (avec un interlignage équilibré de 1.42)
+  // - Titres de rubriques (Expériences, Formations, etc.) : 20.0px
+  // - Titre du métier / Poste visé : 19.5px
+  // - Nom et Prénom : 28px
+  // - Entreprises, écoles, dates et lieux : 16.5px
+  // - Coordonnées, tags de compétences, permis et langues : 15.5px
   const fontSize = {
-    title: `${Math.round(28 * Math.min(1.08, scale))}px`,
-    role: `${(15.5 * scale).toFixed(1)}px`,
-    heading: `${(16.0 * scale).toFixed(1)}px`,
-    summary: `${(14.0 * scale).toFixed(1)}px`,
-    base: `${(14.0 * scale).toFixed(1)}px`,
-    sm: `${(12.5 * scale).toFixed(1)}px`,
-    xs: `${(11.5 * scale).toFixed(1)}px`,
+    title: `${Math.round(28 * Math.min(1.04, scale))}px`,
+    role: `${(19.5 * scale).toFixed(1)}px`,
+    heading: `${(20.0 * scale).toFixed(1)}px`,
+    summary: `${(18.0 * scale).toFixed(1)}px`,
+    base: `${(18.0 * scale).toFixed(1)}px`,
+    sm: `${(16.5 * scale).toFixed(1)}px`,
+    xs: `${(15.5 * scale).toFixed(1)}px`,
   };
 
-  // Formule d'interlignage proportionnel équilibré
-  const lineHeight = Math.min(1.50, Math.max(1.35, 1.42 * Math.pow(scale, 0.20)));
+  // Interlignage équilibré fixé à 1.42
+  const lineHeight = 1.42;
 
-  // Espacements géométriques
+  // Espacements géométriques adaptés aux grandes polices (18px/20px) pour garantir le confinement parfait A4
   const spacing = {
-    pagePadding: `${Math.round(20 * scale)}px`,
-    sidebarPadding: `${Math.round(18 * scale)}px`,
-    sectionGap: `${Math.max(10, Math.round(14 * scale))}px`,
-    itemGap: `${Math.max(6, Math.round(8 * scale))}px`,
-    bulletGap: `${Math.max(2, Math.round(3.5 * scale))}px`,
-    cardPadding: `${Math.max(6, Math.round(8 * scale))}px`,
-    summaryPadding: `${Math.max(8, Math.round(10 * scale))}px`,
-    photoSize: `${Math.round(84 * Math.min(1.08, Math.max(0.90, scale)))}px`,
+    pagePadding: `${Math.round(16 * scale)}px`,
+    sidebarPadding: `${Math.round(15 * scale)}px`,
+    sectionGap: `${Math.max(8, Math.round(11 * scale))}px`,
+    itemGap: `${Math.max(5, Math.round(7 * scale))}px`,
+    bulletGap: `${Math.max(2, Math.round(3 * scale))}px`,
+    cardPadding: `${Math.max(5, Math.round(7 * scale))}px`,
+    summaryPadding: `${Math.max(6, Math.round(8 * scale))}px`,
+    photoSize: `${Math.round(78 * Math.min(1.05, Math.max(0.88, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

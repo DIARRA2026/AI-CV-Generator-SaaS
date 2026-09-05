@@ -104,12 +104,12 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
                     className="flex justify-between items-baseline font-bold text-black"
                   >
                     <span>{exp.role}</span>
-                    <span style={{ fontSize: density.fontSize.xs }} className="font-semibold shrink-0">
+                    <span style={{ fontSize: density.fontSize.sm }} className="font-semibold shrink-0">
                       {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                     </span>
                   </div>
                   <div
-                    style={{ fontSize: density.fontSize.xs }}
+                    style={{ fontSize: density.fontSize.sm }}
                     className="flex justify-between text-black mb-1"
                   >
                     <span className="italic font-medium">{exp.company}</span>
@@ -159,14 +159,14 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
                     <span className="font-bold">{edu.degree}</span>
                     {edu.field && <span> — {edu.field}</span>}
                     <span
-                      style={{ fontSize: density.fontSize.xs }}
+                      style={{ fontSize: density.fontSize.sm }}
                       className="italic block mt-0.5"
                     >
                       {edu.school}{edu.city ? `, ${edu.city}` : ""}
                     </span>
                   </div>
                   <span
-                    style={{ fontSize: density.fontSize.xs }}
+                    style={{ fontSize: density.fontSize.sm }}
                     className="font-semibold shrink-0"
                   >
                     {edu.year}

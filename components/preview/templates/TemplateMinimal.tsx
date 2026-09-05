@@ -107,7 +107,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               {experiences.map((exp) => (
                 <div key={exp.id} className="grid grid-cols-4 gap-3">
                   <div
-                    style={{ fontSize: density.fontSize.xs }}
+                    style={{ fontSize: density.fontSize.sm }}
                     className="col-span-1 text-zinc-400 pt-0.5 leading-snug"
                   >
                     {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
@@ -163,7 +163,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               {educations.map((edu) => (
                 <div key={edu.id} className="grid grid-cols-4 gap-3">
                   <div
-                    style={{ fontSize: density.fontSize.xs }}
+                    style={{ fontSize: density.fontSize.sm }}
                     className="col-span-1 text-zinc-400 pt-0.5"
                   >
                     {edu.year}
@@ -176,7 +176,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                       {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                     </h3>
                     <p
-                      style={{ fontSize: density.fontSize.xs }}
+                      style={{ fontSize: density.fontSize.sm }}
                       className="text-zinc-500 mt-0.5"
                     >
                       {edu.school}{edu.city ? ` (${edu.city})` : ""}

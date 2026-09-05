@@ -54,7 +54,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
             <div className="flex-1 min-w-0">
               {personal.title && (
                 <span
-                  style={{ fontSize: density.fontSize.xs }}
+                  style={{ fontSize: density.fontSize.role }}
                   className="inline-block bg-white/20 px-3 py-1 rounded-full font-bold tracking-wider uppercase mb-1.5 shadow-xs"
                 >
                   {personal.title}
@@ -198,7 +198,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                             {exp.role}
                           </h3>
                           <span
-                            style={{ fontSize: density.fontSize.xs }}
+                            style={{ fontSize: density.fontSize.sm }}
                             className="font-semibold text-slate-600 bg-white border border-slate-200/80 px-2 py-0.5 rounded-md shrink-0 shadow-2xs"
                           >
                             {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
@@ -273,7 +273,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                           </p>
                         </div>
                         <span
-                          style={{ fontSize: density.fontSize.xs }}
+                          style={{ fontSize: density.fontSize.sm }}
                           className="font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shrink-0 shadow-2xs"
                         >
                           {edu.year}

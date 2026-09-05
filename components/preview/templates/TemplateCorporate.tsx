@@ -139,7 +139,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                           {exp.role}
                         </h3>
                         <span
-                          style={{ fontSize: density.fontSize.xs }}
+                          style={{ fontSize: density.fontSize.sm }}
                           className="font-semibold text-slate-600 bg-white border border-slate-200 px-1.5 py-0.5 rounded shrink-0 shadow-2xs"
                         >
                           {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
@@ -214,7 +214,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                         </p>
                       </div>
                       <span
-                        style={{ fontSize: density.fontSize.xs }}
+                        style={{ fontSize: density.fontSize.sm }}
                         className="font-semibold text-slate-600 bg-white px-2 py-0.5 rounded border shrink-0 shadow-2xs"
                       >
                         {edu.year}

@@ -171,7 +171,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                           {exp.role}
                         </h3>
                         <span
-                          style={{ fontSize: density.fontSize.xs }}
+                          style={{ fontSize: density.fontSize.sm }}
                           className="font-sans text-slate-500 italic shrink-0"
                         >
                           {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
@@ -230,14 +230,14 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                           {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                         </h3>
                         <p
-                          style={{ fontSize: density.fontSize.xs }}
+                          style={{ fontSize: density.fontSize.sm }}
                           className="font-sans text-slate-600 mt-0.5"
                         >
                           {edu.school}{edu.city ? ` (${edu.city})` : ""}
                         </p>
                       </div>
                       <span
-                        style={{ fontSize: density.fontSize.xs }}
+                        style={{ fontSize: density.fontSize.sm }}
                         className="font-sans text-slate-500 italic shrink-0"
                       >
                         {edu.year}

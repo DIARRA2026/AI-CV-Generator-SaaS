@@ -145,7 +145,7 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   // - Résumé / Profil Professionnel : 18.0px (avec un interlignage équilibré de 1.42)
   // - Entreprises, écoles, dates et lieux : 16.5px
   // - Coordonnées, tags de compétences, permis et langues : 15.5px
-  // - Photo de profil : 140px (2X plus grande que 74px, portrait net et valorisé)
+  // - Photo de profil : 210px (3X plus grande que 74px, portrait exécutif grand format)
   const fontSize = {
     title: `${Math.round(54 * Math.min(1.04, scale))}px`,
     role: `${(19.5 * scale).toFixed(1)}px`,
@@ -173,7 +173,7 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
     bulletGap: `${Math.max(1.5, Math.round(2.5 * scale))}px`,
     cardPadding: `${Math.max(4, Math.round(5.5 * scale))}px`,
     summaryPadding: `${Math.max(5, Math.round(7 * scale))}px`,
-    photoSize: `${Math.round(140 * Math.min(1.04, Math.max(0.82, scale)))}px`,
+    photoSize: `${Math.round(210 * Math.min(1.04, Math.max(0.82, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

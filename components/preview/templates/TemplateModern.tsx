@@ -41,15 +41,19 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           gap: `${Math.max(8, Math.round(12 * density.scale))}px`,
         }}
       >
-        {/* Photo de profil */}
+        {/* Photo de profil — Grand Format Exécutif (3X plus grand) */}
         {design.showPhoto && personal.photoUrl && (
-          <div className="flex justify-center shrink-0">
-            <div className="relative p-1 bg-white/20 rounded-2xl shadow-md backdrop-blur-xs border border-white/25">
+          <div className="flex justify-center shrink-0 w-full">
+            <div className="relative p-1.5 bg-white/20 rounded-2xl shadow-lg backdrop-blur-xs border border-white/25 w-full flex justify-center">
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
-                style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
-                className="rounded-xl object-cover"
+                style={{
+                  width: density.spacing.photoSize,
+                  height: density.spacing.photoSize,
+                  maxWidth: "100%",
+                }}
+                className="rounded-xl object-cover w-full aspect-square"
                 crossOrigin="anonymous"
               />
             </div>

@@ -29,22 +29,22 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
   return (
     <div className="flex flex-1 h-full min-h-[297mm] max-h-[297mm] overflow-hidden bg-white text-slate-800 font-sans leading-relaxed">
-      {/* Sidebar Gauche — 35% (Agencement Pro en Cartes Exécutives, suppression du vide) */}
+      {/* Sidebar Gauche — 38% (Architecture Exécutive : Structure Claire, Alignements Parfaits, Zéro Débordement) */}
       <div
-        className="w-[35%] text-white flex flex-col h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
+        className="w-[38%] text-white flex flex-col h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
         style={{
           backgroundColor: color,
           paddingTop: density.spacing.pagePaddingTop,
           paddingBottom: density.spacing.pagePaddingBottom,
           paddingLeft: density.spacing.pagePaddingLeft,
-          paddingRight: "0.8cm",
-          gap: `${Math.max(8, Math.round(12 * density.scale))}px`,
+          paddingRight: "0.6cm",
+          gap: `${Math.max(8, Math.round(11 * density.scale))}px`,
         }}
       >
-        {/* Photo de profil — Grand Format Exécutif (3X plus grand) */}
+        {/* Photo de profil — Grand Format Exécutif (3X plus grand, pleine largeur) */}
         {design.showPhoto && personal.photoUrl && (
           <div className="flex justify-center shrink-0 w-full">
-            <div className="relative p-1.5 bg-white/20 rounded-2xl shadow-lg backdrop-blur-xs border border-white/25 w-full flex justify-center">
+            <div className="relative p-1.5 bg-white/20 rounded-2xl shadow-lg backdrop-blur-xs border border-white/30 w-full flex justify-center overflow-hidden">
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
@@ -60,69 +60,126 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Carte Coordonnées & Infos */}
+        {/* Carte Coordonnées — Disposition Structurée en Badges d'Icônes & Libellés */}
         <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-          <h3
-            style={{ fontSize: density.fontSize.sm }}
-            className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2.5 flex items-center gap-1.5"
-          >
-            <Mail className="w-3.5 h-3.5 text-white/90 shrink-0" />
-            Contact & Infos
-          </h3>
-          <div className="space-y-1.5" style={{ fontSize: density.fontSize.xs }}>
+          <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+            <Mail className="w-4 h-4 text-white/90 shrink-0" />
+            <h3
+              style={{ fontSize: density.fontSize.sm }}
+              className="uppercase tracking-wider font-extrabold text-white truncate"
+            >
+              Coordonnées
+            </h3>
+          </div>
+          <div className="space-y-2" style={{ fontSize: density.fontSize.xs }}>
+            {/* Email */}
             {personal.email && (
-              <div className="flex items-start gap-2">
-                <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                <span className="break-all font-medium leading-snug">{personal.email}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Mail className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Email</span>
+                  <span className="break-all font-semibold text-white leading-tight block">{personal.email}</span>
+                </div>
               </div>
             )}
+
+            {/* Téléphone */}
             {personal.phone && (
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 shrink-0 text-white/80" />
-                <span className="font-semibold leading-snug">{personal.phone}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Phone className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Téléphone</span>
+                  <span className="font-bold text-white tracking-wide block leading-tight">{personal.phone}</span>
+                </div>
               </div>
             )}
+
+            {/* Localisation */}
             {(personal.city || personal.country) && (
-              <div className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                <span className="font-medium leading-snug">
-                  {[personal.city, personal.country].filter(Boolean).join(", ")}
-                </span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <MapPin className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Localisation</span>
+                  <span className="font-semibold text-white leading-tight block">
+                    {[personal.city, personal.country].filter(Boolean).join(", ")}
+                  </span>
+                </div>
               </div>
             )}
+
+            {/* Date & Lieu de Naissance */}
             {(personal.birthDate || personal.birthPlace) && (
-              <div className="flex items-start gap-2">
-                <Calendar className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                <span className="font-medium leading-snug">
-                  {[
-                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
-                  ].filter(Boolean).join(" ")}
-                </span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Calendar className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Naissance</span>
+                  <span className="font-semibold text-white leading-tight block">
+                    {[
+                      personal.birthDate ? `${personal.birthDate}` : "",
+                      personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                    ].filter(Boolean).join(" ")}
+                  </span>
+                </div>
               </div>
             )}
+
+            {/* État Civil */}
             {personal.maritalStatus && (
-              <div className="flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 shrink-0 text-white/80" />
-                <span className="font-medium leading-snug">{personal.maritalStatus}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Users className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">État Civil</span>
+                  <span className="font-semibold text-white leading-tight block">{personal.maritalStatus}</span>
+                </div>
               </div>
             )}
+
+            {/* Permis de Conduire */}
             {personal.driverLicense && (
-              <div className="flex items-center gap-2">
-                <Car className="w-3.5 h-3.5 shrink-0 text-white/80" />
-                <span className="font-medium leading-snug">Permis : {personal.driverLicense}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Car className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Permis</span>
+                  <span className="font-semibold text-white leading-tight block">{personal.driverLicense}</span>
+                </div>
               </div>
             )}
+
+            {/* LinkedIn */}
             {personal.linkedin && (
-              <div className="flex items-start gap-2">
-                <Linkedin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                <span className="break-all font-medium leading-snug">{personal.linkedin}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Linkedin className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">LinkedIn</span>
+                  <span className="break-all font-semibold text-white leading-tight block">{personal.linkedin}</span>
+                </div>
               </div>
             )}
+
+            {/* Site Web */}
             {personal.website && (
-              <div className="flex items-start gap-2">
-                <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                <span className="break-all font-medium leading-snug">{personal.website}</span>
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-md bg-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <Globe className="w-3 h-3 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-white/60 text-[10px] uppercase font-bold tracking-wider block leading-none mb-0.5">Site Web</span>
+                  <span className="break-all font-semibold text-white leading-tight block">{personal.website}</span>
+                </div>
               </div>
             )}
           </div>
@@ -131,19 +188,21 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         {/* Carte Compétences */}
         {skills && skills.length > 0 && (
           <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <h3
-              style={{ fontSize: density.fontSize.sm }}
-              className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-white/90 shrink-0" />
-              Compétences
-            </h3>
+            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+              <Sparkles className="w-4 h-4 text-white/90 shrink-0" />
+              <h3
+                style={{ fontSize: density.fontSize.sm }}
+                className="uppercase tracking-wider font-extrabold text-white truncate"
+              >
+                Compétences
+              </h3>
+            </div>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {skills.map((cat) => (
                 <div key={cat.id} className="space-y-1">
                   <p
                     style={{ fontSize: density.fontSize.xs }}
-                    className="font-bold text-white/95 tracking-wider uppercase"
+                    className="font-bold text-white/95 tracking-wider uppercase text-[11px]"
                   >
                     {cat.category}
                   </p>
@@ -164,77 +223,100 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Carte Langues */}
+        {/* Carte Langues — Jauges Visuelles & Badges Propres Sans Retour à la Ligne */}
         {languages && languages.length > 0 && (
           <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <h3
-              style={{ fontSize: density.fontSize.sm }}
-              className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
-            >
-              <Globe className="w-3.5 h-3.5 text-white/90 shrink-0" />
-              Langues
-            </h3>
-            <div className="space-y-1.5">
+            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+              <Globe className="w-4 h-4 text-white/90 shrink-0" />
+              <h3
+                style={{ fontSize: density.fontSize.sm }}
+                className="uppercase tracking-wider font-extrabold text-white truncate"
+              >
+                Langues
+              </h3>
+            </div>
+            <div className="space-y-2">
               {languages.map((lang) => (
                 <div
                   key={lang.id}
-                  style={{ fontSize: density.fontSize.xs }}
-                  className="flex justify-between items-center py-1 px-2 rounded-lg bg-white/10 border border-white/15"
+                  className="bg-white/10 rounded-lg p-2 border border-white/15"
                 >
-                  <span className="font-semibold text-white">{lang.name}</span>
-                  <span
-                    style={{ fontSize: density.fontSize.xs }}
-                    className="font-semibold text-white/90 bg-white/20 px-2 py-0.5 rounded shadow-2xs"
-                  >
-                    {lang.level}
-                  </span>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-white text-sm">{lang.name}</span>
+                    <span
+                      style={{ fontSize: density.fontSize.xs }}
+                      className="font-semibold text-white/95 bg-white/20 px-2.5 py-0.5 rounded-md shadow-2xs whitespace-nowrap"
+                    >
+                      {lang.level}
+                    </span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-white rounded-full h-1.5 transition-all"
+                      style={{
+                        width:
+                          lang.level === "Bilingue / Natif"
+                            ? "100%"
+                            : lang.level === "Courant"
+                            ? "85%"
+                            : lang.level === "Intermédiaire"
+                            ? "60%"
+                            : "40%",
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Carte Centres d'intérêt */}
+        {/* Carte Centres d'intérêt — Grille Sémantique 2 Colonnes */}
         {sections?.interests && sections.interests.length > 0 && (
           <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <h4
-              style={{ fontSize: density.fontSize.sm }}
-              className="uppercase font-extrabold tracking-widest text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
-            >
-              <Award className="w-3.5 h-3.5 text-white/90 shrink-0" />
-              Centres d'intérêt
-            </h4>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+              <Award className="w-4 h-4 text-white/90 shrink-0" />
+              <h3
+                style={{ fontSize: density.fontSize.sm }}
+                className="uppercase tracking-wider font-extrabold text-white truncate whitespace-nowrap"
+              >
+                Centres d'intérêt
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
               {sections.interests.map((interest, i) => (
-                <span
+                <div
                   key={i}
                   style={{ fontSize: density.fontSize.xs }}
-                  className="inline-block px-2.5 py-1 bg-white/20 border border-white/25 rounded-lg text-white leading-tight font-semibold shadow-2xs"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/15 border border-white/20 rounded-lg text-white font-semibold shadow-2xs leading-tight"
                 >
-                  {interest}
-                </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  <span className="truncate">{interest}</span>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Badge d'ancrage bas discret */}
-        <div
-          style={{ fontSize: density.fontSize.xs }}
-          className="mt-auto pt-2 border-t border-white/20 text-white/70 text-center flex items-center justify-center gap-1.5 shrink-0"
-        >
-          <CheckCircle2 className="w-3.5 h-3.5 text-white/80 shrink-0" />
-          <span>Profil Certifié Conforme</span>
+        {/* Sceau Bas Exécutif de Certification */}
+        <div className="mt-auto bg-white/10 rounded-xl p-3 border border-white/15 text-center flex flex-col items-center gap-1 shrink-0 backdrop-blur-xs shadow-xs">
+          <div className="flex items-center gap-1.5 text-white font-bold tracking-wider uppercase text-xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+            <span>Profil Candidat Conforme</span>
+          </div>
+          <p className="text-white/70 text-[11px] leading-tight">
+            Document certifié conforme • MonCV.ai
+          </p>
         </div>
       </div>
 
-      {/* Contenu Principal Droite — 65% (Remplissage A4 ordonné avec justification de texte) */}
+      {/* Contenu Principal Droite — 62% (Remplissage A4 ordonné avec justification de texte) */}
       <div
-        className="w-[65%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
+        className="w-[62%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
         style={{
           paddingTop: density.spacing.pagePaddingTop,
           paddingBottom: density.spacing.pagePaddingBottom,
-          paddingLeft: "0.8cm",
+          paddingLeft: "0.6cm",
           paddingRight: density.spacing.pagePaddingRight,
         }}
       >

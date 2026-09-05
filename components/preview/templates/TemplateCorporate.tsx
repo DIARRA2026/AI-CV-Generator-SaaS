@@ -160,7 +160,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                             <li
                               key={idx}
                               style={{
-                                fontSize: density.fontSize.sm,
+                                fontSize: density.fontSize.base,
                                 lineHeight: density.lineHeight,
                               }}
                               className="flex items-start gap-1.5 cv-pro-text"

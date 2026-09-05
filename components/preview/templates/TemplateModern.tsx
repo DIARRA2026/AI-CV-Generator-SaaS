@@ -116,7 +116,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         {skills && skills.length > 0 && (
           <div className="my-auto py-2">
             <h3
-              style={{ fontSize: density.fontSize.xs }}
+              style={{ fontSize: density.fontSize.sm }}
               className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5"
             >
               Compétences
@@ -153,7 +153,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {languages && languages.length > 0 && (
             <div>
               <h3
-                style={{ fontSize: density.fontSize.xs }}
+                style={{ fontSize: density.fontSize.sm }}
                 className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2"
               >
                 Langues
@@ -182,7 +182,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {sections?.interests && sections.interests.length > 0 && (
             <div className="pt-2 border-t border-white/20">
               <h4
-                style={{ fontSize: density.fontSize.xs }}
+                style={{ fontSize: density.fontSize.sm }}
                 className="uppercase font-extrabold tracking-widest text-white/80 mb-1.5"
               >
                 Centres d'intérêt
@@ -302,7 +302,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                           <li
                             key={i}
                             style={{
-                              fontSize: density.fontSize.sm,
+                              fontSize: density.fontSize.base,
                               lineHeight: density.lineHeight,
                             }}
                             className="flex items-start gap-1.5 cv-pro-text"

@@ -219,7 +219,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                               <li
                                 key={idx}
                                 style={{
-                                  fontSize: density.fontSize.sm,
+                                  fontSize: density.fontSize.base,
                                   lineHeight: density.lineHeight,
                                 }}
                                 className="flex items-start gap-1.5 cv-pro-text"
@@ -402,7 +402,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                           {p.name}
                         </p>
                         <p
-                          style={{ fontSize: density.fontSize.xs }}
+                          style={{ fontSize: density.fontSize.sm }}
                           className="text-slate-600 mt-1 leading-snug font-normal"
                         >
                           {p.description}

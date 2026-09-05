@@ -351,9 +351,9 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                 </h2>
                 <div className="space-y-1 font-sans">
                   {sections.certifications.map((c) => (
-                    <div key={c.id} style={{ fontSize: density.fontSize.xs }}>
-                      <p className="font-bold text-slate-800 leading-snug">{c.title}</p>
-                      <p className="text-slate-500">{c.issuer} — {c.year}</p>
+                    <div key={c.id}>
+                      <p style={{ fontSize: density.fontSize.sm }} className="font-bold text-slate-800 leading-snug">{c.title}</p>
+                      <p style={{ fontSize: density.fontSize.xs }} className="text-slate-500">{c.issuer} — {c.year}</p>
                     </div>
                   ))}
                 </div>

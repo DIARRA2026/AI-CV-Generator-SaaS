@@ -55,11 +55,14 @@ export async function downloadResumePDF(
   // Cloner le CV source
   const clone = sourceElement.cloneNode(true) as HTMLElement;
   clone.id = "cv-clone-for-pdf";
-  clone.style.transform = "none";
-  clone.style.transformOrigin = "top left";
-  clone.style.boxShadow = "none";
+  clone.style.position = "static";
+  clone.style.top = "0";
+  clone.style.left = "0";
   clone.style.width = "794px";
+  clone.style.minWidth = "794px";
+  clone.style.maxWidth = "794px";
   clone.style.height = "1123px";
+  clone.style.minHeight = "1123px";
   clone.style.maxHeight = "1123px";
   clone.style.overflow = "hidden";
   clone.style.margin = "0";

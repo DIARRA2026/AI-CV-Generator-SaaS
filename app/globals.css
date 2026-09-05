@@ -40,10 +40,13 @@ body {
 
 /* Format A4 & Impression Haute Fidélité (Traitement de Texte Professionnel) */
 .a4-page {
-  width: 210mm;
-  height: 297mm;
-  max-height: 297mm;
-  min-height: 297mm;
+  width: 210mm !important;
+  min-width: 210mm !important;
+  max-width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+  flex-shrink: 0 !important;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -91,12 +94,16 @@ body {
     box-shadow: none !important;
     margin: 0 !important;
     width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
     height: 297mm !important;
     max-height: 297mm !important;
     min-height: 297mm !important;
     overflow: hidden !important;
     page-break-after: avoid !important;
     page-break-inside: avoid !important;
+    transform: none !important;
+    position: relative !important;
   }
 
   @page {

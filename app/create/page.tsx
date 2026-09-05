@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ResumeData } from "@/lib/types";
 import { initialResumeData } from "@/lib/initialData";
@@ -74,6 +74,26 @@ export default function CreateCVPage() {
   };
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  const fitToScreen = useCallback(() => {
+    if (previewContainerRef.current) {
+      const containerWidth = previewContainerRef.current.clientWidth - 32;
+      if (containerWidth > 120) {
+        // 794px est la largeur géométrique A4 standard à 96 DPI
+        const idealScale = Math.min(1.0, Math.max(0.35, Math.floor((containerWidth / 794) * 100) / 100));
+        setScale(idealScale);
+        return;
+      }
+    }
+    if (typeof window !== "undefined") {
+      const width = window.innerWidth;
+      if (width < 450) setScale(0.44);
+      else if (width < 768) setScale(0.55);
+      else if (width < 1280) setScale(0.64);
+      else setScale(0.68);
+    }
+  }, []);
 
   // Charger le CV actif au montage, hydrater depuis le Cloud Supabase & synchroniser l'authentification
   useEffect(() => {
@@ -119,33 +139,34 @@ export default function CreateCVPage() {
         });
     }
 
-    // Détection de la taille d'écran pour un zoom initial parfaitement adapté
-    if (typeof window !== "undefined") {
-      const width = window.innerWidth;
-      if (width < 450) {
-        setScale(0.46);
-      } else if (width < 768) {
-        setScale(0.58);
-      } else if (width < 1280) {
-        setScale(0.68);
-      } else {
-        setScale(0.76);
-      }
-    }
-
     window.addEventListener("storage", syncAuth);
     return () => window.removeEventListener("storage", syncAuth);
   }, []);
 
-  const fitToScreen = () => {
-    if (typeof window !== "undefined") {
-      const width = window.innerWidth;
-      if (width < 450) setScale(0.46);
-      else if (width < 768) setScale(0.58);
-      else if (width < 1280) setScale(0.68);
-      else setScale(0.76);
+  // Calcul automatique optimal au montage et redimensionnement
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitToScreen();
+    }, 150);
+
+    const handleResize = () => {
+      fitToScreen();
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [fitToScreen]);
+
+  // Recalcul immédiat lors du basculement d'onglet vers l'aperçu sur mobile
+  useEffect(() => {
+    if (viewTab === "preview") {
+      const timer = setTimeout(() => fitToScreen(), 80);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [viewTab, fitToScreen]);
 
   // Sauvegarder automatiquement : LocalStorage immédiat + Débounced Cloud Sync Full-Stack (700ms)
   const handleUpdateData = (updated: ResumeData) => {
@@ -564,7 +585,10 @@ export default function CreateCVPage() {
           </div>
 
           {/* Canvas A4 */}
-          <div className="w-full flex justify-center bg-slate-200/70 p-2 sm:p-4 rounded-3xl border border-slate-300/70 overflow-x-auto min-h-[600px] shadow-inner">
+          <div
+            ref={previewContainerRef}
+            className="w-full flex justify-center bg-slate-200/70 p-2 sm:p-4 rounded-3xl border border-slate-300/70 overflow-x-auto min-h-[600px] shadow-inner"
+          >
             <CVPreviewCanvas ref={previewRef} data={resumeData} scale={scale} />
           </div>
 

@@ -31,7 +31,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
     <div className="flex flex-1 h-full min-h-[297mm] max-h-[297mm] overflow-hidden bg-white text-slate-800 font-sans leading-relaxed">
       {/* Sidebar Gauche — 38% (Architecture Exécutive : Structure Claire, Alignements Parfaits, Zéro Débordement) */}
       <div
-        className="w-[38%] text-white flex flex-col h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
+        className="w-[38%] min-w-[38%] max-w-[38%] text-white flex flex-col h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
         style={{
           backgroundColor: color,
           paddingTop: density.spacing.pagePaddingTop,
@@ -44,16 +44,24 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         {/* Photo de profil — Grand Format Exécutif (3X plus grand, pleine largeur) */}
         {design.showPhoto && personal.photoUrl && (
           <div className="flex justify-center shrink-0 w-full">
-            <div className="relative p-1.5 bg-white/20 rounded-2xl shadow-lg backdrop-blur-xs border border-white/30 w-full flex justify-center overflow-hidden">
+            <div
+              className="relative p-1.5 bg-white/20 rounded-2xl shadow-lg backdrop-blur-xs border border-white/30 flex justify-center items-center overflow-hidden aspect-square mx-auto"
+              style={{
+                width: density.spacing.photoSize,
+                height: density.spacing.photoSize,
+                maxWidth: "100%",
+                maxHeight: density.spacing.photoSize,
+              }}
+            >
               <img
                 src={personal.photoUrl}
                 alt={`${personal.firstName} ${personal.lastName}`}
                 style={{
-                  width: density.spacing.photoSize,
-                  height: density.spacing.photoSize,
-                  maxWidth: "100%",
+                  width: "100%",
+                  height: "100%",
+                  aspectRatio: "1 / 1",
                 }}
-                className="rounded-xl object-cover w-full aspect-square"
+                className="rounded-xl object-cover w-full h-full aspect-square shrink-0"
                 crossOrigin="anonymous"
               />
             </div>
@@ -312,7 +320,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
       {/* Contenu Principal Droite — 62% (Remplissage A4 ordonné avec justification de texte) */}
       <div
-        className="w-[62%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
+        className="w-[62%] min-w-[62%] max-w-[62%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
         style={{
           paddingTop: density.spacing.pagePaddingTop,
           paddingBottom: density.spacing.pagePaddingBottom,

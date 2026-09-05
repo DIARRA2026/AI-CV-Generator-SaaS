@@ -14,6 +14,7 @@ import {
   FolderGit2,
   Calendar,
   Users,
+  Car,
 } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
 
@@ -28,103 +29,109 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
   return (
     <div className="flex flex-1 h-full min-h-[297mm] max-h-[297mm] overflow-hidden bg-white text-slate-800 font-sans leading-relaxed">
-      {/* Sidebar Gauche — 33% (Auto-équilibrée sur toute la hauteur A4) */}
+      {/* Sidebar Gauche — 35% (Agencement Pro en Cartes Exécutives, suppression du vide) */}
       <div
-        className="w-[33%] text-white flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
+        className="w-[35%] text-white flex flex-col h-full min-h-[297mm] max-h-[297mm] shrink-0 overflow-hidden"
         style={{
           backgroundColor: color,
           paddingTop: density.spacing.pagePaddingTop,
           paddingBottom: density.spacing.pagePaddingBottom,
           paddingLeft: density.spacing.pagePaddingLeft,
           paddingRight: "0.8cm",
+          gap: `${Math.max(8, Math.round(12 * density.scale))}px`,
         }}
       >
-        {/* Bloc supérieur : Photo + Contact */}
-        <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
-          {/* Photo */}
-          {design.showPhoto && personal.photoUrl && (
-            <div className="flex justify-center mb-1">
-              <div className="relative p-1 bg-white/20 rounded-2xl shadow-md backdrop-blur-xs">
-                <img
-                  src={personal.photoUrl}
-                  alt={`${personal.firstName} ${personal.lastName}`}
-                  style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
-                  className="rounded-xl object-cover"
-                  crossOrigin="anonymous"
-                />
-              </div>
+        {/* Photo de profil */}
+        {design.showPhoto && personal.photoUrl && (
+          <div className="flex justify-center shrink-0">
+            <div className="relative p-1 bg-white/20 rounded-2xl shadow-md backdrop-blur-xs border border-white/25">
+              <img
+                src={personal.photoUrl}
+                alt={`${personal.firstName} ${personal.lastName}`}
+                style={{ width: density.spacing.photoSize, height: density.spacing.photoSize }}
+                className="rounded-xl object-cover"
+                crossOrigin="anonymous"
+              />
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Contact */}
-          <div>
-            <h3
-              style={{ fontSize: density.fontSize.xs }}
-              className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5"
-            >
-              Contact
-            </h3>
-            <div className="space-y-1.5" style={{ fontSize: density.fontSize.xs }}>
-              {personal.email && (
-                <div className="flex items-start gap-2">
-                  <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                  <span className="break-all font-medium leading-snug">{personal.email}</span>
-                </div>
-              )}
-              {personal.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 shrink-0 text-white/80" />
-                  <span className="font-medium leading-snug">{personal.phone}</span>
-                </div>
-              )}
-              {(personal.city || personal.country) && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                  <span className="font-medium leading-snug">
-                    {[personal.city, personal.country].filter(Boolean).join(", ")}
-                  </span>
-                </div>
-              )}
-              {(personal.birthDate || personal.birthPlace) && (
-                <div className="flex items-start gap-2">
-                  <Calendar className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                  <span className="font-medium leading-snug">
-                    {[
-                      personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                      personal.birthPlace ? `à ${personal.birthPlace}` : ""
-                    ].filter(Boolean).join(" ")}
-                  </span>
-                </div>
-              )}
-              {personal.maritalStatus && (
-                <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 shrink-0 text-white/80" />
-                  <span className="font-medium leading-snug">{personal.maritalStatus}</span>
-                </div>
-              )}
-              {personal.linkedin && (
-                <div className="flex items-start gap-2">
-                  <Linkedin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                  <span className="break-all font-medium leading-snug">{personal.linkedin}</span>
-                </div>
-              )}
-              {personal.website && (
-                <div className="flex items-start gap-2">
-                  <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
-                  <span className="break-all font-medium leading-snug">{personal.website}</span>
-                </div>
-              )}
-            </div>
+        {/* Carte Coordonnées & Infos */}
+        <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
+          <h3
+            style={{ fontSize: density.fontSize.sm }}
+            className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2.5 flex items-center gap-1.5"
+          >
+            <Mail className="w-3.5 h-3.5 text-white/90 shrink-0" />
+            Contact & Infos
+          </h3>
+          <div className="space-y-1.5" style={{ fontSize: density.fontSize.xs }}>
+            {personal.email && (
+              <div className="flex items-start gap-2">
+                <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                <span className="break-all font-medium leading-snug">{personal.email}</span>
+              </div>
+            )}
+            {personal.phone && (
+              <div className="flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5 shrink-0 text-white/80" />
+                <span className="font-semibold leading-snug">{personal.phone}</span>
+              </div>
+            )}
+            {(personal.city || personal.country) && (
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                <span className="font-medium leading-snug">
+                  {[personal.city, personal.country].filter(Boolean).join(", ")}
+                </span>
+              </div>
+            )}
+            {(personal.birthDate || personal.birthPlace) && (
+              <div className="flex items-start gap-2">
+                <Calendar className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                <span className="font-medium leading-snug">
+                  {[
+                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                  ].filter(Boolean).join(" ")}
+                </span>
+              </div>
+            )}
+            {personal.maritalStatus && (
+              <div className="flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 shrink-0 text-white/80" />
+                <span className="font-medium leading-snug">{personal.maritalStatus}</span>
+              </div>
+            )}
+            {personal.driverLicense && (
+              <div className="flex items-center gap-2">
+                <Car className="w-3.5 h-3.5 shrink-0 text-white/80" />
+                <span className="font-medium leading-snug">Permis : {personal.driverLicense}</span>
+              </div>
+            )}
+            {personal.linkedin && (
+              <div className="flex items-start gap-2">
+                <Linkedin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                <span className="break-all font-medium leading-snug">{personal.linkedin}</span>
+              </div>
+            )}
+            {personal.website && (
+              <div className="flex items-start gap-2">
+                <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5 text-white/80" />
+                <span className="break-all font-medium leading-snug">{personal.website}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Bloc médian : Compétences */}
+        {/* Carte Compétences */}
         {skills && skills.length > 0 && (
-          <div className="my-auto py-2">
+          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
             <h3
               style={{ fontSize: density.fontSize.sm }}
-              className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2.5"
+              className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
             >
+              <Sparkles className="w-3.5 h-3.5 text-white/90 shrink-0" />
               Compétences
             </h3>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -141,7 +148,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                       <span
                         key={idx}
                         style={{ fontSize: density.fontSize.xs }}
-                        className="inline-block px-2 py-0.5 rounded-md bg-white/20 border border-white/25 text-white font-semibold leading-tight shadow-xs"
+                        className="inline-block px-2.5 py-1 rounded-lg bg-white/20 border border-white/25 text-white font-semibold leading-tight shadow-xs"
                       >
                         {item}
                       </span>
@@ -153,65 +160,73 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Bloc inférieur : Langues & Centres d'intérêt */}
-        <div className="space-y-3 pt-2">
-          {/* Langues */}
-          {languages && languages.length > 0 && (
-            <div>
-              <h3
-                style={{ fontSize: density.fontSize.sm }}
-                className="uppercase tracking-widest font-extrabold text-white/90 border-b border-white/20 pb-1.5 mb-2"
-              >
-                Langues
-              </h3>
-              <div className="space-y-1">
-                {languages.map((lang) => (
-                  <div
-                    key={lang.id}
-                    style={{ fontSize: density.fontSize.xs }}
-                    className="flex justify-between items-center py-0.5 border-b border-white/10 last:border-0"
-                  >
-                    <span className="font-semibold text-white">{lang.name}</span>
-                    <span
-                      style={{ fontSize: density.fontSize.xs }}
-                      className="font-medium text-white/85 bg-white/15 px-2 py-0.5 rounded"
-                    >
-                      {lang.level}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Centres d'intérêt */}
-          {sections?.interests && sections.interests.length > 0 && (
-            <div className="pt-2 border-t border-white/20">
-              <h4
-                style={{ fontSize: density.fontSize.sm }}
-                className="uppercase font-extrabold tracking-widest text-white/80 mb-1.5"
-              >
-                Centres d'intérêt
-              </h4>
-              <div className="flex flex-wrap gap-1">
-                {sections.interests.map((interest, i) => (
+        {/* Carte Langues */}
+        {languages && languages.length > 0 && (
+          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
+            <h3
+              style={{ fontSize: density.fontSize.sm }}
+              className="uppercase tracking-widest font-extrabold text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
+            >
+              <Globe className="w-3.5 h-3.5 text-white/90 shrink-0" />
+              Langues
+            </h3>
+            <div className="space-y-1.5">
+              {languages.map((lang) => (
+                <div
+                  key={lang.id}
+                  style={{ fontSize: density.fontSize.xs }}
+                  className="flex justify-between items-center py-1 px-2 rounded-lg bg-white/10 border border-white/15"
+                >
+                  <span className="font-semibold text-white">{lang.name}</span>
                   <span
-                    key={i}
                     style={{ fontSize: density.fontSize.xs }}
-                    className="inline-block px-2 py-0.5 bg-white/15 rounded text-white/90 leading-tight font-medium"
+                    className="font-semibold text-white/90 bg-white/20 px-2 py-0.5 rounded shadow-2xs"
                   >
-                    {interest}
+                    {lang.level}
                   </span>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Carte Centres d'intérêt */}
+        {sections?.interests && sections.interests.length > 0 && (
+          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
+            <h4
+              style={{ fontSize: density.fontSize.sm }}
+              className="uppercase font-extrabold tracking-widest text-white border-b border-white/20 pb-1.5 mb-2 flex items-center gap-1.5"
+            >
+              <Award className="w-3.5 h-3.5 text-white/90 shrink-0" />
+              Centres d'intérêt
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {sections.interests.map((interest, i) => (
+                <span
+                  key={i}
+                  style={{ fontSize: density.fontSize.xs }}
+                  className="inline-block px-2.5 py-1 bg-white/20 border border-white/25 rounded-lg text-white leading-tight font-semibold shadow-2xs"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Badge d'ancrage bas discret */}
+        <div
+          style={{ fontSize: density.fontSize.xs }}
+          className="mt-auto pt-2 border-t border-white/20 text-white/70 text-center flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 text-white/80 shrink-0" />
+          <span>Profil Certifié Conforme</span>
         </div>
       </div>
 
-      {/* Contenu Principal Droite — 67% (Remplissage A4 ordonné avec justification de texte) */}
+      {/* Contenu Principal Droite — 65% (Remplissage A4 ordonné avec justification de texte) */}
       <div
-        className="w-[67%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
+        className="w-[65%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
         style={{
           paddingTop: density.spacing.pagePaddingTop,
           paddingBottom: density.spacing.pagePaddingBottom,

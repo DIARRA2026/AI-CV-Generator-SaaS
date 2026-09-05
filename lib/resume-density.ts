@@ -69,6 +69,7 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   if (personal?.city || personal?.country) contactFieldsCount++;
   if (personal?.birthDate || personal?.birthPlace) contactFieldsCount++;
   if (personal?.maritalStatus) contactFieldsCount++;
+  if (personal?.driverLicense) contactFieldsCount++;
   if (personal?.linkedin) contactFieldsCount++;
   if (personal?.website) contactFieldsCount++;
   totalLines += contactFieldsCount * 0.7;

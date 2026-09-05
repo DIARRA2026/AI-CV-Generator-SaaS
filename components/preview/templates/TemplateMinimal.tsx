@@ -17,11 +17,11 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
       style={{ padding: density.spacing.pagePadding }}
     >
       <div
-        className="flex-1 flex flex-col justify-between min-h-0"
+        className="flex-1 flex flex-col min-h-0"
         style={{ gap: density.spacing.sectionGap }}
       >
         {/* Header minimaliste */}
-        <div className="mb-2">
+        <div className="mb-1">
           <div className="flex justify-between items-start">
             <div>
               <h1
@@ -67,6 +67,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               </span>
             )}
             {personal.maritalStatus && <span>· {personal.maritalStatus}</span>}
+            {personal.driverLicense && <span>· Permis: {personal.driverLicense}</span>}
             {personal.linkedin && <span>· {personal.linkedin}</span>}
             {personal.website && <span>· {personal.website}</span>}
           </div>
@@ -74,7 +75,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Profil */}
         {summary && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
@@ -95,7 +96,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Expérience */}
         {experiences && experiences.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
@@ -151,7 +152,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
@@ -188,7 +189,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         )}
 
         {/* Compétences & Langues */}
-        <div className="grid grid-cols-2 gap-5 pt-2.5 border-t border-zinc-200">
+        <div className="grid grid-cols-2 gap-5 pt-2 border-t border-zinc-200">
           {skills && skills.length > 0 && (
             <div>
               <h2
@@ -226,6 +227,24 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                     >
                       <span className="font-medium">{l.name}</span>
                       <span className="text-zinc-500">{l.level}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sections?.certifications && sections.certifications.length > 0 && (
+              <div>
+                <h2
+                  style={{ fontSize: density.fontSize.heading }}
+                  className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
+                >
+                  Certifications
+                </h2>
+                <div className="space-y-0.5">
+                  {sections.certifications.map((c) => (
+                    <div key={c.id} style={{ fontSize: density.fontSize.xs }} className="text-zinc-700">
+                      <span className="font-semibold">{c.title}</span> <span className="text-zinc-400">({c.issuer})</span>
                     </div>
                   ))}
                 </div>

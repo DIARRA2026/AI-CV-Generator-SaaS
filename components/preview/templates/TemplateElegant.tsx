@@ -1,6 +1,6 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
-import { Mail, Phone, MapPin, Linkedin, Globe, Calendar, Users } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Globe, Calendar, Users, Car } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
@@ -18,7 +18,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
       style={{ padding: density.spacing.pagePadding }}
     >
       <div
-        className="flex-1 flex flex-col justify-between min-h-0"
+        className="flex-1 flex flex-col min-h-0"
         style={{ gap: density.spacing.sectionGap }}
       >
         {/* Header Centré Élégant */}
@@ -94,6 +94,12 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                 <span>{personal.maritalStatus}</span>
               </span>
             )}
+            {personal.driverLicense && (
+              <span className="flex items-center gap-1">
+                <Car className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>Permis: {personal.driverLicense}</span>
+              </span>
+            )}
             {personal.linkedin && (
               <span className="flex items-center gap-1">
                 <Linkedin className="w-3 h-3 text-slate-400 shrink-0" />
@@ -111,7 +117,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Profil */}
         {summary && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div>
             <h2
               style={{
                 color,
@@ -134,19 +140,19 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Corps 2 colonnes (Remplissage A4 dynamique) */}
-        <div className="grid grid-cols-3 gap-5 flex-1 min-h-0">
+        {/* Corps 2 colonnes */}
+        <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
           {/* Gauche — Expérience & Formation */}
-          <div className="col-span-2 flex flex-col justify-between h-full min-h-0">
+          <div className="col-span-2 flex flex-col min-h-0" style={{ gap: density.spacing.sectionGap }}>
             {experiences && experiences.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0">
+              <div>
                 <h2
                   style={{
                     color,
                     borderColor: `${color}30`,
                     fontSize: density.fontSize.heading,
                   }}
-                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
                   Expériences Professionnelles
                 </h2>
@@ -202,14 +208,14 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             )}
 
             {educations && educations.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0 pt-1.5">
+              <div>
                 <h2
                   style={{
                     color,
                     borderColor: `${color}30`,
                     fontSize: density.fontSize.heading,
                   }}
-                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
                   Formation & Diplômes
                 </h2>
@@ -244,16 +250,16 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
           </div>
 
           {/* Droite — Compétences, Langues, Intérêts */}
-          <div className="col-span-1 flex flex-col justify-between h-full min-h-0">
+          <div className="col-span-1 flex flex-col min-h-0" style={{ gap: density.spacing.sectionGap }}>
             {skills && skills.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0">
+              <div>
                 <h2
                   style={{
                     color,
                     borderColor: `${color}30`,
                     fontSize: density.fontSize.heading,
                   }}
-                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
+                  className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
                   Compétences
                 </h2>
@@ -284,7 +290,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             )}
 
             {languages && languages.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+              <div>
                 <h2
                   style={{
                     color,
@@ -311,7 +317,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             )}
 
             {sections?.interests && sections.interests.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+              <div>
                 <h2
                   style={{
                     color,
@@ -332,7 +338,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             )}
 
             {sections?.certifications && sections.certifications.length > 0 && (
-              <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+              <div>
                 <h2
                   style={{
                     color,

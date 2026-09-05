@@ -108,6 +108,7 @@ export interface ResumeData {
     birthDate?: string;
     birthPlace?: string;
     maritalStatus?: string;
+    driverLicense?: string;
     linkedin: string;
     website: string;
     photoUrl: string;

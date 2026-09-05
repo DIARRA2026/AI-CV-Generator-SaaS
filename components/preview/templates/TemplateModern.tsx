@@ -203,13 +203,13 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Contenu Principal Droite — 67% (Remplissage A4 dynamique avec justification de texte) */}
+      {/* Contenu Principal Droite — 67% (Remplissage A4 ordonné avec justification de texte) */}
       <div
         className="w-[67%] flex flex-col justify-between h-full min-h-[297mm] max-h-[297mm] overflow-hidden"
         style={{ padding: density.spacing.pagePadding }}
       >
         <div
-          className="flex-1 flex flex-col justify-between min-h-0"
+          className="flex flex-col min-h-0"
           style={{ gap: density.spacing.sectionGap }}
         >
           {/* Header Nom & Titre */}
@@ -230,7 +230,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
           {/* Profil Professionnel */}
           {summary && (
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Sparkles className="w-3.5 h-3.5" style={{ color }} />
                 <h2
@@ -255,7 +255,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
           {/* Expériences */}
           {experiences && experiences.length > 0 && (
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Briefcase className="w-3.5 h-3.5" style={{ color }} />
                 <h2
@@ -269,7 +269,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                 {experiences.map((exp) => (
                   <div
                     key={exp.id}
-                    className="relative pl-3.5 border-l-2"
+                    className="relative pl-3.5 border-l-2 bg-slate-50/50 p-2.5 rounded-r-xl border-slate-100"
                     style={{ borderColor: `${color}50` }}
                   >
                     {/* Alignement tabulaire Word Processor : Titre à gauche, dates à droite */}
@@ -282,7 +282,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                       </h3>
                       <span
                         style={{ fontSize: density.fontSize.xs }}
-                        className="font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0"
+                        className="font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shrink-0 shadow-2xs"
                       >
                         {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                       </span>
@@ -293,24 +293,26 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                     >
                       {exp.company} {exp.city ? `— ${exp.city}` : ""}
                     </p>
-                    <ul
-                      style={{ gap: density.spacing.bulletGap }}
-                      className="text-slate-600 flex flex-col"
-                    >
-                      {exp.highlights.map((h, i) => (
-                        <li
-                          key={i}
-                          style={{
-                            fontSize: density.fontSize.base,
-                            lineHeight: density.lineHeight,
-                          }}
-                          className="flex items-start gap-1.5 cv-pro-text"
-                        >
-                          <span className="text-slate-400 font-bold shrink-0 mt-[-1px]">•</span>
-                          <span className="flex-1">{h}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {exp.highlights && exp.highlights.length > 0 && (
+                      <ul
+                        style={{ gap: density.spacing.bulletGap }}
+                        className="text-slate-600 flex flex-col"
+                      >
+                        {exp.highlights.map((h, i) => (
+                          <li
+                            key={i}
+                            style={{
+                              fontSize: density.fontSize.sm,
+                              lineHeight: density.lineHeight,
+                            }}
+                            className="flex items-start gap-1.5 cv-pro-text"
+                          >
+                            <span className="text-slate-400 font-bold shrink-0 mt-[-1px]">•</span>
+                            <span className="flex-1">{h}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>
@@ -319,7 +321,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
           {/* Formations */}
           {educations && educations.length > 0 && (
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <GraduationCap className="w-3.5 h-3.5" style={{ color }} />
                 <h2
@@ -344,7 +346,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                         {edu.degree} {edu.field ? `— ${edu.field}` : ""}
                       </h3>
                       <p
-                        style={{ fontSize: density.fontSize.xs }}
+                        style={{ fontSize: density.fontSize.sm }}
                         className="text-slate-600 mt-0.5"
                       >
                         {edu.school} {edu.city ? `(${edu.city})` : ""}
@@ -352,7 +354,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                     </div>
                     <span
                       style={{ fontSize: density.fontSize.xs }}
-                      className="font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shrink-0"
+                      className="font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shrink-0 shadow-2xs"
                     >
                       {edu.year}
                     </span>
@@ -365,7 +367,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           {/* Certifications & Projets */}
           {((sections?.certifications && sections.certifications.length > 0) ||
             (sections?.projects && sections.projects.length > 0)) && (
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Award className="w-3.5 h-3.5" style={{ color }} />
                 <h2
@@ -383,7 +385,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                     className="bg-slate-50 rounded-xl border border-slate-100"
                   >
                     <p
-                      style={{ fontSize: density.fontSize.sm }}
+                      style={{ fontSize: density.fontSize.base }}
                       className="font-bold text-slate-900 leading-snug"
                     >
                       {c.title}
@@ -403,7 +405,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                     className="bg-slate-50 rounded-xl border border-slate-100"
                   >
                     <p
-                      style={{ fontSize: density.fontSize.sm }}
+                      style={{ fontSize: density.fontSize.base }}
                       className="font-bold text-slate-900 leading-snug"
                     >
                       {p.name}

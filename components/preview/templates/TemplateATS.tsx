@@ -16,11 +16,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
       style={{ padding: density.spacing.pagePadding }}
     >
       <div
-        className="flex-1 flex flex-col justify-between min-h-0"
+        className="flex-1 flex flex-col min-h-0"
         style={{ gap: density.spacing.sectionGap }}
       >
         {/* Header ATS — centré, sobre, standardisé */}
-        <div className="text-center pb-2.5 mb-1.5 border-b-2 border-black">
+        <div className="text-center pb-2.5 mb-1 border-b-2 border-black">
           {design.showPhoto && personal.photoUrl && (
             <div className="mb-2 flex justify-center">
               <img
@@ -57,6 +57,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
                 personal.birthPlace ? `à ${personal.birthPlace}` : ""
               ].filter(Boolean).join(" "),
               personal.maritalStatus,
+              personal.driverLicense ? `Permis: ${personal.driverLicense}` : "",
               personal.linkedin,
               personal.website,
             ]
@@ -67,7 +68,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Résumé Professionnel */}
         {summary && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
@@ -88,7 +89,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Expérience Professionnelle */}
         {experiences && experiences.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
@@ -140,7 +141,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
@@ -178,7 +179,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Compétences */}
         {skills && skills.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
@@ -198,7 +199,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Langues */}
         {languages && languages.length > 0 && (
-          <div className="flex-1 flex flex-col justify-center min-h-0 pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
@@ -213,7 +214,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Certifications */}
         {sections?.certifications && sections.certifications.length > 0 && (
-          <div className="pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
@@ -233,7 +234,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Projets */}
         {sections?.projects && sections.projects.length > 0 && (
-          <div className="pt-1">
+          <div>
             <h2
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"

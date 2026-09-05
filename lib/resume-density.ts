@@ -126,36 +126,36 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
   }
 
   // 2. Formule Mathématique d'Échelle Typographique (Power-law Type Scaling)
-  // Baseline = 33 lignes idéales pour un document A4 standard
-  const baselineLines = 33;
-  const rawScale = Math.pow(baselineLines / Math.max(12, totalLines), 0.38);
-  // Clamping de sécurité typographique : lisibilité minimale 0.76, élégance maximale 1.22
-  const scale = Math.max(0.76, Math.min(1.22, rawScale));
+  // Baseline = 28 lignes idéales pour un document A4 standard
+  const baselineLines = 28;
+  const rawScale = Math.pow(baselineLines / Math.max(14, totalLines), 0.30);
+  // Clamping de sécurité typographique : lisibilité minimale 0.90, élégance maximale 1.15
+  const scale = Math.max(0.90, Math.min(1.15, rawScale));
 
-  // 3. Calcul continu des grandeurs typographiques et géométriques
+  // 3. Calcul continu des grandeurs typographiques et géométriques (Normes d'Édition Pro)
   const fontSize = {
-    title: `${Math.round(22 * Math.min(1.15, scale))}px`,
-    role: `${(10.5 * scale).toFixed(1)}px`,
-    heading: `${(11.0 * scale).toFixed(1)}px`,
-    summary: `${(10.0 * scale).toFixed(1)}px`,
-    base: `${(9.5 * scale).toFixed(1)}px`,
-    sm: `${(9.0 * scale).toFixed(1)}px`,
-    xs: `${(8.2 * scale).toFixed(1)}px`,
+    title: `${Math.round(24 * Math.min(1.12, scale))}px`,
+    role: `${(13.2 * scale).toFixed(1)}px`,
+    heading: `${(13.0 * scale).toFixed(1)}px`,
+    summary: `${(11.5 * scale).toFixed(1)}px`,
+    base: `${(11.5 * scale).toFixed(1)}px`,
+    sm: `${(10.8 * scale).toFixed(1)}px`,
+    xs: `${(10.0 * scale).toFixed(1)}px`,
   };
 
-  // Formule d'interlignage proportionnel amorti
-  const lineHeight = Math.min(1.58, Math.max(1.24, 1.35 * Math.pow(scale, 0.35)));
+  // Formule d'interlignage proportionnel équilibré
+  const lineHeight = Math.min(1.58, Math.max(1.38, 1.45 * Math.pow(scale, 0.25)));
 
   // Espacements géométriques
   const spacing = {
-    pagePadding: `${Math.round(24 * scale)}px`,
-    sidebarPadding: `${Math.round(20 * scale)}px`,
-    sectionGap: `${Math.max(6, Math.round(14 * scale))}px`,
-    itemGap: `${Math.max(4, Math.round(8 * scale))}px`,
-    bulletGap: `${Math.max(2, Math.round(3.5 * scale))}px`,
-    cardPadding: `${Math.max(4, Math.round(8 * scale))}px`,
-    summaryPadding: `${Math.max(6, Math.round(10 * scale))}px`,
-    photoSize: `${Math.round(80 * Math.min(1.2, Math.max(0.8, scale)))}px`,
+    pagePadding: `${Math.round(26 * scale)}px`,
+    sidebarPadding: `${Math.round(22 * scale)}px`,
+    sectionGap: `${Math.max(12, Math.round(18 * scale))}px`,
+    itemGap: `${Math.max(8, Math.round(12 * scale))}px`,
+    bulletGap: `${Math.max(3, Math.round(5 * scale))}px`,
+    cardPadding: `${Math.max(8, Math.round(12 * scale))}px`,
+    summaryPadding: `${Math.max(10, Math.round(14 * scale))}px`,
+    photoSize: `${Math.round(92 * Math.min(1.15, Math.max(0.88, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

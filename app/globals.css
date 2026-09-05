@@ -42,6 +42,8 @@ body {
 .a4-page {
   width: 210mm;
   min-height: 297mm;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   background: #ffffff;
   margin: 0 auto;

@@ -14,6 +14,7 @@ import {
   Calendar,
   Users,
 } from "lucide-react";
+import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
   data: ResumeData;
@@ -22,10 +23,11 @@ interface TemplateProps {
 export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#7c3aed";
+  const density = getResumeDensity(data);
 
   return (
-    <div className="min-h-[297mm] bg-white text-slate-800 font-sans text-[11px] leading-relaxed flex flex-col justify-between">
-      <div>
+    <div className="min-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-relaxed flex flex-col justify-between">
+      <div className="flex-1 flex flex-col justify-between">
         {/* Banner supérieur coloré */}
         <div className="px-8 pt-7 pb-6 text-white" style={{ backgroundColor: color }}>
           <div className="flex items-center gap-5">
@@ -97,27 +99,27 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Corps du CV */}
-        <div className="p-7 space-y-5">
+        {/* Corps du CV (Remplissage A4 dynamique) */}
+        <div className={`p-7 flex-1 flex flex-col justify-between ${density.sectionGap}`}>
           {/* Résumé */}
           {summary && (
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div className={`bg-slate-50/80 ${density.summaryPadding} rounded-xl border border-slate-100`}>
               <div className="flex items-center gap-1.5 mb-1.5 font-bold text-[10.5px] uppercase tracking-wide" style={{ color }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>À Propos de Moi</span>
               </div>
-              <p className="text-slate-700 text-[10.5px] leading-relaxed">
+              <p className={`text-slate-700 ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
                 {summary}
               </p>
             </div>
           )}
 
           {/* Corps en 2 colonnes */}
-          <div className="grid grid-cols-12 gap-5">
+          <div className="grid grid-cols-12 gap-5 flex-1 min-h-0">
             {/* Gauche 7/12 — Expériences & Formation */}
-            <div className="col-span-7 space-y-5">
+            <div className="col-span-7 flex flex-col justify-between h-full">
               {experiences && experiences.length > 0 && (
-                <div>
+                <div className="flex-1 flex flex-col justify-center min-h-0">
                   <div className="flex items-center gap-1.5 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                     <Briefcase className="w-3.5 h-3.5 shrink-0" style={{ color }} />
                     <h2 className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900">
@@ -184,16 +186,16 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
             </div>
 
             {/* Droite 5/12 — Compétences, Langues, Projets */}
-            <div className="col-span-5 space-y-5">
+            <div className="col-span-5 flex flex-col justify-between h-full">
               {skills && skills.length > 0 && (
-                <div>
+                <div className="flex-1 flex flex-col justify-center min-h-0">
                   <h3
-                    className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900 mb-2.5 pb-1 border-b"
+                    className="font-bold text-[10.5px] uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b"
                     style={{ borderColor: `${color}30` }}
                   >
                     Compétences & Outils
                   </h3>
-                  <div className="space-y-3">
+                  <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
                     {skills.map((cat) => (
                       <div key={cat.id}>
                         <h4 className="font-bold text-slate-800 text-[9.5px] uppercase tracking-wide mb-1.5">

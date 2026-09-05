@@ -1,5 +1,6 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
+import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
   data: ResumeData;
@@ -7,10 +8,11 @@ interface TemplateProps {
 
 export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
+  const density = getResumeDensity(data);
 
   return (
-    <div className="px-10 pt-9 pb-7 min-h-[297mm] bg-white text-black font-sans text-[11px] leading-normal flex flex-col justify-between">
-      <div>
+    <div className="px-10 pt-9 pb-7 min-h-[297mm] h-full flex-1 bg-white text-black font-sans leading-normal flex flex-col justify-between">
+      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
         {/* Header ATS — centré, sobre, standardisé */}
         <div className="text-center pb-4 mb-5 border-b-2 border-black">
           {design.showPhoto && personal.photoUrl && (
@@ -49,11 +51,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Résumé Professionnel */}
         {summary && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
               RÉSUMÉ PROFESSIONNEL
             </h2>
-            <p className="text-[10.5px] leading-relaxed text-black">
+            <p className={`${density.summaryTextSize} ${density.lineHeight} text-black text-justify`}>
               {summary}
             </p>
           </div>
@@ -61,11 +63,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Expérience Professionnelle */}
         {experiences && experiences.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2.5">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
               EXPÉRIENCE PROFESSIONNELLE
             </h2>
-            <div className="space-y-3.5">
+            <div className={density.itemGap}>
               {experiences.map((exp) => (
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline font-bold text-[11px] text-black">
@@ -78,7 +80,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
                     <span className="italic font-medium">{exp.company}</span>
                     {exp.city && <span className="italic">{exp.city}</span>}
                   </div>
-                  <ul className="list-disc list-outside ml-5 space-y-0.5 text-[10px] text-black">
+                  <ul className={`list-disc list-outside ml-5 ${density.bulletGap} ${density.bodyTextSize} text-black`}>
                     {exp.highlights.map((h, idx) => (
                       <li key={idx} className="leading-snug">{h}</li>
                     ))}
@@ -91,11 +93,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2.5">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
               FORMATION & DIPLÔMES
             </h2>
-            <div className="space-y-2.5">
+            <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
               {educations.map((edu) => (
                 <div key={edu.id} className="flex justify-between items-start text-[10.5px] text-black">
                   <div>
@@ -114,8 +116,8 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Compétences */}
         {skills && skills.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
               COMPÉTENCES TECHNIQUES & LOGICIELS
             </h2>
             <div className="space-y-1 text-[10px] text-black">
@@ -131,8 +133,8 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Langues */}
         {languages && languages.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5">
               LANGUES
             </h2>
             <p className="text-[10px] text-black">

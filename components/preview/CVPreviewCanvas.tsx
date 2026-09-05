@@ -39,7 +39,7 @@ export const CVPreviewCanvas = forwardRef<HTMLDivElement, CVPreviewCanvasProps>(
         <div
           ref={ref}
           id="cv-printable-page"
-          className="a4-page transition-all duration-200 transform-gpu overflow-hidden relative"
+          className="a4-page transition-all duration-200 transform-gpu overflow-hidden relative flex flex-col"
           style={{
             transform: scale !== 1 ? `scale(${scale})` : undefined,
             transformOrigin: "top center",

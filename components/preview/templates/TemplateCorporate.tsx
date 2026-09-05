@@ -1,6 +1,7 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
 import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Award, Wrench } from "lucide-react";
+import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
   data: ResumeData;
@@ -9,10 +10,11 @@ interface TemplateProps {
 export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#1e3a8a";
+  const density = getResumeDensity(data);
 
   return (
-    <div className="p-8 min-h-[297mm] bg-white text-slate-800 font-sans text-[11px] leading-relaxed flex flex-col justify-between">
-      <div>
+    <div className="p-8 min-h-[297mm] h-full flex-1 bg-white text-slate-800 font-sans leading-relaxed flex flex-col justify-between">
+      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
         {/* Header Corporate En Bandeau */}
         <div className="flex items-center justify-between border-b-2 pb-5 mb-6" style={{ borderColor: color }}>
           <div className="flex items-center gap-4">
@@ -57,41 +59,41 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Résumé Exécutif */}
         {summary && (
-          <div className="mb-6 bg-slate-50 p-4 rounded-xl border-l-4" style={{ borderColor: color }}>
+          <div className={`bg-slate-50/80 ${density.summaryPadding} rounded-xl border-l-4 shadow-xs`} style={{ borderColor: color }}>
             <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-1">
               Synthèse Professionnelle
             </h2>
-            <p className="text-slate-700 text-[10.5px] leading-relaxed">
+            <p className={`text-slate-700 ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
               {summary}
             </p>
           </div>
         )}
 
-        {/* 2 Colonnes Structurées */}
-        <div className="grid grid-cols-12 gap-6">
-          {/* Colonne Gauche (7/12) : Expériences */}
-          <div className="col-span-7 space-y-5">
+        {/* 2 Colonnes Structurées (Remplissage A4 dynamique) */}
+        <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 pt-2">
+          {/* Colonne Gauche (7/12) : Expériences & Formations */}
+          <div className="col-span-7 flex flex-col justify-between h-full">
             {experiences && experiences.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              <div className="flex-1 flex flex-col justify-center min-h-0">
+                <div className="flex items-center gap-2 mb-2 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                   <Briefcase className="w-4 h-4" style={{ color }} />
                   <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
                     Parcours Professionnel
                   </h2>
                 </div>
-                <div className="space-y-4">
+                <div className={density.itemGap}>
                   {experiences.map((exp) => (
                     <div key={exp.id} className="relative pl-3.5 border-l-2" style={{ borderColor: `${color}40` }}>
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <h3 className="font-bold text-slate-900 text-[11.5px]">{exp.role}</h3>
-                        <span className="text-[9.5px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                        <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"}`}>{exp.role}</h3>
+                        <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                           {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
                         </span>
                       </div>
                       <p className="text-[10px] font-semibold mb-1" style={{ color }}>
                         {exp.company} {exp.city ? `(${exp.city})` : ""}
                       </p>
-                      <ul className="space-y-1 text-slate-600 text-[10px]">
+                      <ul className={`${density.bulletGap} text-slate-600 ${density.bodyTextSize}`}>
                         {exp.highlights.map((h, idx) => (
                           <li key={idx} className="flex items-start gap-1.5 leading-relaxed">
                             <span className="text-slate-400 font-bold">•</span>
@@ -107,18 +109,18 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
 
             {/* Formations */}
             {educations && educations.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              <div className="flex-1 flex flex-col justify-center min-h-0 pt-2">
+                <div className="flex items-center gap-2 mb-2 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                   <GraduationCap className="w-4 h-4" style={{ color }} />
                   <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
                     Diplômes & Cursus
                   </h2>
                 </div>
-                <div className="space-y-2.5">
+                <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
                   {educations.map((edu) => (
-                    <div key={edu.id} className="flex justify-between items-start bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
+                    <div key={edu.id} className={`flex justify-between items-start bg-slate-50/60 ${density.cardPadding} rounded-xl border border-slate-100`}>
                       <div>
-                        <h3 className="font-bold text-slate-900 text-[11px]">
+                        <h3 className={`font-bold text-slate-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"}`}>
                           {edu.degree} {edu.field ? `— ${edu.field}` : ""}
                         </h3>
                         <p className="text-[10px] text-slate-600 mt-0.5">{edu.school} {edu.city ? `(${edu.city})` : ""}</p>
@@ -134,19 +136,19 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
           </div>
 
           {/* Colonne Droite (5/12) : Compétences, Langues, Extra */}
-          <div className="col-span-5 space-y-5">
+          <div className="col-span-5 flex flex-col justify-between h-full">
             {/* Compétences */}
             {skills && skills.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              <div className="flex-1 flex flex-col justify-center min-h-0">
+                <div className="flex items-center gap-2 mb-2 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                   <Wrench className="w-4 h-4" style={{ color }} />
                   <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
                     Domaines d'Expertise
                   </h2>
                 </div>
-                <div className="space-y-3">
+                <div className={density.mode === "spacious" ? "space-y-3.5" : "space-y-2"}>
                   {skills.map((cat) => (
-                    <div key={cat.id} className="space-y-1.5">
+                    <div key={cat.id} className="space-y-1">
                       <h4 className="font-bold text-slate-900 text-[10px] uppercase tracking-wide">
                         {cat.category}
                       </h4>
@@ -154,7 +156,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                         {cat.items.map((item, idx) => (
                           <span
                             key={idx}
-                            className="inline-block px-2.5 py-1 bg-slate-100 text-slate-800 font-semibold rounded-lg text-[9.5px] border border-slate-200"
+                            className={`inline-block ${density.mode === "spacious" ? "px-2.5 py-1 text-[10px]" : "px-2 py-0.5 text-[9px]"} bg-slate-100 text-slate-800 font-semibold rounded-lg border border-slate-200`}
                           >
                             {item}
                           </span>
@@ -168,11 +170,11 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
 
             {/* Langues */}
             {languages && languages.length > 0 && (
-              <div>
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-2.5 pb-1 border-b" style={{ borderColor: `${color}30` }}>
+              <div className="flex-1 flex flex-col justify-center min-h-0 pt-2">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                   Langues
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {languages.map((l) => (
                     <div key={l.id} className="flex justify-between items-center text-[10px] py-1 border-b border-slate-100">
                       <span className="font-bold text-slate-800">{l.name}</span>
@@ -187,16 +189,16 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
 
             {/* Certifications / Projets */}
             {sections.certifications && sections.certifications.length > 0 && (
-              <div>
+              <div className="flex-1 flex flex-col justify-center min-h-0 pt-2">
                 <div className="flex items-center gap-2 mb-2 pb-1 border-b" style={{ borderColor: `${color}30` }}>
                   <Award className="w-4 h-4" style={{ color }} />
                   <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
                     Certifications
                   </h2>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {sections.certifications.map((c) => (
-                    <div key={c.id} className="p-2 bg-slate-50 rounded-lg border border-slate-100 text-[9.5px]">
+                    <div key={c.id} className={`p-2 bg-slate-50 rounded-lg border border-slate-100 ${density.bodyTextSize}`}>
                       <p className="font-bold text-slate-900 leading-snug">{c.title}</p>
                       <p className="text-slate-500 mt-0.5">{c.issuer} ({c.year})</p>
                     </div>

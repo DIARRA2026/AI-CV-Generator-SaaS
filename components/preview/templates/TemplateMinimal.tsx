@@ -1,5 +1,6 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
+import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
   data: ResumeData;
@@ -8,10 +9,11 @@ interface TemplateProps {
 export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#111827";
+  const density = getResumeDensity(data);
 
   return (
-    <div className="p-10 min-h-[297mm] bg-white text-zinc-800 font-sans text-[11px] leading-relaxed flex flex-col justify-between">
-      <div>
+    <div className="p-10 min-h-[297mm] h-full flex-1 bg-white text-zinc-800 font-sans leading-relaxed flex flex-col justify-between">
+      <div className={`flex-1 flex flex-col justify-between ${density.sectionGap}`}>
         {/* Header minimaliste */}
         <div className="mb-7">
           <div className="flex justify-between items-start">
@@ -56,11 +58,11 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Profil */}
         {summary && (
-          <div className="mb-6">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">
               À Propos
             </h2>
-            <p className="text-zinc-700 text-[10.5px] leading-relaxed">
+            <p className={`text-zinc-700 ${density.summaryTextSize} ${density.lineHeight} text-justify`}>
               {summary}
             </p>
           </div>
@@ -68,11 +70,11 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Expérience */}
         {experiences && experiences.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-3">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
               Expérience
             </h2>
-            <div className="space-y-4">
+            <div className={density.itemGap}>
               {experiences.map((exp) => (
                 <div key={exp.id} className="grid grid-cols-4 gap-4">
                   <div className="col-span-1 text-[9.5px] text-zinc-400 pt-0.5 leading-snug">
@@ -80,11 +82,11 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                     {exp.current ? "Présent" : exp.endDate}
                   </div>
                   <div className="col-span-3">
-                    <h3 className="font-semibold text-zinc-900 text-[11px] leading-tight">{exp.role}</h3>
-                    <p className="text-[10px] text-zinc-600 mb-1.5 font-medium mt-0.5">
+                    <h3 className={`font-semibold text-zinc-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"} leading-tight`}>{exp.role}</h3>
+                    <p className="text-[10px] text-zinc-600 mb-1 font-medium mt-0.5">
                       {exp.company}{exp.city ? ` — ${exp.city}` : ""}
                     </p>
-                    <ul className="space-y-0.5 text-zinc-600 text-[10px]">
+                    <ul className={`${density.bulletGap} text-zinc-600 ${density.bodyTextSize}`}>
                       {exp.highlights.map((h, idx) => (
                         <li key={idx} className="flex items-start gap-1.5 leading-snug">
                           <span className="text-zinc-400 font-bold shrink-0">–</span>
@@ -101,18 +103,18 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Formation */}
         {educations && educations.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-3">
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <h2 className="text-[9.5px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
               Formation
             </h2>
-            <div className="space-y-3">
+            <div className={density.mode === "spacious" ? "space-y-3" : "space-y-1.5"}>
               {educations.map((edu) => (
                 <div key={edu.id} className="grid grid-cols-4 gap-4">
                   <div className="col-span-1 text-[9.5px] text-zinc-400 pt-0.5">
                     {edu.year}
                   </div>
                   <div className="col-span-3">
-                    <h3 className="font-semibold text-zinc-900 text-[11px] leading-tight">
+                    <h3 className={`font-semibold text-zinc-900 ${density.mode === "spacious" ? "text-xs" : "text-[11px]"} leading-tight`}>
                       {edu.degree}{edu.field ? ` — ${edu.field}` : ""}
                     </h3>
                     <p className="text-[9.5px] text-zinc-500 mt-0.5">

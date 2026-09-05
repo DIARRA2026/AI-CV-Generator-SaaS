@@ -1,6 +1,6 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
-import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Award, Wrench } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Award, Wrench, Calendar, Users, Car } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
 
 interface TemplateProps {
@@ -57,26 +57,58 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
             </div>
           </div>
 
-          {/* Contact En-tête */}
+          {/* Contact En-tête avec Icônes Dédiées & Permis */}
           <div
-            className="text-right space-y-0.5 text-slate-600 shrink-0"
+            className="text-right space-y-1 text-slate-600 shrink-0"
             style={{ fontSize: density.fontSize.xs }}
           >
-            {personal.email && <p className="font-semibold text-slate-900">{personal.email}</p>}
-            {personal.phone && <p>{personal.phone}</p>}
+            {personal.email && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="font-semibold text-slate-900">{personal.email}</span>
+                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
+            )}
+            {personal.phone && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="font-bold text-slate-800">{personal.phone}</span>
+                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
+            )}
             {(personal.city || personal.country) && (
-              <p>{[personal.city, personal.country].filter(Boolean).join(", ")}</p>
+              <div className="flex items-center justify-end gap-1.5">
+                <span>{[personal.city, personal.country].filter(Boolean).join(", ")}</span>
+                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
             )}
             {(personal.birthDate || personal.birthPlace) && (
-              <p>
-                {[
-                  personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                  personal.birthPlace ? `à ${personal.birthPlace}` : ""
-                ].filter(Boolean).join(" ")}
-              </p>
+              <div className="flex items-center justify-end gap-1.5">
+                <span>
+                  {[
+                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
+                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                  ].filter(Boolean).join(" ")}
+                </span>
+                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
             )}
-            {personal.maritalStatus && <p>{personal.maritalStatus}</p>}
-            {personal.linkedin && <p className="text-slate-500">{personal.linkedin}</p>}
+            {personal.maritalStatus && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span>{personal.maritalStatus}</span>
+                <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
+            )}
+            {personal.driverLicense && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="font-semibold text-slate-700">Permis : {personal.driverLicense}</span>
+                <Car className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
+            )}
+            {personal.linkedin && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="text-slate-500">{personal.linkedin}</span>
+                <Linkedin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -328,20 +360,39 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                 >
                   Langues
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {languages.map((l) => (
                     <div
                       key={l.id}
-                      style={{ fontSize: density.fontSize.sm }}
-                      className="flex justify-between items-center py-1 border-b border-slate-100"
+                      className="bg-slate-50/80 p-2 rounded-lg border border-slate-100"
                     >
-                      <span className="font-bold text-slate-800">{l.name}</span>
-                      <span
-                        style={{ fontSize: density.fontSize.xs }}
-                        className="font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700"
-                      >
-                        {l.level}
-                      </span>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-slate-800" style={{ fontSize: density.fontSize.sm }}>
+                          {l.name}
+                        </span>
+                        <span
+                          style={{ fontSize: density.fontSize.xs }}
+                          className="font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 shadow-2xs whitespace-nowrap"
+                        >
+                          {l.level}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="rounded-full h-1.5 transition-all"
+                          style={{
+                            backgroundColor: color,
+                            width:
+                              l.level === "Bilingue / Natif"
+                                ? "100%"
+                                : l.level === "Courant"
+                                ? "85%"
+                                : l.level === "Intermédiaire"
+                                ? "60%"
+                                : "40%",
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

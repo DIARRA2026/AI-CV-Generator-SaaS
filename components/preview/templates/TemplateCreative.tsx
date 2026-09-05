@@ -13,6 +13,7 @@ import {
   FolderGit2,
   Calendar,
   Users,
+  Car,
 } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
 
@@ -112,6 +113,12 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                   <span className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 shrink-0 text-white/80" />
                     <span>{personal.maritalStatus}</span>
+                  </span>
+                )}
+                {personal.driverLicense && (
+                  <span className="flex items-center gap-1.5">
+                    <Car className="w-3.5 h-3.5 shrink-0 text-white/80" />
+                    <span>Permis : {personal.driverLicense}</span>
                   </span>
                 )}
                 {personal.linkedin && (
@@ -435,24 +442,39 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                       Langues
                     </h3>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {languages.map((l) => (
                       <div
                         key={l.id}
-                        style={{
-                          fontSize: density.fontSize.sm,
-                          paddingTop: "4px",
-                          paddingBottom: "4px",
-                        }}
-                        className="flex justify-between items-center border-b border-slate-100 last:border-0"
+                        className="bg-slate-50/80 p-2 rounded-xl border border-slate-100"
                       >
-                        <span className="font-bold text-slate-800">{l.name}</span>
-                        <span
-                          style={{ fontSize: density.fontSize.xs }}
-                          className="font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md"
-                        >
-                          {l.level}
-                        </span>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-bold text-slate-800" style={{ fontSize: density.fontSize.sm }}>
+                            {l.name}
+                          </span>
+                          <span
+                            style={{ fontSize: density.fontSize.xs }}
+                            className="font-semibold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-2xs whitespace-nowrap"
+                          >
+                            {l.level}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="rounded-full h-1.5 transition-all"
+                            style={{
+                              backgroundColor: color,
+                              width:
+                                l.level === "Bilingue / Natif"
+                                  ? "100%"
+                                  : l.level === "Courant"
+                                  ? "85%"
+                                  : l.level === "Intermédiaire"
+                                  ? "60%"
+                                  : "40%",
+                            }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -463,21 +485,21 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
               {sections?.interests && sections.interests.length > 0 && (
                 <div>
                   <h4
-                    style={{ fontSize: density.fontSize.heading }}
-                    className="font-extrabold uppercase tracking-wider text-slate-900 mb-1.5 pb-1 border-b"
-                    style-prop-border-color={`${color}30`}
+                    style={{ fontSize: density.fontSize.heading, borderColor: `${color}40` }}
+                    className="font-extrabold uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b-2"
                   >
                     Centres d'intérêt
                   </h4>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {sections.interests.map((interest, i) => (
-                      <span
+                      <div
                         key={i}
                         style={{ fontSize: density.fontSize.xs }}
-                        className="inline-block px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-medium"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-slate-700 font-semibold shadow-2xs leading-tight"
                       >
-                        {interest}
-                      </span>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="truncate">{interest}</span>
+                      </div>
                     ))}
                   </div>
                 </div>

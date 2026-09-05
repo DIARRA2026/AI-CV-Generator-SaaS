@@ -47,10 +47,9 @@ export const ScanConvertModal: React.FC<Props> = ({ isOpen, onClose, resumeData 
       const { downloadResumePDF } = await import("@/lib/pdf-export");
       await downloadResumePDF("cv-printable-page", resumeData);
     } else if (outputFormat === "word") {
-      // Génère un .txt formaté (simulé Word)
-      const content = buildWordContent(resumeData);
-      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-      triggerDownload(blob, `CV_${resumeData.personal.firstName}_${resumeData.personal.lastName}.txt`);
+      // Génère un vrai document Microsoft Word (.docx) professionnel
+      const { downloadResumeDocx } = await import("@/lib/docx-export");
+      await downloadResumeDocx(resumeData);
     } else if (outputFormat === "excel") {
       const csv = buildCSVContent(resumeData);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -139,8 +138,8 @@ export const ScanConvertModal: React.FC<Props> = ({ isOpen, onClose, resumeData 
     },
     {
       id: "word",
-      label: "Word (.txt)",
-      desc: "Exporte le contenu structuré du CV (compatible Word)",
+      label: "Word (.docx)",
+      desc: "Exporte un vrai document Microsoft Word (.docx) éditable",
       icon: <FileText className="w-5 h-5" />,
       color: "text-blue-600 bg-blue-50 border-blue-200",
     },

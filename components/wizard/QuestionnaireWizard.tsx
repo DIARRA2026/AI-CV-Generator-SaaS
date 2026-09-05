@@ -19,6 +19,7 @@ interface QuestionnaireWizardProps {
   onOpenATS: () => void;
   onOpenCoverLetter: () => void;
   onDownloadPDF: () => void;
+  onDownloadWord?: () => void;
   onShare: () => void;
   onOpenPayment: () => void;
 }
@@ -29,6 +30,7 @@ export const QuestionnaireWizard: React.FC<QuestionnaireWizardProps> = ({
   onOpenATS,
   onOpenCoverLetter,
   onDownloadPDF,
+  onDownloadWord,
   onShare,
   onOpenPayment,
 }) => {
@@ -228,6 +230,7 @@ export const QuestionnaireWizard: React.FC<QuestionnaireWizardProps> = ({
             onOpenATS={onOpenATS}
             onOpenCoverLetter={onOpenCoverLetter}
             onDownloadPDF={onDownloadPDF}
+            onDownloadWord={onDownloadWord}
             onShare={onShare}
             onOpenPayment={onOpenPayment}
           />

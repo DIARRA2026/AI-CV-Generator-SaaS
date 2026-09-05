@@ -8,6 +8,7 @@ import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
 import { initialResumeData } from "@/lib/initialData";
 import { downloadResumePDF } from "@/lib/pdf-export";
+import { downloadResumeDocx } from "@/lib/docx-export";
 import { CVPreviewCanvas } from "@/components/preview/CVPreviewCanvas";
 import {
   Download,
@@ -165,6 +166,16 @@ export default function PublicCandidateCVPage() {
   const handleDownload = async () => {
     setIsDownloading(true);
     const success = await downloadResumePDF("cv-printable-page", resumeData);
+    setIsDownloading(false);
+    if (success) {
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    }
+  };
+
+  const handleDownloadWord = async () => {
+    setIsDownloading(true);
+    const success = await downloadResumeDocx(resumeData);
     setIsDownloading(false);
     if (success) {
       setDownloadSuccess(true);
@@ -422,6 +433,22 @@ export default function PublicCandidateCVPage() {
                   <span className="hidden md:inline">Partager</span>
                 </>
               )}
+            </button>
+
+            {/* Télécharger Word (.docx) */}
+            <button
+              type="button"
+              onClick={handleDownloadWord}
+              disabled={isDownloading}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 ${
+                isDark
+                  ? "bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50"
+                  : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200"
+              }`}
+              title="Télécharger au format Word (.docx)"
+            >
+              <FileText className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="hidden md:inline whitespace-nowrap">Word (.docx)</span>
             </button>
 
             {/* Télécharger CV PDF */}
@@ -1540,15 +1567,27 @@ export default function PublicCandidateCVPage() {
                 <p className="text-[11px] text-slate-400">Prêt pour l'impression et les candidatures officielles</p>
               </div>
             </div>
-            <button
-              type="button"
-              disabled={isDownloading}
-              onClick={handleDownload}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-md"
-            >
-              <Download className="w-4 h-4" />
-              <span>Télécharger ce CV en PDF</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isDownloading}
+                onClick={handleDownloadWord}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all"
+                title="Télécharger au format Word (.docx)"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Word (.docx)</span>
+              </button>
+              <button
+                type="button"
+                disabled={isDownloading}
+                onClick={handleDownload}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all"
+              >
+                <Download className="w-4 h-4" />
+                <span>Télécharger ce CV en PDF</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-center bg-slate-900/50 p-3 sm:p-8 rounded-3xl border border-slate-800 overflow-x-auto shadow-2xl">

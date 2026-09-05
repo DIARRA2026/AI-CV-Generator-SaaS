@@ -6,6 +6,7 @@ import { ResumeData } from "@/lib/types";
 import { initialResumeData } from "@/lib/initialData";
 import { StorageManager } from "@/lib/storage";
 import { downloadResumePDF } from "@/lib/pdf-export";
+import { downloadResumeDocx } from "@/lib/docx-export";
 import { QuestionnaireWizard } from "@/components/wizard/QuestionnaireWizard";
 import { CVPreviewCanvas } from "@/components/preview/CVPreviewCanvas";
 import { ATSOptimizerModal } from "@/components/tools/ATSOptimizerModal";
@@ -174,17 +175,21 @@ export default function CreateCVPage() {
     }, 700);
   };
 
-  // Téléchargement direct du PDF prévisualisé (respect de l'offre)
+  // Téléchargement direct du PDF prévisualisé (immédiat et sans blocage)
   const handleDownloadPDF = async () => {
-    // Si compte gratuit, l'offre gratuite spécifie "Téléchargement PDF désactivé / avec filigrane"
-    if (!resumeData.isPremium || resumeData.planTier === "free") {
-      setPaymentDefaultPlan("1500");
-      setIsPaymentOpen(true);
-      return;
-    }
-
     setIsDownloading(true);
     const success = await downloadResumePDF("cv-printable-page", resumeData);
+    setIsDownloading(false);
+    if (success) {
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    }
+  };
+
+  // Téléchargement natif Word (.docx) professionnel
+  const handleDownloadWord = async () => {
+    setIsDownloading(true);
+    const success = await downloadResumeDocx(resumeData);
     setIsDownloading(false);
     if (success) {
       setDownloadSuccess(true);
@@ -406,10 +411,46 @@ export default function CreateCVPage() {
           <button
             type="button"
             onClick={() => requireAuth("smartGenerate", () => setIsSmartGenerateOpen(true))}
-            className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all"
+            className="px-3.5 py-1.5 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all"
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span>Générer un CV</span>
+            <span className="hidden sm:inline">Générer un CV</span>
+          </button>
+
+          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+          {/* Téléchargement Word (.docx) */}
+          <button
+            type="button"
+            onClick={handleDownloadWord}
+            disabled={isDownloading}
+            className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all cursor-pointer shadow-xs"
+            title="Télécharger immédiatement en Word (.docx)"
+          >
+            <FileText className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="hidden md:inline">Word (.docx)</span>
+          </button>
+
+          {/* Télécharger PDF */}
+          <button
+            type="button"
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+            className={`px-4 py-1.5 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer ${
+              downloadSuccess
+                ? "bg-emerald-600 hover:bg-emerald-500"
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
+            }`}
+            title="Télécharger immédiatement le CV en PDF"
+          >
+            {isDownloading ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : downloadSuccess ? (
+              <Check className="w-3.5 h-3.5 stroke-[3]" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>{isDownloading ? "Génération..." : downloadSuccess ? "Téléchargé !" : "Télécharger PDF"}</span>
           </button>
         </div>
       </div>
@@ -428,6 +469,7 @@ export default function CreateCVPage() {
             onOpenATS={() => setIsATSOpen(true)}
             onOpenCoverLetter={() => setIsCoverLetterOpen(true)}
             onDownloadPDF={handleDownloadPDF}
+            onDownloadWord={handleDownloadWord}
             onShare={() => setIsShareOpen(true)}
             onOpenPayment={() => setIsPaymentOpen(true)}
           />
@@ -524,6 +566,46 @@ export default function CreateCVPage() {
           {/* Canvas A4 */}
           <div className="w-full flex justify-center bg-slate-200/70 p-2 sm:p-4 rounded-3xl border border-slate-300/70 overflow-x-auto min-h-[600px] shadow-inner">
             <CVPreviewCanvas ref={previewRef} data={resumeData} scale={scale} />
+          </div>
+
+          {/* Barre d'action rapide sous le canvas */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-2xl border border-slate-200 no-print shadow-xs">
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>Format A4 professionnel (1,5 cm de marges calibrées)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadWord}
+                disabled={isDownloading}
+                className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all cursor-pointer"
+                title="Télécharger en Word (.docx)"
+              >
+                <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Word (.docx)</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                className={`px-4 py-1.5 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer ${
+                  downloadSuccess
+                    ? "bg-emerald-600"
+                    : "bg-blue-600 hover:bg-blue-500"
+                }`}
+                title="Télécharger en PDF"
+              >
+                {isDownloading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : downloadSuccess ? (
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>{isDownloading ? "Génération..." : downloadSuccess ? "Téléchargé !" : "Télécharger le PDF"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

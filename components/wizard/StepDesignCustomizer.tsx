@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ResumeData, TemplateId } from "@/lib/types";
-import { Check, Palette, Sparkles, Layout, Type, Download, Share2, Crown, Eye, EyeOff } from "lucide-react";
+import { Check, Palette, Sparkles, Layout, Type, Download, Share2, Crown, Eye, EyeOff, FileText } from "lucide-react";
 
 interface StepDesignCustomizerProps {
   design: ResumeData["design"];
@@ -10,6 +10,7 @@ interface StepDesignCustomizerProps {
   onOpenATS: () => void;
   onOpenCoverLetter: () => void;
   onDownloadPDF: () => void;
+  onDownloadWord?: () => void;
   onShare: () => void;
   onOpenPayment: () => void;
 }
@@ -20,6 +21,7 @@ export const StepDesignCustomizer: React.FC<StepDesignCustomizerProps> = ({
   onOpenATS,
   onOpenCoverLetter,
   onDownloadPDF,
+  onDownloadWord,
   onShare,
   onOpenPayment,
 }) => {
@@ -183,30 +185,43 @@ export const StepDesignCustomizer: React.FC<StepDesignCustomizerProps> = ({
         </button>
       </div>
 
-      {/* 4. Bouton Principal de Téléchargement Direct & Partage */}
-      <div className="p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* 4. Boutons Principaux de Téléchargement Direct & Partage */}
+      <div className="p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h3 className="text-base font-bold text-white">
             Prêt à postuler ? Téléchargez votre CV
           </h3>
           <p className="text-xs text-blue-200 mt-0.5">
-            Génère et enregistre immédiatement le fichier PDF sur votre appareil.
+            Génération instantanée en PDF haute résolution ou document Word (.docx) éditable.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
           <button
             type="button"
             onClick={onShare}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/20"
+            className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/20 transition-all"
           >
             <Share2 className="w-4 h-4" />
             <span>QR & Partage</span>
           </button>
+
+          {onDownloadWord && (
+            <button
+              type="button"
+              onClick={onDownloadWord}
+              className="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+              title="Télécharger au format Word (.docx)"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Télécharger Word (.docx)</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onDownloadPDF}
-            className="flex-1 sm:flex-initial px-6 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-all"
+            className="flex-1 sm:flex-initial px-5 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-all"
           >
             <Download className="w-4 h-4" />
             <span>Télécharger le PDF</span>

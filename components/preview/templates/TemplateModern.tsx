@@ -60,13 +60,12 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Carte Coordonnées — Disposition Structurée en Badges d'Icônes & Libellés */}
-        <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-          <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
-            <Mail className="w-4 h-4 text-white/90 shrink-0" />
+        {/* Carte Coordonnées — Disposition Aérée et Sans Débordement */}
+        <div className="bg-white/10 rounded-xl p-3.5 border border-white/15 backdrop-blur-xs shadow-xs shrink-0 overflow-visible">
+          <div className="flex items-center gap-2 pb-2 mb-3 border-b border-white/20">
             <h3
               style={{ fontSize: density.fontSize.sm }}
-              className="uppercase tracking-wider font-extrabold text-white truncate"
+              className="uppercase tracking-wider font-extrabold text-white leading-normal"
             >
               Coordonnées
             </h3>
@@ -187,12 +186,12 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Carte Compétences */}
         {skills && skills.length > 0 && (
-          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+          <div className="bg-white/10 rounded-xl p-3.5 border border-white/15 backdrop-blur-xs shadow-xs shrink-0 overflow-visible">
+            <div className="flex items-center gap-2 pb-2 mb-2.5 border-b border-white/20">
               <Sparkles className="w-4 h-4 text-white/90 shrink-0" />
               <h3
                 style={{ fontSize: density.fontSize.sm }}
-                className="uppercase tracking-wider font-extrabold text-white truncate"
+                className="uppercase tracking-wider font-extrabold text-white leading-normal"
               >
                 Compétences
               </h3>
@@ -211,7 +210,7 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
                       <span
                         key={idx}
                         style={{ fontSize: density.fontSize.xs }}
-                        className="inline-block px-2.5 py-1 rounded-lg bg-white/20 border border-white/25 text-white font-semibold leading-tight shadow-xs"
+                        className="inline-block px-2.5 py-1 rounded-lg bg-white/20 border border-white/25 text-white font-semibold leading-normal shadow-xs"
                       >
                         {item}
                       </span>
@@ -225,12 +224,12 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
 
         {/* Carte Langues — Jauges Visuelles & Badges Propres Sans Retour à la Ligne */}
         {languages && languages.length > 0 && (
-          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+          <div className="bg-white/10 rounded-xl p-3.5 border border-white/15 backdrop-blur-xs shadow-xs shrink-0 overflow-visible">
+            <div className="flex items-center gap-2 pb-2 mb-2.5 border-b border-white/20">
               <Globe className="w-4 h-4 text-white/90 shrink-0" />
               <h3
                 style={{ fontSize: density.fontSize.sm }}
-                className="uppercase tracking-wider font-extrabold text-white truncate"
+                className="uppercase tracking-wider font-extrabold text-white leading-normal"
               >
                 Langues
               </h3>
@@ -271,42 +270,39 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Carte Centres d'intérêt — Grille Sémantique 2 Colonnes */}
+        {/* Carte Centres d'intérêt — Tags Aérés Sans Débordement Ni Coupure */}
         {sections?.interests && sections.interests.length > 0 && (
-          <div className="bg-white/10 rounded-xl p-3 border border-white/15 backdrop-blur-xs shadow-xs shrink-0">
-            <div className="flex items-center gap-2 pb-1.5 mb-2.5 border-b border-white/25">
+          <div className="bg-white/10 rounded-xl p-3.5 border border-white/15 backdrop-blur-xs shadow-xs shrink-0 overflow-visible">
+            <div className="flex items-center gap-2 pb-2 mb-2.5 border-b border-white/20">
               <Award className="w-4 h-4 text-white/90 shrink-0" />
               <h3
                 style={{ fontSize: density.fontSize.sm }}
-                className="uppercase tracking-wider font-extrabold text-white truncate whitespace-nowrap"
+                className="uppercase tracking-wider font-extrabold text-white leading-normal"
               >
                 Centres d'intérêt
               </h3>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex flex-wrap gap-2 overflow-visible">
               {sections.interests.map((interest, i) => (
-                <div
+                <span
                   key={i}
                   style={{ fontSize: density.fontSize.xs }}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/15 border border-white/20 rounded-lg text-white font-semibold shadow-2xs leading-tight"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 border border-white/25 rounded-lg text-white font-medium leading-normal shadow-xs overflow-visible"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                  <span className="truncate">{interest}</span>
-                </div>
+                  <span>{interest}</span>
+                </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Sceau Bas Exécutif de Certification */}
-        <div className="mt-auto bg-white/10 rounded-xl p-3 border border-white/15 text-center flex flex-col items-center gap-1 shrink-0 backdrop-blur-xs shadow-xs">
-          <div className="flex items-center gap-1.5 text-white font-bold tracking-wider uppercase text-xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-            <span>Profil Candidat Conforme</span>
-          </div>
-          <p className="text-white/70 text-[11px] leading-tight">
-            Document certifié conforme • MonCV.ai
-          </p>
+        {/* Sceau Bas Discret */}
+        <div className="mt-auto pt-2 border-t border-white/20 text-center flex items-center justify-center gap-1.5 shrink-0">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+          <span className="text-white/80 font-bold tracking-wider uppercase text-[10px]">
+            Profil Certifié Conforme
+          </span>
         </div>
       </div>
 

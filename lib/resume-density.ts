@@ -173,7 +173,7 @@ export function getResumeDensity(data: ResumeData): DensitySettings {
     bulletGap: `${Math.max(1.5, Math.round(2.5 * scale))}px`,
     cardPadding: `${Math.max(4, Math.round(5.5 * scale))}px`,
     summaryPadding: `${Math.max(5, Math.round(7 * scale))}px`,
-    photoSize: `${Math.round(210 * Math.min(1.04, Math.max(0.82, scale)))}px`,
+    photoSize: `${Math.round(180 * Math.min(1.04, Math.max(0.82, scale)))}px`,
   };
 
   // 4. Catégorisation pour rétrocompatibilité

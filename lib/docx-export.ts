@@ -3,13 +3,9 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
+  ImageRun,
   AlignmentType,
   BorderStyle,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
   convertMillimetersToTwip,
 } from "docx";
 import { ResumeData } from "./types";
@@ -17,40 +13,150 @@ import { ResumeData } from "./types";
 /**
  * Nettoie une chaîne de couleur hexadécimale (supprime le #)
  */
-function cleanHexColor(hex: string, fallback: string = "2563EB"): string {
+function cleanHexColor(hex?: string, fallback: string = "2563EB"): string {
   if (!hex) return fallback;
   const cleaned = hex.replace("#", "").trim();
   return cleaned.length === 6 ? cleaned : fallback;
 }
 
+type DocxImageType = "jpg" | "png" | "gif" | "bmp";
+
+interface PhotoImageData {
+  data: Uint8Array;
+  type: DocxImageType;
+}
+
+/**
+ * Récupère les octets binaires et le type d'une image (Data URL base64 ou URL HTTP)
+ */
+async function getPhotoImageData(url?: string): Promise<PhotoImageData | null> {
+  try {
+    if (!url || typeof url !== "string") return null;
+
+    let imgType: DocxImageType = "png";
+
+    // 1. Data URL Base64
+    if (url.startsWith("data:")) {
+      if (url.startsWith("data:image/jpeg") || url.startsWith("data:image/jpg")) {
+        imgType = "jpg";
+      } else if (url.startsWith("data:image/gif")) {
+        imgType = "gif";
+      } else if (url.startsWith("data:image/bmp")) {
+        imgType = "bmp";
+      } else {
+        imgType = "png";
+      }
+
+      const commaIdx = url.indexOf(",");
+      if (commaIdx !== -1) {
+        const base64Data = url.substring(commaIdx + 1);
+        if (typeof window !== "undefined" && typeof atob === "function") {
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          return { data: bytes, type: imgType };
+        } else if (typeof Buffer !== "undefined") {
+          return { data: new Uint8Array(Buffer.from(base64Data, "base64")), type: imgType };
+        }
+      }
+    }
+
+    // 2. URL HTTP / Relative
+    if (url.toLowerCase().includes(".jpg") || url.toLowerCase().includes(".jpeg")) {
+      imgType = "jpg";
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    return { data: new Uint8Array(arrayBuffer), type: imgType };
+  } catch (err) {
+    console.warn("Impossible de charger la photo pour l'export Word :", err);
+    return null;
+  }
+}
+
+/**
+ * Crée un titre de section avec une barre de soulignement colorée élégante
+ */
+function createSectionTitle(title: string, primaryColor: string): Paragraph {
+  return new Paragraph({
+    spacing: { before: 240, after: 120 },
+    border: {
+      bottom: {
+        color: primaryColor,
+        size: 14,
+        space: 6,
+        style: BorderStyle.SINGLE,
+      },
+    },
+    children: [
+      new TextRun({
+        text: title.toUpperCase(),
+        bold: true,
+        size: 24, // 12pt
+        color: primaryColor,
+        font: "Calibri",
+      }),
+    ],
+  });
+}
+
 /**
  * Génère et déclenche le téléchargement immédiat du CV au format Microsoft Word (.docx)
+ * Design fidèle au CV PDF : En-tête exécutif, photo intégrée, coordonnées en texte fluide (sans tableau),
+ * rubriques colorées, puces hiérarchiques et marges de 1,5 cm.
  */
 export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolean> {
   try {
     const { personal, summary, experiences, educations, skills, languages, sections, design } = resumeData;
     const primaryColor = cleanHexColor(design.primaryColor, "2563EB");
-    const marginTwip = convertMillimetersToTwip(15); // Strictement 1,5 cm de marges
+    const marginTwip = convertMillimetersToTwip(15); // Strictement 1,5 cm de marges (A4)
 
-    const children: (Paragraph | Table)[] = [];
+    const children: Paragraph[] = [];
 
-    // 1. En-tête : Nom et Prénom
+    // 1. Photo de profil (si activée et fournie)
+    if (design.showPhoto && personal.photoUrl) {
+      const photoInfo = await getPhotoImageData(personal.photoUrl);
+      if (photoInfo && photoInfo.data && photoInfo.data.length > 0) {
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 0, after: 140 },
+            children: [
+              new ImageRun({
+                data: photoInfo.data,
+                transformation: {
+                  width: 105,
+                  height: 105,
+                },
+                type: photoInfo.type,
+              }),
+            ],
+          })
+        );
+      }
+    }
+
+    // 2. Nom et Prénom en Grand Format Majuscules
     children.push(
       new Paragraph({
         alignment: AlignmentType.LEFT,
-        spacing: { before: 0, after: 80 },
+        spacing: { before: 0, after: 60 },
         children: [
           new TextRun({
             text: `${personal.firstName || ""} `.toUpperCase(),
             bold: true,
-            size: 44, // 22pt
+            size: 46, // 23pt
             color: "111827",
             font: "Calibri",
           }),
           new TextRun({
             text: `${personal.lastName || ""}`.toUpperCase(),
             bold: true,
-            size: 44, // 22pt
+            size: 46, // 23pt
             color: primaryColor,
             font: "Calibri",
           }),
@@ -58,12 +164,12 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       })
     );
 
-    // Titre du poste visé
+    // Titre du poste visé / Profession
     if (personal.title) {
       children.push(
         new Paragraph({
           alignment: AlignmentType.LEFT,
-          spacing: { before: 0, after: 180 },
+          spacing: { before: 0, after: 140 },
           children: [
             new TextRun({
               text: personal.title.toUpperCase(),
@@ -77,15 +183,45 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       );
     }
 
-    // 2. Coordonnées & Infos Personnelles (Tableau structuré 2 colonnes sans bordures)
-    const contactItems: string[] = [];
-    if (personal.email) contactItems.push(`Email : ${personal.email}`);
-    if (personal.phone) contactItems.push(`Tél : ${personal.phone}`);
+    // 3. Coordonnées & Infos Personnelles en Paragraphes Fluides (AUCUN TABLEAU !)
+    const contactLine1: string[] = [];
+    if (personal.email) contactLine1.push(`Email : ${personal.email}`);
+    if (personal.phone) contactLine1.push(`Tél : ${personal.phone}`);
     if (personal.city || personal.country) {
-      contactItems.push(`Ville : ${[personal.city, personal.country].filter(Boolean).join(", ")}`);
+      contactLine1.push(`Localisation : ${[personal.city, personal.country].filter(Boolean).join(", ")}`);
     }
+
+    if (contactLine1.length > 0) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.LEFT,
+          spacing: { before: 0, after: 40 },
+          children: contactLine1.map((item, idx) => [
+            ...(idx > 0
+              ? [
+                  new TextRun({
+                    text: "   •   ",
+                    color: primaryColor,
+                    bold: true,
+                    size: 20,
+                    font: "Calibri",
+                  }),
+                ]
+              : []),
+            new TextRun({
+              text: item,
+              size: 20, // 10pt
+              color: "374151",
+              font: "Calibri",
+            }),
+          ]).flat(),
+        })
+      );
+    }
+
+    const contactLine2: string[] = [];
     if (personal.birthDate || personal.birthPlace) {
-      contactItems.push(
+      contactLine2.push(
         `Naissance : ${[
           personal.birthDate ? `${personal.birthDate}` : "",
           personal.birthPlace ? `à ${personal.birthPlace}` : "",
@@ -94,107 +230,91 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
           .join(" ")}`
       );
     }
-    if (personal.maritalStatus) contactItems.push(`État civil : ${personal.maritalStatus}`);
-    if (personal.driverLicense) contactItems.push(`Permis : ${personal.driverLicense}`);
-    if (personal.linkedin) contactItems.push(`LinkedIn : ${personal.linkedin}`);
-    if (personal.website) contactItems.push(`Web : ${personal.website}`);
+    if (personal.maritalStatus) contactLine2.push(`État civil : ${personal.maritalStatus}`);
+    if (personal.driverLicense) contactLine2.push(`Permis : ${personal.driverLicense}`);
 
-    if (contactItems.length > 0) {
-      const rows: TableRow[] = [];
-      for (let i = 0; i < contactItems.length; i += 2) {
-        const item1 = contactItems[i];
-        const item2 = contactItems[i + 1] || "";
-        rows.push(
-          new TableRow({
-            children: [
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                borders: {
-                  top: { style: BorderStyle.NONE },
-                  bottom: { style: BorderStyle.NONE },
-                  left: { style: BorderStyle.NONE },
-                  right: { style: BorderStyle.NONE },
-                },
-                children: [
-                  new Paragraph({
-                    spacing: { before: 30, after: 30 },
-                    children: [
-                      new TextRun({
-                        text: `• ${item1}`,
-                        size: 20, // 10pt
-                        color: "374151",
-                        font: "Calibri",
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                borders: {
-                  top: { style: BorderStyle.NONE },
-                  bottom: { style: BorderStyle.NONE },
-                  left: { style: BorderStyle.NONE },
-                  right: { style: BorderStyle.NONE },
-                },
-                children: [
-                  new Paragraph({
-                    spacing: { before: 30, after: 30 },
-                    children: [
-                      new TextRun({
-                        text: item2 ? `• ${item2}` : "",
-                        size: 20,
-                        color: "374151",
-                        font: "Calibri",
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          })
-        );
-      }
-
+    if (contactLine2.length > 0) {
       children.push(
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows,
+        new Paragraph({
+          alignment: AlignmentType.LEFT,
+          spacing: { before: 0, after: 40 },
+          children: contactLine2.map((item, idx) => [
+            ...(idx > 0
+              ? [
+                  new TextRun({
+                    text: "   •   ",
+                    color: primaryColor,
+                    bold: true,
+                    size: 20,
+                    font: "Calibri",
+                  }),
+                ]
+              : []),
+            new TextRun({
+              text: item,
+              size: 20,
+              color: "374151",
+              font: "Calibri",
+            }),
+          ]).flat(),
         })
       );
     }
 
-    // Fonction helper pour créer les titres de sections Word
-    const createSectionHeader = (title: string): Paragraph => {
-      return new Paragraph({
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 240, after: 100 },
-        border: {
-          bottom: {
-            color: primaryColor,
-            space: 4,
-            style: BorderStyle.SINGLE,
-            size: 12,
-          },
-        },
-        children: [
-          new TextRun({
-            text: title.toUpperCase(),
-            bold: true,
-            size: 24, // 12pt
-            color: primaryColor,
-            font: "Calibri",
-          }),
-        ],
-      });
-    };
+    const contactLine3: string[] = [];
+    if (personal.linkedin) contactLine3.push(`LinkedIn : ${personal.linkedin}`);
+    if (personal.website) contactLine3.push(`Site : ${personal.website}`);
 
-    // 3. Profil Professionnel / Résumé
-    if (summary && summary.trim().length > 0) {
-      children.push(createSectionHeader("Profil Professionnel"));
+    if (contactLine3.length > 0) {
       children.push(
         new Paragraph({
-          spacing: { before: 60, after: 120 },
+          alignment: AlignmentType.LEFT,
+          spacing: { before: 0, after: 40 },
+          children: contactLine3.map((item, idx) => [
+            ...(idx > 0
+              ? [
+                  new TextRun({
+                    text: "   •   ",
+                    color: primaryColor,
+                    bold: true,
+                    size: 20,
+                    font: "Calibri",
+                  }),
+                ]
+              : []),
+            new TextRun({
+              text: item,
+              size: 20,
+              color: "374151",
+              font: "Calibri",
+            }),
+          ]).flat(),
+        })
+      );
+    }
+
+    // Trait fin de séparation de l'en-tête
+    children.push(
+      new Paragraph({
+        spacing: { before: 60, after: 160 },
+        border: {
+          bottom: {
+            color: "E5E7EB",
+            size: 8,
+            space: 4,
+            style: BorderStyle.SINGLE,
+          },
+        },
+      })
+    );
+
+    // 4. Profil Professionnel
+    if (summary && summary.trim().length > 0) {
+      children.push(createSectionTitle("Profil Professionnel", primaryColor));
+      children.push(
+        new Paragraph({
+          spacing: { before: 40, after: 160 },
+          alignment: AlignmentType.JUSTIFIED,
           children: [
             new TextRun({
               text: summary.trim(),
@@ -207,25 +327,26 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       );
     }
 
-    // 4. Expériences Professionnelles
+    // 5. Expériences Professionnelles
     if (experiences && experiences.length > 0) {
-      children.push(createSectionHeader("Expériences Professionnelles"));
+      children.push(createSectionTitle("Expériences Professionnelles", primaryColor));
 
-      experiences.forEach((exp) => {
-        // Ligne Titre de poste et dates
+      experiences.forEach((exp, idx) => {
+        // Intitulé du poste et dates
         children.push(
           new Paragraph({
-            spacing: { before: 100, after: 30 },
+            spacing: { before: idx === 0 ? 40 : 120, after: 30 },
             children: [
               new TextRun({
-                text: exp.role || "Poste",
+                text: exp.role.toUpperCase(),
                 bold: true,
                 size: 22, // 11pt
                 color: "111827",
                 font: "Calibri",
               }),
               new TextRun({
-                text: `  |  ${exp.startDate || ""} – ${exp.current ? "Présent" : exp.endDate || ""}`,
+                text: `   [${exp.startDate} — ${exp.current ? "Présent" : exp.endDate}]`,
+                bold: true,
                 size: 20,
                 color: "6B7280",
                 font: "Calibri",
@@ -234,14 +355,79 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
           })
         );
 
-        // Ligne Entreprise et Ville
+        // Entreprise et Lieu en couleur primaire
         children.push(
           new Paragraph({
             spacing: { before: 0, after: 60 },
             children: [
               new TextRun({
-                text: `${exp.company || ""}${exp.city ? ` — ${exp.city}` : ""}`,
-                italics: true,
+                text: `${exp.company.toUpperCase()}${exp.city ? ` — ${exp.city.toUpperCase()}` : ""}`,
+                bold: true,
+                size: 20, // 10pt
+                color: primaryColor,
+                font: "Calibri",
+              }),
+            ],
+          })
+        );
+
+        // Réalisations sous forme de puces natives Word
+        if (exp.highlights && exp.highlights.length > 0) {
+          exp.highlights.forEach((h) => {
+            if (h && h.trim().length > 0) {
+              children.push(
+                new Paragraph({
+                  bullet: { level: 0 },
+                  spacing: { before: 20, after: 30 },
+                  children: [
+                    new TextRun({
+                      text: h.trim(),
+                      size: 20,
+                      color: "374151",
+                      font: "Calibri",
+                    }),
+                  ],
+                })
+              );
+            }
+          });
+        }
+      });
+    }
+
+    // 6. Formation & Diplômes
+    if (educations && educations.length > 0) {
+      children.push(createSectionTitle("Formation & Diplômes", primaryColor));
+
+      educations.forEach((edu, idx) => {
+        children.push(
+          new Paragraph({
+            spacing: { before: idx === 0 ? 40 : 100, after: 20 },
+            children: [
+              new TextRun({
+                text: edu.degree.toUpperCase(),
+                bold: true,
+                size: 22, // 11pt
+                color: "111827",
+                font: "Calibri",
+              }),
+              new TextRun({
+                text: edu.year ? `   [${edu.year}]` : "",
+                bold: true,
+                size: 20,
+                color: "6B7280",
+                font: "Calibri",
+              }),
+            ],
+          })
+        );
+
+        children.push(
+          new Paragraph({
+            spacing: { before: 0, after: 60 },
+            children: [
+              new TextRun({
+                text: `${edu.school}${edu.field ? ` — ${edu.field}` : ""}`,
                 bold: true,
                 size: 20,
                 color: primaryColor,
@@ -250,48 +436,29 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
             ],
           })
         );
-
-        // Missions / Réalisations
-        if (exp.highlights && exp.highlights.length > 0) {
-          exp.highlights.forEach((h) => {
-            children.push(
-              new Paragraph({
-                bullet: { level: 0 },
-                spacing: { before: 20, after: 20 },
-                children: [
-                  new TextRun({
-                    text: h,
-                    size: 20,
-                    color: "374151",
-                    font: "Calibri",
-                  }),
-                ],
-              })
-            );
-          });
-        }
       });
     }
 
-    // 5. Formation & Diplômes
-    if (educations && educations.length > 0) {
-      children.push(createSectionHeader("Formation & Diplômes"));
+    // 7. Certifications & Réalisations (dont Permis de Conduire officiel)
+    if (sections?.certifications && sections.certifications.length > 0) {
+      children.push(createSectionTitle("Certifications & Réalisations", primaryColor));
 
-      educations.forEach((edu) => {
+      sections.certifications.forEach((cert, idx) => {
         children.push(
           new Paragraph({
-            spacing: { before: 80, after: 20 },
+            spacing: { before: idx === 0 ? 40 : 80, after: 20 },
             children: [
               new TextRun({
-                text: `${edu.degree || ""}${edu.field ? ` en ${edu.field}` : ""}`,
+                text: (cert.title || "").toUpperCase(),
                 bold: true,
-                size: 22,
+                size: 21,
                 color: "111827",
                 font: "Calibri",
               }),
               new TextRun({
-                text: edu.year ? `  |  ${edu.year}` : "",
-                size: 20,
+                text: cert.year ? `   [${cert.year}]` : "",
+                bold: true,
+                size: 19,
                 color: "6B7280",
                 font: "Calibri",
               }),
@@ -299,41 +466,42 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
           })
         );
 
-        children.push(
-          new Paragraph({
-            spacing: { before: 0, after: 60 },
-            children: [
-              new TextRun({
-                text: `${edu.school || ""}${edu.city ? ` (${edu.city})` : ""}`,
-                italics: true,
-                size: 20,
-                color: "4B5563",
-                font: "Calibri",
-              }),
-            ],
-          })
-        );
+        if (cert.issuer) {
+          children.push(
+            new Paragraph({
+              spacing: { before: 0, after: 50 },
+              children: [
+                new TextRun({
+                  text: cert.issuer,
+                  size: 19,
+                  color: primaryColor,
+                  font: "Calibri",
+                }),
+              ],
+            })
+          );
+        }
       });
     }
 
-    // 6. Compétences
+    // 8. Compétences
     if (skills && skills.length > 0) {
-      children.push(createSectionHeader("Compétences"));
+      children.push(createSectionTitle("Compétences", primaryColor));
 
       skills.forEach((cat) => {
         children.push(
           new Paragraph({
-            spacing: { before: 60, after: 40 },
+            spacing: { before: 40, after: 40 },
             children: [
               new TextRun({
-                text: `${cat.category} : `,
+                text: `• ${cat.category.toUpperCase()} : `,
                 bold: true,
                 size: 20,
-                color: "111827",
+                color: primaryColor,
                 font: "Calibri",
               }),
               new TextRun({
-                text: (cat.items || []).join(", "),
+                text: cat.items.join("  •  "),
                 size: 20,
                 color: "374151",
                 font: "Calibri",
@@ -344,70 +512,55 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       });
     }
 
-    // 7. Langues
+    // 9. Langues
     if (languages && languages.length > 0) {
-      children.push(createSectionHeader("Langues"));
+      children.push(createSectionTitle("Langues", primaryColor));
 
-      languages.forEach((lang) => {
-        children.push(
-          new Paragraph({
-            spacing: { before: 30, after: 30 },
-            children: [
-              new TextRun({
-                text: `• ${lang.name} : `,
-                bold: true,
-                size: 20,
-                color: "111827",
-                font: "Calibri",
-              }),
-              new TextRun({
-                text: `${lang.level}`,
-                size: 20,
-                color: primaryColor,
-                font: "Calibri",
-              }),
-            ],
-          })
-        );
-      });
+      children.push(
+        new Paragraph({
+          spacing: { before: 40, after: 80 },
+          children: languages.map((lang, idx) => [
+            ...(idx > 0
+              ? [
+                  new TextRun({
+                    text: "     |     ",
+                    color: "9CA3AF",
+                    bold: true,
+                    size: 20,
+                    font: "Calibri",
+                  }),
+                ]
+              : []),
+            new TextRun({
+              text: `${lang.name} : `,
+              bold: true,
+              size: 20,
+              color: "111827",
+              font: "Calibri",
+            }),
+            new TextRun({
+              text: lang.level,
+              bold: true,
+              size: 20,
+              color: primaryColor,
+              font: "Calibri",
+            }),
+          ]).flat(),
+        })
+      );
     }
 
-    // 8. Certifications & Projets
-    if (sections?.certifications && sections.certifications.length > 0) {
-      children.push(createSectionHeader("Certifications"));
-      sections.certifications.forEach((cert) => {
-        children.push(
-          new Paragraph({
-            spacing: { before: 40, after: 20 },
-            children: [
-              new TextRun({
-                text: `• ${cert.title}`,
-                bold: true,
-                size: 20,
-                color: "111827",
-                font: "Calibri",
-              }),
-              new TextRun({
-                text: ` — ${cert.issuer || ""} (${cert.year || ""})`,
-                size: 20,
-                color: "6B7280",
-                font: "Calibri",
-              }),
-            ],
-          })
-        );
-      });
-    }
-
-    // 9. Centres d'intérêt
+    // 10. Centres d'intérêt
     if (sections?.interests && sections.interests.length > 0) {
-      children.push(createSectionHeader("Centres d'intérêt"));
+      children.push(createSectionTitle("Centres d'intérêt", primaryColor));
+
       children.push(
         new Paragraph({
           spacing: { before: 40, after: 80 },
           children: [
             new TextRun({
-              text: sections.interests.join("  •  "),
+              text: sections.interests.map((i) => `• ${i}`).join("     "),
+              bold: true,
               size: 20,
               color: "374151",
               font: "Calibri",
@@ -417,24 +570,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       );
     }
 
-    // 10. Bas de document discret
-    children.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        spacing: { before: 300, after: 0 },
-        children: [
-          new TextRun({
-            text: "Document certifié conforme • Généré sur MonCV.ai",
-            italics: true,
-            size: 18,
-            color: "9CA3AF",
-            font: "Calibri",
-          }),
-        ],
-      })
-    );
-
-    // Création du document Word conforme A4 avec marges de 1,5 cm
+    // Création du document Word A4 avec 1,5 cm de marges
     const doc = new Document({
       sections: [
         {
@@ -453,28 +589,24 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       ],
     });
 
-    // Génération du fichier binaire .docx
+    // Génération et téléchargement immédiat
     const blob = await Packer.toBlob(doc);
+    const fileName = `CV_${(personal.firstName || "Candidat").trim()}_${(personal.lastName || "CV").trim()}.docx`
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_.-]/g, "");
 
-    // Déclenchement du téléchargement navigateur
-    const firstName = personal?.firstName?.trim() || "Candidat";
-    const lastName = personal?.lastName?.trim() || "CV";
-    const filename = `CV_${lastName}_${firstName}`
-      .replace(/[^a-zA-Z0-9_-]/g, "_")
-      .replace(/_+/g, "_");
-
-    const url = URL.createObjectURL(blob);
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${filename}.docx`;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
+    window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 
     return true;
-  } catch (err) {
-    console.error("Erreur lors de l'export Word (.docx) :", err);
+  } catch (error) {
+    console.error("Erreur génération document Word (.docx) :", error);
     return false;
   }
 }

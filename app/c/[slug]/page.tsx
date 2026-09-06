@@ -51,9 +51,11 @@ import {
   Layers,
   Smartphone,
   TrendingUp,
+  Building,
 } from "lucide-react";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
 import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
+import { isEnterpriseFormulaActive } from "@/lib/license-manager";
 
 /**
  * CONFIGURATION DU THÈME DES CARTES (Format exact Inspiré du Mockup SaaS)
@@ -138,6 +140,33 @@ export default function PublicCandidateCVPage() {
   const [contactProjectType, setContactProjectType] = useState("Opportunité d'Emploi / Mission");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSent, setContactSent] = useState(false);
+
+  // État Espace Entreprise pour les profils créés
+  const [isBusiness, setIsBusiness] = useState(false);
+  const [isFromEnterprise, setIsFromEnterprise] = useState(false);
+
+  useEffect(() => {
+    const checkBiz = () => {
+      const biz = StorageManager.isBusinessAccount() || StorageManager.getUser()?.accountType === "business";
+      setIsBusiness(biz);
+    };
+    checkBiz();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") === "enterprise" || params.get("tab") === "business") {
+        setIsFromEnterprise(true);
+      }
+    }
+    window.addEventListener("storage", checkBiz);
+    return () => window.removeEventListener("storage", checkBiz);
+  }, []);
+
+  const handleReturnToEnterprise = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("moncv_view_mode", "enterprise");
+      window.dispatchEvent(new Event("storage"));
+    }
+  };
 
   useEffect(() => {
     // 1. Repli local synchrone immédiat si disponible dans le cache
@@ -506,6 +535,17 @@ export default function PublicCandidateCVPage() {
             {/* Sélecteur de Changement de Profil Client & Espaces */}
             <ProfileSwitcher currentSlug={slug} isDark={isDark} />
 
+            {/* Bouton RETOUR DANS L'ESPACE ENTREPRISE */}
+            <Link
+              href="/dashboard?tab=business"
+              onClick={handleReturnToEnterprise}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0 border border-amber-400/50"
+              title="Retourner à l'Espace Entreprise & Vivier RH"
+            >
+              <Building className="w-3.5 h-3.5 text-slate-950" />
+              <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+            </Link>
+
             {/* Bouton Retour Accueil MonCV.ai */}
             <Link
               href="/?landing=true"
@@ -545,6 +585,19 @@ export default function PublicCandidateCVPage() {
             <div className="pt-1 pb-1">
               <ProfileSwitcher currentSlug={slug} isDark={isDark} className="w-full" />
             </div>
+
+            {/* Bouton Rapide Espace Entreprise Mobile */}
+            <Link
+              href="/dashboard?tab=business"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleReturnToEnterprise();
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 cursor-pointer"
+            >
+              <Building className="w-4 h-4 text-slate-950" />
+              <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+            </Link>
 
             {/* Actions rapides Mobile */}
             <Link
@@ -1638,10 +1691,19 @@ export default function PublicCandidateCVPage() {
         }}
       />
 
-      {/* Bouton Flottant de retour à l'accueil MonCV.ai */}
-      <div className="fixed bottom-5 left-5 z-40 no-print">
+      {/* Boutons Flottants de retour Espace Entreprise & Accueil */}
+      <div className="fixed bottom-5 left-5 z-40 no-print flex flex-col sm:flex-row items-start gap-2">
         <Link
-          href="/"
+          href="/dashboard?tab=business"
+          onClick={handleReturnToEnterprise}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-amber-400/60"
+          title="Retourner à l'Espace Entreprise & Vivier RH"
+        >
+          <Building className="w-4 h-4 text-slate-950 shrink-0" />
+          <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+        </Link>
+        <Link
+          href="/?landing=true"
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border shadow-xl backdrop-blur-md text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer ${
             isDark
               ? "bg-[#121318]/95 border-slate-700/80 text-slate-200 hover:text-white hover:border-blue-500 shadow-black/70"

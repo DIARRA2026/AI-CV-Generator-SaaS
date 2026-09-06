@@ -674,7 +674,7 @@ export default function DashboardPage() {
                                   CV &amp; Portfolio en Ligne
                                 </span>
                                 <a
-                                  href={`/c/${cv.slug}`}
+                                  href={`/c/${cv.slug}?from=enterprise`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-0.5 text-[10.5px]"
@@ -780,6 +780,25 @@ export default function DashboardPage() {
             /* B. VUE 2 : ESPACE CANDIDAT PERSONNEL (CVs INDIVIDUELS)                    */
             /* ========================================================================= */
             <div className="space-y-6 fade-in">
+              {/* Bannière de retour direct dans l'espace entreprise pour comptes entreprise */}
+              {isBusinessAccount && (
+                <div className="p-4 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-2xl border border-indigo-900/60 shadow-md flex flex-wrap items-center justify-between gap-3 text-white">
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <Building className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      Vous êtes en vue <strong>CV Personnel</strong>. Votre compte dispose d'un accès Vivier RH Entreprise actif.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("business")}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                  >
+                    <Building className="w-4 h-4 text-slate-950" />
+                    <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+                  </button>
+                </div>
+              )}
               {/* En-tête Dashboard avec profil */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm">
                 <div>

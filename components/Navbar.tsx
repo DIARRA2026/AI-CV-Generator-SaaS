@@ -123,12 +123,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isEditorPage ? (
               <button
                 type="button"
-                onClick={handleMesCvsClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press border border-slate-200/80 bg-white shadow-xs"
-                title="Retourner à mon tableau de bord"
+                onClick={() => {
+                  if (StorageManager.isBusinessAccount() || currentUser?.accountType === "business") {
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("moncv_view_mode", "enterprise");
+                      window.dispatchEvent(new Event("storage"));
+                    }
+                    router.push("/dashboard?tab=business");
+                  } else {
+                    handleMesCvsClick({ preventDefault: () => {} } as any);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer btn-press border shadow-xs ${
+                  StorageManager.isBusinessAccount() || currentUser?.accountType === "business"
+                    ? "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 border-amber-400 font-black shadow-amber-500/20 hover:from-amber-400 hover:to-orange-400"
+                    : "text-slate-700 hover:text-blue-600 hover:bg-slate-100 border-slate-200/80 bg-white"
+                }`}
+                title={
+                  StorageManager.isBusinessAccount() || currentUser?.accountType === "business"
+                    ? "Retourner à l'Espace Entreprise & Vivier RH"
+                    : "Retourner à mon tableau de bord"
+                }
               >
-                <LayoutDashboard className="w-4 h-4 text-blue-600" />
-                <span>← Mes CVs</span>
+                {StorageManager.isBusinessAccount() || currentUser?.accountType === "business" ? (
+                  <>
+                    <Building className="w-4 h-4 text-slate-950 shrink-0" />
+                    <span>← RETOUR DANS L'ESPACE ENTREPRISE</span>
+                  </>
+                ) : (
+                  <>
+                    <LayoutDashboard className="w-4 h-4 text-blue-600" />
+                    <span>← Mes CVs</span>
+                  </>
+                )}
               </button>
             ) : isEnterprisePage ? (
               <button
@@ -616,6 +643,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                       VIP
                     </span>
                   </Link>
+
+                  {(currentUser?.accountType === "business" || StorageManager.isBusinessAccount()) && (
+                    <Link
+                      href="/dashboard?tab=business"
+                      onClick={() => {
+                        setIsMobileDrawerOpen(false);
+                        if (typeof window !== "undefined") {
+                          localStorage.setItem("moncv_view_mode", "enterprise");
+                          window.dispatchEvent(new Event("storage"));
+                        }
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs cursor-pointer btn-press shadow-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Building className="w-4 h-4 text-slate-950" />
+                        <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-950 text-white text-[9px] font-black uppercase">
+                        RH
+                      </span>
+                    </Link>
+                  )}
 
                   {(!currentUser || currentUser.accountType !== "business") && (
                     <Link

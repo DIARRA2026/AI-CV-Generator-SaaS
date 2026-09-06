@@ -10,6 +10,7 @@ import {
 } from "docx";
 import { ResumeData } from "./types";
 import { canDownloadWithoutWatermark } from "./license-manager";
+import { translations, SupportedLanguage } from "./i18n";
 
 /**
  * Nettoie une chaîne de couleur hexadécimale (supprime le #)
@@ -110,8 +111,17 @@ function createSectionTitle(title: string, primaryColor: string): Paragraph {
  * Design fidèle au CV PDF : En-tête exécutif, photo intégrée, coordonnées en texte fluide (sans tableau),
  * rubriques colorées, puces hiérarchiques et marges de 1,5 cm.
  */
-export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolean> {
+export async function downloadResumeDocx(resumeData: ResumeData, lang?: SupportedLanguage): Promise<boolean> {
   try {
+    let currentLang: SupportedLanguage = lang || "fr";
+    if (!lang && typeof window !== "undefined") {
+      const saved = localStorage.getItem("moncv_locale") as SupportedLanguage;
+      if (saved && (saved === "fr" || saved === "en" || saved === "es" || saved === "ar")) {
+        currentLang = saved;
+      }
+    }
+    const dict = translations[currentLang] || translations.fr;
+
     const { personal, summary, experiences, educations, skills, languages, sections, design } = resumeData;
     const primaryColor = cleanHexColor(design.primaryColor, "2563EB");
     const marginTwip = convertMillimetersToTwip(15); // Strictement 1,5 cm de marges (A4)
@@ -186,10 +196,10 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 3. Coordonnées & Infos Personnelles en Paragraphes Fluides (AUCUN TABLEAU !)
     const contactLine1: string[] = [];
-    if (personal.email) contactLine1.push(`Email : ${personal.email}`);
-    if (personal.phone) contactLine1.push(`Tél : ${personal.phone}`);
+    if (personal.email) contactLine1.push(`${dict.cv.email} : ${personal.email}`);
+    if (personal.phone) contactLine1.push(`${dict.cv.phone} : ${personal.phone}`);
     if (personal.city || personal.country) {
-      contactLine1.push(`Localisation : ${[personal.city, personal.country].filter(Boolean).join(", ")}`);
+      contactLine1.push(`${dict.cv.address} : ${[personal.city, personal.country].filter(Boolean).join(", ")}`);
     }
 
     if (contactLine1.length > 0) {
@@ -223,16 +233,16 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
     const contactLine2: string[] = [];
     if (personal.birthDate || personal.birthPlace) {
       contactLine2.push(
-        `Naissance : ${[
+        `${dict.cv.bornOn} : ${[
           personal.birthDate ? `${personal.birthDate}` : "",
-          personal.birthPlace ? `à ${personal.birthPlace}` : "",
+          personal.birthPlace ? `${dict.cv.bornAt} ${personal.birthPlace}` : "",
         ]
           .filter(Boolean)
           .join(" ")}`
       );
     }
-    if (personal.maritalStatus) contactLine2.push(`Situation matrimoniale : ${personal.maritalStatus}`);
-    if (personal.driverLicense) contactLine2.push(`Permis : ${personal.driverLicense}`);
+    if (personal.maritalStatus) contactLine2.push(`${dict.cv.maritalStatus} : ${personal.maritalStatus}`);
+    if (personal.driverLicense) contactLine2.push(`${dict.cv.driverLicense} : ${personal.driverLicense}`);
 
     if (contactLine2.length > 0) {
       children.push(
@@ -264,7 +274,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     const contactLine3: string[] = [];
     if (personal.linkedin) contactLine3.push(`LinkedIn : ${personal.linkedin}`);
-    if (personal.website) contactLine3.push(`Site : ${personal.website}`);
+    if (personal.website) contactLine3.push(`${dict.cv.website} : ${personal.website}`);
 
     if (contactLine3.length > 0) {
       children.push(
@@ -311,7 +321,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 4. Profil Professionnel
     if (summary && summary.trim().length > 0) {
-      children.push(createSectionTitle("Profil Professionnel", primaryColor));
+      children.push(createSectionTitle(dict.cv.profile, primaryColor));
       children.push(
         new Paragraph({
           spacing: { before: 40, after: 160 },
@@ -330,7 +340,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 5. Expériences Professionnelles
     if (experiences && experiences.length > 0) {
-      children.push(createSectionTitle("Expériences Professionnelles", primaryColor));
+      children.push(createSectionTitle(dict.cv.experience, primaryColor));
 
       experiences.forEach((exp, idx) => {
         // Intitulé du poste et dates
@@ -346,7 +356,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
                 font: "Calibri",
               }),
               new TextRun({
-                text: `   [${exp.startDate} — ${exp.current ? "Présent" : exp.endDate}]`,
+                text: `   [${exp.startDate} — ${exp.current ? dict.cv.present : exp.endDate}]`,
                 bold: true,
                 size: 20,
                 color: "6B7280",
@@ -398,7 +408,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 6. Formation & Diplômes
     if (educations && educations.length > 0) {
-      children.push(createSectionTitle("Formation & Diplômes", primaryColor));
+      children.push(createSectionTitle(dict.cv.education, primaryColor));
 
       educations.forEach((edu, idx) => {
         children.push(
@@ -440,9 +450,9 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
       });
     }
 
-    // 7. Certifications & Réalisations (dont Permis de Conduire officiel)
+    // 7. Certifications & Réalisations
     if (sections?.certifications && sections.certifications.length > 0) {
-      children.push(createSectionTitle("Certifications & Réalisations", primaryColor));
+      children.push(createSectionTitle(dict.cv.certifications, primaryColor));
 
       sections.certifications.forEach((cert, idx) => {
         children.push(
@@ -487,7 +497,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 8. Compétences
     if (skills && skills.length > 0) {
-      children.push(createSectionTitle("Compétences", primaryColor));
+      children.push(createSectionTitle(dict.cv.skills, primaryColor));
 
       skills.forEach((cat) => {
         children.push(
@@ -515,7 +525,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 9. Langues
     if (languages && languages.length > 0) {
-      children.push(createSectionTitle("Langues", primaryColor));
+      children.push(createSectionTitle(dict.cv.languages, primaryColor));
 
       children.push(
         new Paragraph({
@@ -553,7 +563,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
 
     // 10. Centres d'intérêt
     if (sections?.interests && sections.interests.length > 0) {
-      children.push(createSectionTitle("Centres d'intérêt", primaryColor));
+      children.push(createSectionTitle(dict.cv.interests, primaryColor));
 
       children.push(
         new Paragraph({
@@ -579,7 +589,7 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
           spacing: { before: 240, after: 0 },
           children: [
             new TextRun({
-              text: "Document généré avec MonCV.ai • Version Découverte (0 FCFA)",
+              text: `${dict.cv.watermarkTitle} • ${dict.cv.watermarkDesc}`,
               italics: true,
               size: 16,
               color: "9CA3AF",

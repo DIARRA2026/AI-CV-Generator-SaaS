@@ -14,6 +14,7 @@ import {
 
 interface LanguageContextType {
   language: SupportedLanguage;
+  currentLanguage: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
   dict: TranslationDictionary;
   t: (path: string, fallback?: string) => string;
@@ -115,6 +116,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const value = {
     language,
+    currentLanguage: language,
     setLanguage,
     dict,
     t,
@@ -134,6 +136,7 @@ export const useTranslation = () => {
     const fallbackDict = translations[defaultLanguage];
     return {
       language: defaultLanguage,
+      currentLanguage: defaultLanguage,
       setLanguage: () => {},
       dict: fallbackDict,
       t: (path: string, fallback?: string) => {

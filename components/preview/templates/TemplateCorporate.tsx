@@ -2,12 +2,14 @@ import React from "react";
 import { ResumeData } from "@/lib/types";
 import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Award, Wrench, Calendar, Users, Car } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
+import { useTranslation } from "@/lib/i18n";
 
 interface TemplateProps {
   data: ResumeData;
 }
 
 export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
+  const { dict } = useTranslation();
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#1e3a8a";
   const density = getResumeDensity(data);
@@ -46,13 +48,13 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                 style={{ fontSize: density.fontSize.title }}
                 className="font-black text-slate-900 tracking-tight uppercase leading-tight"
               >
-                {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
+                {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : dict.cv.defaultFullName}
               </h1>
               <p
                 style={{ color, fontSize: density.fontSize.role }}
                 className="font-bold uppercase tracking-wider mt-0.5"
               >
-                {personal.title || "Intitulé du poste recherché"}
+                {personal.title || dict.cv.defaultJobTitle}
               </p>
             </div>
           </div>
@@ -70,7 +72,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
             )}
             {personal.phone && (
               <div className="flex items-center justify-end gap-1.5">
-                <span className="font-bold text-slate-800">{personal.phone}</span>
+                <span className="font-bold text-slate-800" dir="ltr">{personal.phone}</span>
                 <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </div>
             )}
@@ -84,8 +86,8 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
               <div className="flex items-center justify-end gap-1.5">
                 <span>
                   {[
-                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                    personal.birthDate ? `${dict.cv.bornOn} ${personal.birthDate}` : "",
+                    personal.birthPlace ? `${dict.cv.bornAt} ${personal.birthPlace}` : ""
                   ].filter(Boolean).join(" ")}
                 </span>
                 <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -99,7 +101,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
             )}
             {personal.driverLicense && (
               <div className="flex items-center justify-end gap-1.5">
-                <span className="font-semibold text-slate-700">Permis : {personal.driverLicense}</span>
+                <span className="font-semibold text-slate-700">{dict.cv.driverLicense}: {personal.driverLicense}</span>
                 <Car className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </div>
             )}
@@ -125,7 +127,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider text-slate-900 mb-1"
             >
-              Synthèse Professionnelle
+              {dict.cv.profile}
             </h2>
             <p
               style={{
@@ -157,7 +159,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                     style={{ fontSize: density.fontSize.heading }}
                     className="font-bold uppercase tracking-wider text-slate-900"
                   >
-                    Parcours Professionnel
+                    {dict.cv.experience}
                   </h2>
                 </div>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -179,7 +181,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                           style={{ fontSize: density.fontSize.sm }}
                           className="font-semibold text-slate-600 bg-white border border-slate-200 px-1.5 py-0.5 rounded shrink-0 shadow-2xs"
                         >
-                          {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
+                          {exp.startDate} – {exp.current ? dict.cv.present : exp.endDate}
                         </span>
                       </div>
                       <p
@@ -226,7 +228,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                     style={{ fontSize: density.fontSize.heading }}
                     className="font-bold uppercase tracking-wider text-slate-900"
                   >
-                    Diplômes & Cursus
+                    {dict.cv.education}
                   </h2>
                 </div>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -280,7 +282,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                     style={{ fontSize: density.fontSize.heading }}
                     className="font-bold uppercase tracking-wider text-slate-900"
                   >
-                    Domaines d'Expertise
+                    {dict.cv.skills}
                   </h2>
                 </div>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -321,7 +323,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                     style={{ fontSize: density.fontSize.heading }}
                     className="font-bold uppercase tracking-wider text-slate-900"
                   >
-                    Certifications & Permis
+                    {dict.cv.certifications}
                   </h2>
                 </div>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
@@ -358,7 +360,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                   style={{ fontSize: density.fontSize.heading, borderColor: `${color}30` }}
                   className="font-bold uppercase tracking-wider text-slate-900 mb-2 pb-1 border-b"
                 >
-                  Langues
+                  {dict.cv.languages}
                 </h3>
                 <div className="space-y-2">
                   {languages.map((l) => (
@@ -406,7 +408,7 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
         style={{ fontSize: density.fontSize.xs }}
         className="pt-2 text-center border-t border-slate-100 text-slate-400 shrink-0"
       >
-        Profil Professionnel • Certifié MonCV.ai
+        {dict.cv.certifiedDocument}
       </div>
     </div>
   );

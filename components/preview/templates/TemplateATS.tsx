@@ -1,12 +1,14 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
 import { getResumeDensity } from "@/lib/resume-density";
+import { useTranslation } from "@/lib/i18n";
 
 interface TemplateProps {
   data: ResumeData;
 }
 
 export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
+  const { dict } = useTranslation();
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const density = getResumeDensity(data);
 
@@ -41,13 +43,13 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
             style={{ fontSize: density.fontSize.title }}
             className="font-bold uppercase tracking-tight text-black leading-tight"
           >
-            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
+            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : dict.cv.defaultFullName}
           </h1>
           <p
             style={{ fontSize: density.fontSize.role }}
             className="font-semibold text-black mt-0.5"
           >
-            {personal.title || "Intitulé du poste recherché"}
+            {personal.title || dict.cv.defaultJobTitle}
           </p>
           <p
             style={{ fontSize: density.fontSize.xs }}
@@ -58,11 +60,11 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               personal.phone,
               [personal.city, personal.country].filter(Boolean).join(", "),
               [
-                personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                personal.birthDate ? `${dict.cv.bornOn} ${personal.birthDate}` : "",
+                personal.birthPlace ? `${dict.cv.bornAt} ${personal.birthPlace}` : ""
               ].filter(Boolean).join(" "),
               personal.maritalStatus,
-              personal.driverLicense ? `Permis: ${personal.driverLicense}` : "",
+              personal.driverLicense ? `${dict.cv.driverLicense}: ${personal.driverLicense}` : "",
               personal.linkedin,
               personal.website,
             ]
@@ -78,7 +80,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
             >
-              RÉSUMÉ PROFESSIONNEL
+              {dict.cv.profile}
             </h2>
             <p
               style={{
@@ -99,7 +101,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
             >
-              EXPÉRIENCE PROFESSIONNELLE
+              {dict.cv.experience}
             </h2>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {experiences.map((exp) => (
@@ -110,7 +112,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
                   >
                     <span>{exp.role}</span>
                     <span style={{ fontSize: density.fontSize.sm }} className="font-semibold shrink-0">
-                      {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
+                      {exp.startDate} – {exp.current ? dict.cv.present : exp.endDate}
                     </span>
                   </div>
                   <div
@@ -151,7 +153,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
             >
-              FORMATION & DIPLÔMES
+              {dict.cv.education}
             </h2>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {educations.map((edu) => (
@@ -189,7 +191,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
             >
-              COMPÉTENCES TECHNIQUES & LOGICIELS
+              {dict.cv.skills}
             </h2>
             <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {skills.map((cat) => (
@@ -209,7 +211,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1"
             >
-              LANGUES
+              {dict.cv.languages}
             </h2>
             <p style={{ fontSize: density.fontSize.xs }} className="text-black">
               {languages.map((l) => `${l.name} (${l.level})`).join("  |  ")}
@@ -224,7 +226,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
             >
-              CERTIFICATIONS
+              {dict.cv.certifications}
             </h2>
             <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {sections.certifications.map((c) => (
@@ -244,7 +246,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1.5"
             >
-              PROJETS & RÉALISATIONS
+              {dict.cv.projects}
             </h2>
             <div style={{ fontSize: density.fontSize.xs }} className="space-y-1 text-black">
               {sections.projects.map((p) => (
@@ -262,7 +264,7 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
         style={{ fontSize: density.fontSize.xs }}
         className="text-center text-gray-500 pt-2 border-t border-gray-300 mt-2 shrink-0"
       >
-        CV Optimisé ATS (Applicant Tracking System) · MonCV.ai
+        {dict.cv.certifiedDocument}
       </div>
     </div>
   );

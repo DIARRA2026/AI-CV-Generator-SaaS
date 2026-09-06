@@ -2,12 +2,14 @@ import React from "react";
 import { ResumeData } from "@/lib/types";
 import { Mail, Phone, MapPin, Linkedin, Globe, Calendar, Users, Car } from "lucide-react";
 import { getResumeDensity } from "@/lib/resume-density";
+import { useTranslation } from "@/lib/i18n";
 
 interface TemplateProps {
   data: ResumeData;
 }
 
 export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
+  const { dict } = useTranslation();
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#0f172a";
   const density = getResumeDensity(data);
@@ -50,13 +52,13 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             style={{ fontSize: density.fontSize.title }}
             className="font-bold tracking-widest uppercase text-slate-900 leading-tight"
           >
-            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
+            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : dict.cv.defaultFullName}
           </h1>
           <p
             style={{ color, fontSize: density.fontSize.role }}
             className="uppercase tracking-wider font-sans font-semibold mt-0.5 mb-1.5"
           >
-            {personal.title || "Intitulé du poste recherché"}
+            {personal.title || dict.cv.defaultJobTitle}
           </p>
 
           {/* Barre de contact horizontale */}
@@ -73,7 +75,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             {personal.phone && (
               <span className="flex items-center gap-1">
                 <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>{personal.phone}</span>
+                <span dir="ltr">{personal.phone}</span>
               </span>
             )}
             {(personal.city || personal.country) && (
@@ -87,8 +89,8 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                 <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                 <span>
                   {[
-                    personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                    personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                    personal.birthDate ? `${dict.cv.bornOn} ${personal.birthDate}` : "",
+                    personal.birthPlace ? `${dict.cv.bornAt} ${personal.birthPlace}` : ""
                   ].filter(Boolean).join(" ")}
                 </span>
               </span>
@@ -102,7 +104,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             {personal.driverLicense && (
               <span className="flex items-center gap-1">
                 <Car className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>Permis: {personal.driverLicense}</span>
+                <span>{dict.cv.driverLicense}: {personal.driverLicense}</span>
               </span>
             )}
             {personal.linkedin && (
@@ -131,7 +133,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
               }}
               className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
             >
-              Profil Professionnel
+              {dict.cv.profile}
             </h2>
             <p
               style={{
@@ -159,7 +161,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
-                  Expériences Professionnelles
+                  {dict.cv.experience}
                 </h2>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                   {experiences.map((exp) => (
@@ -179,7 +181,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                           style={{ fontSize: density.fontSize.sm }}
                           className="font-sans text-slate-500 italic shrink-0"
                         >
-                          {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
+                          {exp.startDate} – {exp.current ? dict.cv.present : exp.endDate}
                         </span>
                       </div>
                       <p
@@ -222,7 +224,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
-                  Formation & Diplômes
+                  {dict.cv.education}
                 </h2>
                 <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
                   {educations.map((edu) => (
@@ -266,7 +268,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-2"
                 >
-                  Compétences
+                  {dict.cv.skills}
                 </h2>
                 <div style={{ gap: density.spacing.itemGap }} className="font-sans flex flex-col">
                   {skills.map((cat) => (
@@ -304,7 +306,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1.5"
                 >
-                  Langues
+                  {dict.cv.languages}
                 </h2>
                 <div className="space-y-1 font-sans">
                   {languages.map((l) => (
@@ -331,7 +333,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1"
                 >
-                  Intérêts
+                  {dict.cv.interests}
                 </h2>
                 <p
                   style={{ fontSize: density.fontSize.xs }}
@@ -352,7 +354,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
                   }}
                   className="uppercase tracking-widest font-bold font-sans border-b pb-0.5 mb-1"
                 >
-                  Certifications
+                  {dict.cv.certifications}
                 </h2>
                 <div className="space-y-1 font-sans">
                   {sections.certifications.map((c) => (
@@ -372,7 +374,7 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
         style={{ fontSize: density.fontSize.xs }}
         className="text-center font-sans text-slate-400 pt-2 border-t border-slate-100 mt-2 shrink-0"
       >
-        CV Réalisé avec MonCV.ai
+        {dict.cv.certifiedDocument}
       </div>
     </div>
   );

@@ -56,6 +56,8 @@ import {
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
 import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
 import { isEnterpriseFormulaActive } from "@/lib/license-manager";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 /**
  * CONFIGURATION DU THÈME DES CARTES (Format exact Inspiré du Mockup SaaS)
@@ -121,6 +123,7 @@ const getCardTheme = (color?: string) => {
 };
 
 export default function PublicCandidateCVPage() {
+  const { dict, isRTL } = useTranslation();
   const params = useParams();
   const slug = params?.slug as string;
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
@@ -406,6 +409,7 @@ export default function PublicCandidateCVPage() {
 
   return (
     <div
+      dir={isRTL ? "rtl" : "ltr"}
       className={`min-h-screen w-full overflow-x-hidden font-sans selection:bg-blue-600 selection:text-white transition-colors duration-300 ${
         isDark ? "bg-[#0b0c10] text-slate-100" : "bg-slate-50 text-slate-900"
       }`}
@@ -447,13 +451,13 @@ export default function PublicCandidateCVPage() {
                   {candidateFullName}
                 </span>
                 <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">
-                  Portfolio Certifié
+                  {dict.cv.certifiedProfile}
                 </span>
               </div>
             </Link>
 
             <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10.5px] font-bold">
-              ● Disponible
+              ● {dict.portfolio.badge}
             </span>
           </div>
 
@@ -475,35 +479,30 @@ export default function PublicCandidateCVPage() {
             </button>
 
             {/* Switcher Onglet Portfolio / Format CV A4 */}
-            <div
-              className={`p-1 rounded-xl flex items-center gap-1 border shrink-0 ${
-                isDark ? "bg-slate-900/90 border-slate-800" : "bg-slate-100 border-slate-200"
-              }`}
-            >
+            <div className="flex items-center p-1 rounded-xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => setActiveTab("portfolio")}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap hover:scale-105 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === "portfolio"
                     ? "bg-blue-600 text-white shadow-xs"
                     : isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Globe className="w-3 h-3" />
-                <span className="hidden sm:inline">Portfolio</span>
+                <span className="hidden sm:inline">{dict.portfolio.navAbout}</span>
               </button>
-
               <button
                 type="button"
                 onClick={() => setActiveTab("cv")}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap hover:scale-105 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === "cv"
                     ? "bg-blue-600 text-white shadow-xs"
                     : isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <FileText className="w-3 h-3" />
-                <span className="hidden sm:inline">CV A4</span>
+                <span className="hidden sm:inline">{dict.portfolio.navResume}</span>
               </button>
             </div>
 
@@ -516,17 +515,17 @@ export default function PublicCandidateCVPage() {
                   ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
-              title="Copier le lien du portfolio"
+              title={dict.portfolio.shareProfile}
             >
               {copiedLink ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" />
-                  <span className="hidden md:inline text-emerald-500 font-bold">Copié !</span>
+                  <span className="hidden md:inline text-emerald-500 font-bold">{dict.portfolio.formSuccess}</span>
                 </>
               ) : (
                 <>
                   <QrCode className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Partager</span>
+                  <span className="hidden md:inline">{dict.portfolio.shareProfile}</span>
                 </>
               )}
             </button>
@@ -535,15 +534,18 @@ export default function PublicCandidateCVPage() {
             {/* Sélecteur de Changement de Profil Client & Espaces */}
             <ProfileSwitcher currentSlug={slug} isDark={isDark} />
 
+            {/* Sélecteur de Langue Multilingue i18n */}
+            <LanguageSelector variant="navbar" />
+
             {/* Bouton RETOUR DANS L'ESPACE ENTREPRISE */}
             <Link
               href="/dashboard?tab=business"
               onClick={handleReturnToEnterprise}
               className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0 border border-amber-400/50"
-              title="Retourner à l'Espace Entreprise & Vivier RH"
+              title={dict.creator.backToEnterpriseBtn}
             >
               <Building className="w-3.5 h-3.5 text-slate-950" />
-              <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+              <span>{dict.creator.backToEnterpriseBtn}</span>
             </Link>
 
             {/* Bouton Retour Accueil MonCV.ai */}
@@ -554,10 +556,10 @@ export default function PublicCandidateCVPage() {
                   ? "bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-xs"
               }`}
-              title="Afficher la présentation complète MonCV.ai"
+              title={dict.portfolio.backHome}
             >
               <Home className="w-3.5 h-3.5 text-blue-500 group-hover:-translate-x-0.5 transition-transform duration-300" />
-              <span className="hidden sm:inline whitespace-nowrap">MonCV.ai</span>
+              <span className="hidden sm:inline whitespace-nowrap">{dict.portfolio.backHome}</span>
             </Link>
 
             {/* Bouton Menu Mobile */}
@@ -586,6 +588,11 @@ export default function PublicCandidateCVPage() {
               <ProfileSwitcher currentSlug={slug} isDark={isDark} className="w-full" />
             </div>
 
+            {/* Sélecteur de langue Mobile */}
+            <div className="pt-1 pb-1">
+              <LanguageSelector variant="mobile" />
+            </div>
+
             {/* Bouton Rapide Espace Entreprise Mobile */}
             <Link
               href="/dashboard?tab=business"
@@ -596,7 +603,7 @@ export default function PublicCandidateCVPage() {
               className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 cursor-pointer"
             >
               <Building className="w-4 h-4 text-slate-950" />
-              <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+              <span>{dict.creator.backToEnterpriseBtn}</span>
             </Link>
 
             {/* Actions rapides Mobile */}
@@ -606,14 +613,14 @@ export default function PublicCandidateCVPage() {
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-md shadow-blue-600/20"
             >
               <Home className="w-4 h-4" />
-              <span>← Accueil Découverte MonCV.ai</span>
+              <span>← {dict.portfolio.backHome}</span>
             </Link>
             <a
               href="#contact"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20"
             >
-              <span>Contacter {p.firstName || "le Candidat"}</span>
+              <span>{dict.portfolio.contactMe}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -672,7 +679,7 @@ export default function PublicCandidateCVPage() {
                       <Zap className="w-3 h-3" />
                     </div>
                     <div className="text-left leading-tight">
-                      <span className="text-[10px] font-black block">Conforme ATS</span>
+                      <span className="text-[10px] font-black block">{dict.atsDemo.badge}</span>
                       <span className="text-[8.5px] font-semibold text-slate-400">Score 98/100</span>
                     </div>
                   </div>
@@ -703,7 +710,7 @@ export default function PublicCandidateCVPage() {
                 {/* Badge Disponibilité & Profil Certifié */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Profil Candidat Certifié • Disponible pour opportunités</span>
+                  <span>{dict.cv.certifiedProfile} • {dict.portfolio.badge}</span>
                 </div>
 
                 {/* Titre & Identité */}
@@ -738,7 +745,7 @@ export default function PublicCandidateCVPage() {
                     className="flex-1 min-w-[180px] px-5 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Me Contacter / Recruter</span>
+                    <span>{dict.portfolio.contactMe}</span>
                   </a>
 
                   <a
@@ -750,7 +757,7 @@ export default function PublicCandidateCVPage() {
                     }`}
                   >
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span>Voir mes Réalisations</span>
+                    <span>{dict.portfolio.navProjects}</span>
                   </a>
                 </div>
 
@@ -779,8 +786,8 @@ export default function PublicCandidateCVPage() {
                       <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>
                         {[
-                          p.birthDate ? `Né(e) le ${p.birthDate}` : "",
-                          p.birthPlace ? `à ${p.birthPlace}` : ""
+                          p.birthDate ? `${dict.cv.bornOn} ${p.birthDate}` : "",
+                          p.birthPlace ? `${dict.cv.bornAt} ${p.birthPlace}` : ""
                         ].filter(Boolean).join(" ")}
                       </span>
                     </span>
@@ -1151,7 +1158,7 @@ export default function PublicCandidateCVPage() {
                           href="#contact"
                           className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
                         >
-                          <span>➜ Échanger sur ce projet</span>
+                          <span>➜ {dict.portfolio.sendMessage}</span>
                         </a>
                       </div>
                     </div>
@@ -1188,7 +1195,7 @@ export default function PublicCandidateCVPage() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                       <span className="text-xs font-extrabold text-blue-500">
-                        {exp.startDate} — {exp.current ? "Présent" : exp.endDate}
+                        {exp.startDate} — {exp.current ? dict.cv.present : exp.endDate}
                       </span>
                       {[exp.city, exp.country].filter(Boolean).length > 0 && (
                         <span className="text-[10.5px] font-medium text-slate-400">
@@ -1320,7 +1327,7 @@ export default function PublicCandidateCVPage() {
                           href="#contact"
                           className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
                         >
-                          <span>➜ Proposer cette collaboration</span>
+                          <span>➜ {dict.portfolio.sendMessage}</span>
                         </a>
                       </div>
                     </div>
@@ -1353,14 +1360,14 @@ export default function PublicCandidateCVPage() {
                     className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>Contacter sur WhatsApp Direct</span>
+                    <span>{dict.portfolio.whatsAppDirect}</span>
                   </a>
                   <a
                     href="#contact"
                     className="w-full sm:w-auto px-5 py-2.5 bg-white text-blue-900 font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <Mail className="w-4 h-4 text-blue-600" />
-                    <span>Envoyer un Message Formel</span>
+                    <span>{dict.portfolio.sendMessage}</span>
                   </a>
                 </div>
               </div>
@@ -1398,7 +1405,7 @@ export default function PublicCandidateCVPage() {
                         <Mail className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <span className="text-[10px] text-slate-400 block">Email Professionnel</span>
+                        <span className="text-[10px] text-slate-400 block">{dict.cv.email}</span>
                         <span className="text-xs sm:text-sm font-bold truncate block">{p.email}</span>
                       </div>
                     </a>
@@ -1417,7 +1424,7 @@ export default function PublicCandidateCVPage() {
                         <Phone className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <span className="text-[10px] text-slate-400 block">Téléphone / WhatsApp</span>
+                        <span className="text-[10px] text-slate-400 block">{dict.cv.phone}</span>
                         <span className="text-xs sm:text-sm font-bold truncate block">{p.phone}</span>
                       </div>
                     </a>
@@ -1433,7 +1440,7 @@ export default function PublicCandidateCVPage() {
                         <MapPin className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Localisation</span>
+                        <span className="text-[10px] text-slate-400 block">{dict.cv.address}</span>
                         <span className="text-xs sm:text-sm font-bold block">
                           {[p.city, p.country].filter(Boolean).join(", ")}
                         </span>
@@ -1473,7 +1480,7 @@ export default function PublicCandidateCVPage() {
                     <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
-                    <h3 className="text-base font-bold">Message transmis avec succès !</h3>
+                    <h3 className="text-base font-bold">{dict.portfolio.formSuccess}</h3>
                     <p className="text-xs text-slate-400 max-w-sm mx-auto">
                       Votre prise de contact a été enregistrée. {candidateFullName} vous répondra très rapidement.
                     </p>
@@ -1487,7 +1494,7 @@ export default function PublicCandidateCVPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
                         <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                          Votre Nom / Entreprise <span className="text-red-400">*</span>
+                          {dict.portfolio.formName} <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
@@ -1503,7 +1510,7 @@ export default function PublicCandidateCVPage() {
 
                       <div>
                         <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                          Votre Email <span className="text-red-400">*</span>
+                          {dict.portfolio.formEmail} <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
@@ -1555,7 +1562,7 @@ export default function PublicCandidateCVPage() {
 
                     <div>
                       <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                        Détails de l'opportunité <span className="text-red-400">*</span>
+                        {dict.portfolio.formMessage} <span className="text-red-400">*</span>
                       </label>
                       <textarea
                         required
@@ -1574,7 +1581,7 @@ export default function PublicCandidateCVPage() {
                       className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <Send className="w-4 h-4" />
-                      <span>Transmettre la proposition</span>
+                      <span>{dict.portfolio.formSend}</span>
                     </button>
                   </form>
                 )}
@@ -1619,8 +1626,8 @@ export default function PublicCandidateCVPage() {
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-blue-400" />
               <div>
-                <h3 className="font-bold text-sm text-white">Format CV A4 Conforme ATS</h3>
-                <p className="text-[11px] text-slate-400">Prêt pour l'impression et les candidatures officielles</p>
+                <h3 className="font-bold text-sm text-white">{dict.portfolio.viewCvA4}</h3>
+                <p className="text-[11px] text-slate-400">{dict.cv.certifiedDocument}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1632,7 +1639,7 @@ export default function PublicCandidateCVPage() {
                 title="Télécharger au format Word (.docx)"
               >
                 <FileText className="w-4 h-4" />
-                <span>Word (.docx)</span>
+                <span>{dict.portfolio.downloadWord}</span>
               </button>
               <button
                 type="button"
@@ -1641,7 +1648,7 @@ export default function PublicCandidateCVPage() {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all"
               >
                 <Download className="w-4 h-4" />
-                <span>Télécharger ce CV en PDF</span>
+                <span>{dict.portfolio.downloadPdf}</span>
               </button>
             </div>
           </div>
@@ -1662,7 +1669,7 @@ export default function PublicCandidateCVPage() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">Portfolio de {candidateFullName}</span>
             <span>•</span>
-            <span>Propulsé par MonCV.ai • Développé par <strong>INNOVA GROUP</strong></span>
+            <span>Propulsé par MonCV.ai • {dict.footer.developedBy}</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-semibold">
             <Link href="/terms" className="hover:text-blue-400 transition-colors">
@@ -1700,7 +1707,7 @@ export default function PublicCandidateCVPage() {
           title="Retourner à l'Espace Entreprise & Vivier RH"
         >
           <Building className="w-4 h-4 text-slate-950 shrink-0" />
-          <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+          <span>{dict.creator.backToEnterpriseBtn}</span>
         </Link>
         <Link
           href="/?landing=true"
@@ -1712,7 +1719,7 @@ export default function PublicCandidateCVPage() {
           title="Retourner à l'accueil du site MonCV.ai"
         >
           <Home className="w-4 h-4 text-blue-500" />
-          <span>← Accueil MonCV.ai</span>
+          <span>← {dict.portfolio.backHome}</span>
         </Link>
       </div>
     </div>

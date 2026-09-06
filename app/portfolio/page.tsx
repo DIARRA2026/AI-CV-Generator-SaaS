@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StorageManager } from "@/lib/storage";
 import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import {
   Sparkles,
   ArrowRight,
@@ -479,6 +481,7 @@ const PORTFOLIO_CONFIG = {
 };
 
 export default function PortfolioLandingPage() {
+  const { currentLanguage, isRTL, dict } = useTranslation();
   const router = useRouter();
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [activeFilter, setActiveFilter] = useState<string>("Tous");
@@ -673,7 +676,7 @@ export default function PortfolioLandingPage() {
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md shadow-blue-600/20 transition-all cursor-pointer"
             >
               <Home className="w-4 h-4" />
-              <span>← Retour à la page d'accueil MonCV.ai</span>
+              <span>← {dict.portfolio.backHome}</span>
             </Link>
             <div className="flex items-center gap-2 py-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -733,7 +736,7 @@ export default function PortfolioLandingPage() {
               {/* Badge animé disponibilité */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Disponible pour de nouveaux projets • {PORTFOLIO_CONFIG.profile.availabilityDate}</span>
+                <span>{dict.cv.certifiedProfile} • {PORTFOLIO_CONFIG.profile.availabilityDate}</span>
               </div>
 
               {/* Titre percutant avec dégradé subtil */}
@@ -760,7 +763,7 @@ export default function PortfolioLandingPage() {
                   className="px-6 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Voir mes projets</span>
+                  <span>{dict.portfolio.navProjects}</span>
                   <ArrowRight className="w-4 h-4" />
                 </a>
 
@@ -1688,7 +1691,7 @@ export default function PortfolioLandingPage() {
                     className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Envoyer ma demande de devis</span>
+                    <span>{dict.portfolio.formSend}</span>
                   </button>
                 </form>
               )}
@@ -1716,15 +1719,15 @@ export default function PortfolioLandingPage() {
 
           <div className="flex items-center gap-6 text-[11px] font-semibold">
             <Link href="/" className="hover:text-white transition-colors">MonCV.ai</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Conditions d'Utilisation</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Nous Contacter</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">{dict.footer.terms}</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">{dict.footer.contact}</Link>
             <a href="#projets" className="hover:text-white transition-colors">Projets</a>
             <a href="#services" className="hover:text-white transition-colors">Tarifs</a>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 mt-4 border-t border-slate-800/60 text-center text-[10.5px] text-slate-500">
-          MonCV.ai est une plateforme SaaS conçue et développée par <strong>INNOVA GROUP</strong>. Tous droits réservés.
+          MonCV.ai • {dict.footer.developedBy}. {dict.footer.rights}
         </div>
       </footer>
 
@@ -1740,7 +1743,7 @@ export default function PortfolioLandingPage() {
           title="Retourner à l'accueil du site MonCV.ai"
         >
           <Home className="w-4 h-4 text-blue-500" />
-          <span>← Retour à l'accueil MonCV.ai</span>
+          <span>← {dict.portfolio.backHome}</span>
         </Link>
       </div>
     </div>

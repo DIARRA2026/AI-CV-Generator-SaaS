@@ -9,6 +9,7 @@ import { TemplateMinimal } from "./templates/TemplateMinimal";
 import { TemplateCreative } from "./templates/TemplateCreative";
 import { TemplateATS } from "./templates/TemplateATS";
 import { canDownloadWithoutWatermark } from "@/lib/license-manager";
+import { useTranslation } from "@/lib/i18n";
 
 interface CVPreviewCanvasProps {
   data: ResumeData;
@@ -23,6 +24,8 @@ const A4_HEIGHT_PX = 1123;
 
 export const CVPreviewCanvas = forwardRef<HTMLDivElement, CVPreviewCanvasProps>(
   ({ data, scale = 1 }, ref) => {
+    const { dict, isRTL } = useTranslation();
+
     const renderTemplate = () => {
       switch (data.design.template) {
         case "elegant":
@@ -59,6 +62,7 @@ export const CVPreviewCanvas = forwardRef<HTMLDivElement, CVPreviewCanvasProps>(
           <div
             ref={ref}
             id="cv-printable-page"
+            dir={isRTL ? "rtl" : "ltr"}
             className="a4-page overflow-hidden print:shadow-none print:m-0"
             style={{
               width: "210mm",
@@ -81,9 +85,9 @@ export const CVPreviewCanvas = forwardRef<HTMLDivElement, CVPreviewCanvasProps>(
             {!canDownloadWithoutWatermark(data) && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none overflow-hidden z-30">
                 <div className="transform -rotate-35 border-2 sm:border-4 border-slate-400/25 bg-white/50 backdrop-blur-[0.5px] text-slate-500/35 font-black text-xl sm:text-3xl uppercase tracking-widest px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl shadow-xs text-center">
-                  <span>MonCV.ai • Découverte</span>
+                  <span>{dict.cv.watermarkTitle}</span>
                   <span className="block text-[9px] sm:text-[11px] font-bold tracking-wider mt-0.5 text-slate-400/55">
-                    Version Gratuite • Filigrane Découverte
+                    {dict.cv.watermarkDesc}
                   </span>
                 </div>
               </div>

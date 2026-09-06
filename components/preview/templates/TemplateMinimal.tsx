@@ -1,12 +1,14 @@
 import React from "react";
 import { ResumeData } from "@/lib/types";
 import { getResumeDensity } from "@/lib/resume-density";
+import { useTranslation } from "@/lib/i18n";
 
 interface TemplateProps {
   data: ResumeData;
 }
 
 export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
+  const { dict } = useTranslation();
   const { personal, summary, experiences, educations, skills, languages, sections, design } = data;
   const color = design.primaryColor || "#111827";
   const density = getResumeDensity(data);
@@ -38,14 +40,14 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                     <span className="font-bold">{personal.firstName}</span> {personal.lastName}
                   </>
                 ) : (
-                  <span className="text-zinc-300 font-medium">Votre Prénom & Nom</span>
+                  <span className="text-zinc-300 font-medium">{dict.cv.defaultFullName}</span>
                 )}
               </h1>
               <p
                 style={{ fontSize: density.fontSize.role }}
                 className="tracking-widest text-zinc-500 mt-1 uppercase font-medium"
               >
-                {personal.title || <span className="text-zinc-300 font-normal">Intitulé du poste recherché</span>}
+                {personal.title || <span className="text-zinc-300 font-normal">{dict.cv.defaultJobTitle}</span>}
               </p>
             </div>
             {design.showPhoto && personal.photoUrl && (
@@ -65,20 +67,20 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
             className="flex flex-wrap gap-x-3 gap-y-1 text-zinc-500 mt-2.5 pt-2 border-t border-zinc-200"
           >
             {personal.email && <span>{personal.email}</span>}
-            {personal.phone && <span>· {personal.phone}</span>}
+            {personal.phone && <span dir="ltr">· {personal.phone}</span>}
             {(personal.city || personal.country) && (
               <span>· {[personal.city, personal.country].filter(Boolean).join(", ")}</span>
             )}
             {(personal.birthDate || personal.birthPlace) && (
               <span>
                 · {[
-                  personal.birthDate ? `Né(e) le ${personal.birthDate}` : "",
-                  personal.birthPlace ? `à ${personal.birthPlace}` : ""
+                  personal.birthDate ? `${dict.cv.bornOn} ${personal.birthDate}` : "",
+                  personal.birthPlace ? `${dict.cv.bornAt} ${personal.birthPlace}` : ""
                 ].filter(Boolean).join(" ")}
               </span>
             )}
             {personal.maritalStatus && <span>· {personal.maritalStatus}</span>}
-            {personal.driverLicense && <span>· Permis: {personal.driverLicense}</span>}
+            {personal.driverLicense && <span>· {dict.cv.driverLicense}: {personal.driverLicense}</span>}
             {personal.linkedin && <span>· {personal.linkedin}</span>}
             {personal.website && <span>· {personal.website}</span>}
           </div>
@@ -91,7 +93,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
             >
-              À Propos
+              {dict.cv.profile}
             </h2>
             <p
               style={{
@@ -112,7 +114,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
             >
-              Expérience
+              {dict.cv.experience}
             </h2>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {experiences.map((exp) => (
@@ -121,7 +123,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                     style={{ fontSize: density.fontSize.sm }}
                     className="col-span-1 text-zinc-400 pt-0.5 leading-snug"
                   >
-                    {exp.startDate} – {exp.current ? "Présent" : exp.endDate}
+                    {exp.startDate} – {exp.current ? dict.cv.present : exp.endDate}
                   </div>
                   <div className="col-span-3">
                     <h3
@@ -168,7 +170,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.heading }}
               className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
             >
-              Formation
+              {dict.cv.education}
             </h2>
             <div style={{ gap: density.spacing.itemGap }} className="flex flex-col">
               {educations.map((edu) => (
@@ -207,7 +209,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                 style={{ fontSize: density.fontSize.heading }}
                 className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
               >
-                Compétences
+                {dict.cv.skills}
               </h2>
               <div className="space-y-1">
                 {skills.map((s) => (
@@ -227,7 +229,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                   style={{ fontSize: density.fontSize.heading }}
                   className="uppercase font-bold tracking-widest text-zinc-400 mb-1.5"
                 >
-                  Langues
+                  {dict.cv.languages}
                 </h2>
                 <div className="space-y-0.5">
                   {languages.map((l) => (
@@ -250,7 +252,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                   style={{ fontSize: density.fontSize.heading }}
                   className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
                 >
-                  Certifications
+                  {dict.cv.certifications}
                 </h2>
                 <div className="space-y-0.5">
                   {sections.certifications.map((c) => (
@@ -268,7 +270,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                   style={{ fontSize: density.fontSize.heading }}
                   className="uppercase font-bold tracking-widest text-zinc-400 mb-1"
                 >
-                  Intérêts
+                  {dict.cv.interests}
                 </h2>
                 <p
                   style={{ fontSize: density.fontSize.xs }}
@@ -286,7 +288,7 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
         style={{ fontSize: density.fontSize.xs }}
         className="pt-2 text-center text-zinc-400 border-t border-zinc-100 shrink-0"
       >
-        Généré avec MonCV.ai
+        {dict.cv.certifiedDocument}
       </div>
     </div>
   );

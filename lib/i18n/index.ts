@@ -5,6 +5,7 @@ import { es } from "./locales/es";
 import { ar } from "./locales/ar";
 
 export * from "./types";
+export * from "./LanguageContext";
 
 export const LANGUAGES: LanguageOption[] = [
   {

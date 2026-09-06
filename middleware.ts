@@ -19,7 +19,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
-  // 1. INJECTION DES EN-TÊTES HTTP DE SÉCURITÉ OWASP (Sur toutes les requêtes)
+  // 1. INJECTION DES EN-TÊTES HTTP DE SÉCURITÉ OWASP & ANTI-INDEXATION (Sur toutes les requêtes)
+  response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet"); // Empêche l'indexation par Google/moteurs
   response.headers.set("X-Frame-Options", "DENY"); // Empêche le clickjacking
   response.headers.set("X-Content-Type-Options", "nosniff"); // Empêche le reniflage de type MIME
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -30,7 +31,28 @@ export function middleware(request: NextRequest) {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
-  // 2. VÉRIFICATION DE LA PROTECTION DES ROUTES PRIVÉES
+  // 2. VÉRIFICATION DU SAS DE PRÉVISUALISATION PRIVÉE (PREVIEW LOCK)
+  const previewPassword = process.env.PREVIEW_PASSWORD?.trim();
+  if (previewPassword) {
+    const isPreviewExcluded =
+      pathname.startsWith("/preview-access") ||
+      pathname.startsWith("/api/preview-auth");
+
+    if (!isPreviewExcluded) {
+      const previewCookie = request.cookies.get("moncv_preview_auth")?.value;
+      if (!previewCookie) {
+        const lockUrl = new URL("/preview-access", request.url);
+        if (pathname !== "/") {
+          lockUrl.searchParams.set("redirect", pathname);
+        }
+        const lockResponse = NextResponse.redirect(lockUrl);
+        lockResponse.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+        return lockResponse;
+      }
+    }
+  }
+
+  // 3. VÉRIFICATION DE LA PROTECTION DES ROUTES PRIVÉES
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isProtectedRoute) {

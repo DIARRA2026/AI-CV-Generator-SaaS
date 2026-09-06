@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
+import { PlanTier } from "@/lib/types";
 import {
   Sparkles,
   ArrowRight,
@@ -200,7 +201,7 @@ const FAQS = [
 
 export default function HomePage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [selectedPlanPrice, setSelectedPlanPrice] = useState<"1500" | "2500" | "5000">("2500");
+  const [selectedPlanPrice, setSelectedPlanPrice] = useState<PlanTier>("2500");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState("modern");
   const [activeColor, setActiveColor] = useState("#2563eb");
@@ -231,7 +232,7 @@ export default function HomePage() {
     setIsAuthOpen(true);
   };
 
-  const handleOpenPlanPayment = (plan: "1500" | "2500" | "5000") => {
+  const handleOpenPlanPayment = (plan: PlanTier) => {
     setSelectedPlanPrice(plan);
     setIsPaymentOpen(true);
   };
@@ -1313,6 +1314,324 @@ export default function HomePage() {
         </section>
 
         {/* ========================================================================= */}
+        {/* 8-BIS. SECTION OFFRES BUSINESS & ENTREPRISES (B2B HAUTE CONVERSION)      */}
+        {/* ========================================================================= */}
+        <section id="business" className="py-16 sm:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white relative overflow-hidden border-t border-slate-800">
+          {/* Halos ambiants & grille futuriste */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-indigo-500/15 to-purple-600/15 blur-3xl -z-10 pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+            {/* Badge supérieur */}
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-wider shadow-lg backdrop-blur-md">
+                <Building className="w-3.5 h-3.5 text-blue-400" />
+                <span>Offres B2B & Solutions Entreprises</span>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-emerald-400 text-[10px] font-black">Volume Disponible</span>
+              </div>
+            </div>
+
+            {/* Titre Principal Agressif & Percutant */}
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black tracking-tight leading-tight">
+                Multipliez la Puissance de vos Recrutements. <br className="hidden sm:inline" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300">
+                  Cadence Industrielle, Zéro Rejet ATS, Rentabilité Maximale.
+                </span>
+              </h2>
+              <p className="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed font-normal">
+                <strong>Cabinets de recrutement, PME, centres de formation, ONG et agences d'intérim</strong> : cessez de gaspiller 2 heures par candidat sur Word avec des mises en page chaotiques. Générez en 5 minutes des dossiers de candidature d'élite certifiés conformes aux filtres ATS des multinationales. <strong>Économisez jusqu'à 67%</strong> avec nos formules dégressives sans aucun abonnement contraignant.
+              </p>
+            </div>
+
+            {/* 4 Piliers Marketing & Arguments Chocs */}
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-blue-500/40 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <h4 className="font-extrabold text-sm text-white">Cadence Décuplée ×10</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  5 minutes par CV au lieu de 2h de calvaire sur Word. Vos chargés de recrutement se concentrent enfin sur les entretiens et le placement.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-indigo-500/40 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <h4 className="font-extrabold text-sm text-white">Dégressivité Massive</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Dès <strong>500 FCFA</strong> par candidat débloqué au lieu de 1 500 F. Jusqu'à <strong>200 000 FCFA d'économies directes</strong> sur votre budget.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-emerald-500/40 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <h4 className="font-extrabold text-sm text-white">Zéro Expiration & Zéro Piège</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Aucun abonnement forcé, aucun prélèvement bancaire surprise. Vos crédits de profils restent <strong>acquis à vie</strong> jusqu'à épuisement.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-amber-500/40 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5" />
+                </div>
+                <h4 className="font-extrabold text-sm text-white">100% Conforme ATS</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Calibré pour passer les filtres robotisés (Workday, Taleo, BambooHR). Valorisation selon la méthode STAR reconnue des DRH.
+                </p>
+              </div>
+            </div>
+
+            {/* Grille des 3 Formules Entreprises */}
+            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+              
+              {/* PACK 1 : STARTER PME (30 PROFILS) */}
+              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                      <Building className="w-3.5 h-3.5" />
+                      Starter PME
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                      Économisez 25 000 F (-56%)
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-extrabold text-white mt-3">Pack Starter PME</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Idéal pour petites structures, startups & promotions de 20-30 apprenants.
+                  </p>
+
+                  <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black text-white">20 000</span>
+                    <span className="text-sm font-bold text-slate-400">FCFA</span>
+                    <span className="text-xs font-semibold text-teal-400 ml-auto bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-800/40">
+                      ~667 F / profil
+                    </span>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>30 Candidats / Profils complets débloqués</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Téléchargements illimités (PDF Vectoriel HD + Word DOCX)</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Tous les 6 modèles de CV de prestige inclus</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Mise en page anti-débordement A4 stricte</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Crédits valables à vie sans date d'expiration</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenPlanPayment("enterprise30")}
+                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-teal-600 text-white font-extrabold rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-teal-600/30"
+                >
+                  <Building className="w-4 h-4" />
+                  <span>Activer Starter PME (20 000 F)</span>
+                </button>
+              </div>
+
+              {/* PACK 2 : BUSINESS PRO (75 PROFILS) — LE BEST SELLER RECOMMANDÉ */}
+              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10">
+                {/* Badge Top Recommandé */}
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-3.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+                  <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
+                  <span>Recommandé • Le Choix des Cabinets RH</span>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      <Users className="w-3.5 h-3.5" />
+                      Business Pro
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                      Économisez 67 500 F (-60%)
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-black text-white mt-3">Pack Business Pro</h3>
+                  <p className="text-xs text-slate-300 mt-1">
+                    La formule reine pour cabinets de recrutement, agences d'intérim & DRH actives.
+                  </p>
+
+                  <div className="mt-4 pt-4 border-t border-indigo-800/60 flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black text-white">45 000</span>
+                    <span className="text-sm font-bold text-slate-300">FCFA</span>
+                    <span className="text-xs font-black text-amber-300 ml-auto bg-amber-950/70 px-2.5 py-0.5 rounded-md border border-amber-500/40">
+                      600 F / profil
+                    </span>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-slate-200">
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>75 Candidats / Profils complets débloqués</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-semibold text-indigo-200">
+                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>Demandes d'Emploi Officielles & Lettres IA incluses</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Téléchargements illimités (PDF HD + Word DOCX)</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Accès aux 6 templates de prestige sans filigrane</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-semibold text-emerald-300">
+                      <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Support Prioritaire VIP WhatsApp 7j/7 (&lt; 15 min)</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Reçu & Facture d'entreprise normalisée</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenPlanPayment("enterprise75")}
+                  className="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Activer Business Pro (45 000 F)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* PACK 3 : ENTREPRISE PREMIUM (200 PROFILS) — VOLUME MAXIMAL */}
+              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      <Crown className="w-3.5 h-3.5" />
+                      Entreprise Premium
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                      -67% • Prix Divisé par 3 !
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-extrabold text-white mt-3">Pack Entreprise Premium</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Pour grandes entreprises, ONG internationales, universités & réseaux de cybercafés.
+                  </p>
+
+                  <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black text-white">100 000</span>
+                    <span className="text-sm font-bold text-slate-400">FCFA</span>
+                    <span className="text-xs font-black text-emerald-400 ml-auto bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
+                      500 F / profil
+                    </span>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>200 Candidats / Profils complets débloqués</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-bold text-emerald-300">
+                      <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Tarif plancher garanti : 500 F par profil</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Tous les 6 modèles + Portfolios Web activables</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Accompagnement prise en main pour vos équipes RH</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Ligne WhatsApp dédiée 24/7 & gestionnaire de compte</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Facture normalisée conforme OHADA (N° RCCM / IFU)</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenPlanPayment("enterprise200")}
+                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-amber-600 hover:text-slate-950 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-amber-600/30"
+                >
+                  <Crown className="w-4 h-4" />
+                  <span>Activer Premium (100 000 F)</span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* Bannière Déploiement Sur-Mesure / Grand Compte (+200 profils) */}
+            <div className="mt-10 p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-blue-950/70 via-indigo-950/70 to-purple-950/70 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left backdrop-blur-md">
+              <div className="space-y-1 max-w-xl">
+                <span className="text-[10.5px] font-black uppercase tracking-wider text-amber-300 block">
+                  Accord-Cadre &amp; Grandes Écoles
+                </span>
+                <h4 className="text-base sm:text-lg font-black text-white">
+                  Besoin de plus de 200 profils ou d'un accord sur-mesure ?
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Universités, ministères, réseaux de cybercafés ou groupes panafricains : nous configurons un volume illimité avec facturation pro centralisée et support VIP.
+                </p>
+              </div>
+              <a
+                href="https://wa.me/2250700000000?text=Bonjour%20INNOVA%20GROUP,%20notre%20organisation%20souhaite%20un%20devis%20B2B%20sur-mesure%20pour%20plus%20de%20200%20profils%20sur%20MonCV.ai."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer group"
+              >
+                <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span>Devis Institutionnel sur WhatsApp</span>
+                <ChevronRight className="w-4 h-4 text-emerald-200" />
+              </a>
+            </div>
+
+            {/* Réassurance & Paiement Sécurisé */}
+            <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-slate-400">
+              <div className="flex items-center gap-2 font-medium">
+                <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Règlement 100% sécurisé via <strong>Wave, Orange Money, MTN MoMo</strong> et <strong>Carte Bancaire</strong></span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-400">
+                <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>Facture commerciale certifiée émise par <strong>INNOVA GROUP</strong></span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
         {/* 9. SECTION NOUS CONTACTER & SUPPORT INNOVA GROUP                          */}
         {/* ========================================================================= */}
         <section id="contact" className="py-14 sm:py-18 bg-white border-t border-slate-200">
@@ -1510,6 +1829,9 @@ export default function HomePage() {
               </Link>
               <Link href="/portfolio" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
                 Portfolio Web Démo
+              </Link>
+              <Link href="/#business" className="text-amber-600 font-bold hover:text-amber-700 transition-colors py-1">
+                Offres Entreprises (B2B)
               </Link>
               <Link href="/create" className="text-blue-600 font-bold hover:underline py-1">
                 Créer un CV →

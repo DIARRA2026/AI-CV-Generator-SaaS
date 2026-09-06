@@ -3,14 +3,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles, FileText, LayoutDashboard, Crown, User, LogOut,
-  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe
+  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe, Building
 } from "lucide-react";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
 import { StorageManager, UserSession } from "@/lib/storage";
+import { PlanTier } from "@/lib/types";
 
 interface NavbarProps {
-  onOpenPayment?: (plan?: "1500" | "2500" | "5000") => void;
+  onOpenPayment?: (plan?: PlanTier) => void;
   onOpenAuth?: () => void;
 }
 
@@ -138,6 +139,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
               <span>Portfolio Web</span>
               <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
                 VIP
+              </span>
+            </Link>
+
+            <Link
+              href="/#business"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
+            >
+              <Building className="w-3.5 h-3.5 text-amber-600" />
+              <span>Entreprises</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-amber-600 text-white text-[9px] font-black uppercase">
+                B2B
               </span>
             </Link>
 
@@ -438,6 +450,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
                   VIP
+                </span>
+              </Link>
+
+              <Link
+                href="/#business"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50/70 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200/60"
+              >
+                <div className="flex items-center gap-3">
+                  <Building className="w-4 h-4 text-amber-600" />
+                  <span>Offres Entreprises & RH</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[9.5px] font-black uppercase">
+                  B2B
                 </span>
               </Link>
 

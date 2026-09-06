@@ -15,6 +15,7 @@ import { JobApplicationModal } from "@/components/tools/JobApplicationModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
 import { InvoiceModal } from "@/components/tools/InvoiceModal";
 import { exportResumeToDocx } from "@/lib/docx-export";
+import { isEnterpriseFormulaActive } from "@/lib/license-manager";
 import {
   Plus,
   Edit3,
@@ -141,21 +142,19 @@ export default function DashboardPage() {
     return () => window.removeEventListener("storage", syncState);
   }, []);
 
-  // Filtrage des candidats pour l'Espace Recruteur
+  // Filtrage des candidats pour la recherche dans le vivier entreprise
   const filteredResumes = useMemo(() => {
     if (!candidateSearchQuery.trim()) return resumes;
-    const q = candidateSearchQuery.toLowerCase().trim();
-    return resumes.filter((cv) => {
-      const name = `${cv.personal?.firstName || ""} ${cv.personal?.lastName || ""}`.toLowerCase();
-      const title = (cv.personal?.title || "").toLowerCase();
-      const cvTitle = (cv.title || "").toLowerCase();
-      const email = (cv.personal?.email || "").toLowerCase();
-      const city = (cv.personal?.city || "").toLowerCase();
-      const template = (cv.design?.template || "").toLowerCase();
+    const q = candidateSearchQuery.toLowerCase();
+    return resumes.filter((r) => {
+      const name = `${r.personal?.firstName || ""} ${r.personal?.lastName || ""}`.toLowerCase();
+      const title = (r.personal?.title || "").toLowerCase();
+      const email = (r.personal?.email || "").toLowerCase();
+      const city = (r.personal?.city || "").toLowerCase();
+      const template = (r.design?.template || "").toLowerCase();
       return (
         name.includes(q) ||
         title.includes(q) ||
-        cvTitle.includes(q) ||
         email.includes(q) ||
         city.includes(q) ||
         template.includes(q)
@@ -166,32 +165,34 @@ export default function DashboardPage() {
   // Handler Lettre de Motivation IA (règle des formules payantes Pack Pro 2500 & VIP 5000 & Entreprise)
   const handleOpenCoverLetter = (cv?: ResumeData) => {
     const targetCv = cv || resumes[0] || StorageManager.getActiveResume();
-    const tier = targetCv.planTier || (targetCv.isPremium ? "2500" : "free");
+    const isOffered = isBusinessAccount || StorageManager.isPersonalOffersOffered() || isEnterpriseFormulaActive(targetCv);
+    const tier = isOffered ? "5000" : (targetCv?.planTier || (targetCv?.isPremium ? "2500" : "free"));
 
-    if (tier === "free" || tier === "1500") {
-      StorageManager.saveActiveResume(targetCv);
+    if (!isOffered && (tier === "free" || tier === "1500")) {
+      if (targetCv) StorageManager.saveActiveResume(targetCv);
       setPaymentDefaultPlan("2500");
       setIsPaymentOpen(true);
       return;
     }
 
-    setSelectedForCoverLetter(targetCv);
+    if (targetCv) setSelectedForCoverLetter(targetCv);
     setIsCoverLetterOpen(true);
   };
 
   // Handler Demande d'Emploi Officielle (règle des formules payantes Pack Pro 2500 & VIP 5000 & Entreprise)
   const handleOpenJobApplication = (cv?: ResumeData) => {
     const targetCv = cv || resumes[0] || StorageManager.getActiveResume();
-    const tier = targetCv.planTier || (targetCv.isPremium ? "2500" : "free");
+    const isOffered = isBusinessAccount || StorageManager.isPersonalOffersOffered() || isEnterpriseFormulaActive(targetCv);
+    const tier = isOffered ? "5000" : (targetCv?.planTier || (targetCv?.isPremium ? "2500" : "free"));
 
-    if (tier === "free" || tier === "1500") {
-      StorageManager.saveActiveResume(targetCv);
+    if (!isOffered && (tier === "free" || tier === "1500")) {
+      if (targetCv) StorageManager.saveActiveResume(targetCv);
       setPaymentDefaultPlan("2500");
       setIsPaymentOpen(true);
       return;
     }
 
-    setSelectedForJobApp(targetCv);
+    if (targetCv) setSelectedForJobApp(targetCv);
     setIsJobAppOpen(true);
   };
 
@@ -977,7 +978,17 @@ export default function DashboardPage() {
 
                         {/* Badge Formule Débloquée */}
                         <div className="mb-3">
-                          {cv.planTier === "5000" ? (
+                          {isBusinessAccount || isEnterpriseFormulaActive(cv) ? (
+                            <div className="p-2.5 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-blue-500/10 border border-amber-200 rounded-xl flex items-center justify-between text-xs">
+                              <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                                <Crown className="w-3.5 h-3.5 text-amber-600" />
+                                Formule Entreprise (Offres Personnelles Offertes)
+                              </span>
+                              <span className="text-[10px] bg-amber-600 text-white font-bold px-2 py-0.5 rounded-full">
+                                100% Offert
+                              </span>
+                            </div>
+                          ) : cv.planTier === "5000" ? (
                             <div className="p-2.5 bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 rounded-xl flex items-center justify-between text-xs">
                               <span className="font-black text-purple-900 flex items-center gap-1.5">
                                 <Crown className="w-3.5 h-3.5 text-amber-500" />
@@ -1007,16 +1018,6 @@ export default function DashboardPage() {
                                 Actif
                               </span>
                             </div>
-                          ) : isBusinessAccount ? (
-                            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                              <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                Inclus Licence Entreprise
-                              </span>
-                              <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">
-                                Débloqué
-                              </span>
-                            </div>
                           ) : (
                             <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs">
                               <span className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -1042,13 +1043,13 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
                               <Globe className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span>{cv.planTier === "5000" ? "Portfolio Web Site VIP" : "Lien Public de Partage"}</span>
+                              <span>{cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv) ? "Portfolio Web Site VIP (Offert)" : "Lien Public de Partage"}</span>
                             </div>
                             <span className={`px-2 py-0.5 font-bold text-[9.5px] rounded-md flex items-center gap-1 ${
-                              cv.planTier === "5000" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
+                              cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv) ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
                             }`}>
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              {cv.planTier === "5000" ? "VIP En Ligne" : "Actif"}
+                              {cv.planTier === "5000" ? "VIP En Ligne" : isBusinessAccount || isEnterpriseFormulaActive(cv) ? "VIP Entreprise" : "Actif"}
                             </span>
                           </div>
 
@@ -1064,7 +1065,7 @@ export default function DashboardPage() {
                               className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 transition-all"
                             >
                               <ExternalLink className="w-3 h-3" />
-                              <span>{cv.planTier === "5000" ? "Voir le Portfolio" : "Voir le CV"}</span>
+                              <span>{cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv) ? "Voir le Portfolio VIP" : "Voir le CV"}</span>
                             </a>
                             <button
                               type="button"
@@ -1100,19 +1101,19 @@ export default function DashboardPage() {
                             type="button"
                             onClick={() => handleOpenJobApplication(cv)}
                             className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all border cursor-pointer ${
-                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount
+                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
                                 ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 shadow-xs"
                                 : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
                             }`}
                             title={
-                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount
-                                ? "Créer la Demande d'Emploi Officielle"
+                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
+                                ? "Créer la Demande d'Emploi Officielle (Offerte)"
                                 : "Demande d'Emploi (Inclus dans le Pack Pro 2 500 FCFA)"
                             }
                           >
                             <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                             <span className="truncate">Demande d'emploi</span>
-                            {cv.planTier !== "2500" && cv.planTier !== "5000" && !isBusinessAccount && (
+                            {cv.planTier !== "2500" && cv.planTier !== "5000" && !isBusinessAccount && !isEnterpriseFormulaActive(cv) && (
                               <Lock className="w-3 h-3 text-slate-400 shrink-0" />
                             )}
                           </button>
@@ -1121,19 +1122,19 @@ export default function DashboardPage() {
                             type="button"
                             onClick={() => handleOpenCoverLetter(cv)}
                             className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all border cursor-pointer ${
-                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount
+                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
                                 ? "bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-200 shadow-xs"
                                 : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
                             }`}
                             title={
-                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount
-                                ? "Générer la Lettre de Motivation IA"
+                              cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
+                                ? "Générer la Lettre de Motivation IA (Offerte)"
                                 : "Lettre IA (Inclus dans le Pack Pro 2 500 FCFA)"
                             }
                           >
                             <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                             <span className="truncate">Lettre IA</span>
-                            {cv.planTier !== "2500" && cv.planTier !== "5000" && !isBusinessAccount && (
+                            {cv.planTier !== "2500" && cv.planTier !== "5000" && !isBusinessAccount && !isEnterpriseFormulaActive(cv) && (
                               <Lock className="w-3 h-3 text-slate-400 shrink-0" />
                             )}
                           </button>

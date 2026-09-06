@@ -19,7 +19,7 @@ import { SmartGenerateModal } from "@/components/tools/SmartGenerateModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { Navbar } from "@/components/Navbar";
 import { SupabaseService } from "@/lib/supabaseService";
-import { getLicenseStatus } from "@/lib/license-manager";
+import { getLicenseStatus, isEnterpriseFormulaActive } from "@/lib/license-manager";
 import {
   Download,
   Share2,
@@ -221,13 +221,14 @@ export default function CreateCVPage() {
     }
   };
 
-  const planTier = resumeData.planTier || (resumeData.isPremium ? "2500" : "free");
+  const isEnterpriseActive = StorageManager.isPersonalOffersOffered() || isEnterpriseFormulaActive(resumeData);
+  const planTier = isEnterpriseActive ? "5000" : (resumeData.planTier || (resumeData.isPremium ? "2500" : "free"));
   const licenseStatus = getLicenseStatus(resumeData);
 
-  // Ouverture Lettre IA (Inclus à partir du Pack Pro 2500 FCFA & VIP 5000 FCFA)
+  // Ouverture Lettre IA (Inclus dès la formule Entreprise ou Pack Pro 2500 FCFA & VIP 5000 FCFA)
   const handleOpenCoverLetter = () => {
     requireAuth("coverLetter", () => {
-      if (planTier === "free" || planTier === "1500") {
+      if (!isEnterpriseActive && (planTier === "free" || planTier === "1500")) {
         setPaymentDefaultPlan("2500");
         setIsPaymentOpen(true);
         return;
@@ -236,10 +237,10 @@ export default function CreateCVPage() {
     });
   };
 
-  // Ouverture Demande d'emploi (Inclus à partir du Pack Pro 2500 FCFA & VIP 5000 FCFA)
+  // Ouverture Demande d'emploi (Inclus dès la formule Entreprise ou Pack Pro 2500 FCFA & VIP 5000 FCFA)
   const handleOpenJobApplication = () => {
     requireAuth("jobApplication", () => {
-      if (planTier === "free" || planTier === "1500") {
+      if (!isEnterpriseActive && (planTier === "free" || planTier === "1500")) {
         setPaymentDefaultPlan("2500");
         setIsPaymentOpen(true);
         return;
@@ -514,7 +515,12 @@ export default function CreateCVPage() {
                 <Eye className="w-4 h-4 text-blue-600" />
                 Aperçu Page A4
               </span>
-              {licenseStatus.isUnlocked ? (
+              {isEnterpriseActive ? (
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                  <Crown className="w-3 h-3 text-amber-600" />
+                  Offres Personnelles Offertes (Formule Entreprise)
+                </span>
+              ) : licenseStatus.isUnlocked ? (
                 <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   Profil Débloqué (Illimité)
@@ -605,7 +611,7 @@ export default function CreateCVPage() {
           </div>
 
           {/* Alerte Pédagogique si Changement d'Identité Détecté */}
-          {licenseStatus.isNameChangedFromPrimary && (
+          {!isEnterpriseActive && licenseStatus.isNameChangedFromPrimary && (
             <div className="mb-3 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs no-print">
               <div className="flex items-start gap-2.5 text-amber-900">
                 <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />

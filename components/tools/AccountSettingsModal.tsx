@@ -771,86 +771,107 @@ export const AccountSettingsModal: React.FC<Props> = ({
           {/* ========================================================================= */}
           {/* 3. ONGLET MON OFFRE & ABONNEMENT */}
           {/* ========================================================================= */}
-          {activeTab === "plan" && (
-            <div className="space-y-6">
-              <div className="p-6 rounded-3xl border bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white relative overflow-hidden shadow-xl">
-                <div className="relative z-10 space-y-3">
-                  <span className="px-3 py-1 bg-white/20 text-white text-[11px] font-bold rounded-full uppercase tracking-wider backdrop-blur-sm">
-                    Formule Actuellement Active
-                  </span>
+          {activeTab === "plan" && (() => {
+            const isEnterpriseActive = isBusiness || planTier === "enterprise30" || planTier === "enterprise75" || planTier === "enterprise200" || planTier === "cyber15" || StorageManager.isPersonalOffersOffered();
+            return (
+              <div className="space-y-6">
+                <div className="p-6 rounded-3xl border bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white relative overflow-hidden shadow-xl">
+                  <div className="relative z-10 space-y-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-3 py-1 bg-white/20 text-white text-[11px] font-bold rounded-full uppercase tracking-wider backdrop-blur-sm">
+                        Formule Actuellement Active
+                      </span>
+                      {isEnterpriseActive && (
+                        <span className="px-3 py-1 bg-amber-500/30 text-amber-300 border border-amber-400/40 text-[11px] font-bold rounded-full uppercase tracking-wider backdrop-blur-sm flex items-center gap-1">
+                          <Crown className="w-3 h-3 text-amber-400" />
+                          Offres Personnelles 100% Offertes
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-2xl font-black">
-                      {planTier === "5000"
-                        ? "Pack VIP & Portfolio Web"
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-2xl font-black">
+                        {isEnterpriseActive
+                          ? `Formule Entreprise (${planTier === "enterprise30" ? "Starter 30" : planTier === "enterprise200" ? "Corporate 200" : planTier === "cyber15" ? "Cyber Café 15" : "Business Pro 75"})`
+                          : planTier === "5000"
+                          ? "Pack VIP & Portfolio Web"
+                          : planTier === "2500"
+                          ? "Pack Candidature Pro"
+                          : planTier === "1500"
+                          ? "Pack Essentiel"
+                          : "Formule Découverte (Gratuit)"}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
+                      {isEnterpriseActive
+                        ? "👑 Formule Entreprise Active : Toutes les offres personnelles (Téléchargements PDF HD, Word .docx, Demandes d'Emploi Officielles, Lettres de Motivation IA et Portfolios VIP) sont 100% OFFERTES et incluses pour l'ensemble de vos profils !"
+                        : planTier === "5000"
+                        ? "Accès illimité à toutes les fonctionnalités + Portfolio Web interactif à vie + Support WhatsApp VIP 7j/7."
                         : planTier === "2500"
-                        ? "Pack Candidature Pro"
+                        ? "CV PDF HD sans filigrane + Demande d'emploi officielle + Lettre de motivation IA Word/PDF."
                         : planTier === "1500"
-                        ? "Pack Essentiel"
-                        : "Formule Découverte (Gratuit)"}
-                    </h3>
+                        ? "Téléchargement PDF Haute Définition sans aucun filigrane."
+                        : "Aperçu de votre CV en temps réel avec filigrane MonCV.ai."}
+                    </p>
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          if (onOpenPayment) onOpenPayment("2500");
+                        }}
+                        className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all"
+                      >
+                        <Crown className="w-4 h-4" />
+                        <span>Changer de formule / Mettre à niveau</span>
+                      </button>
+                    </div>
                   </div>
+                </div>
 
-                  <p className="text-xs text-slate-300 max-w-md">
-                    {planTier === "5000"
-                      ? "Accès illimité à toutes les fonctionnalités + Portfolio Web interactif à vie + Support WhatsApp VIP 7j/7."
-                      : planTier === "2500"
-                      ? "CV PDF HD sans filigrane + Demande d'emploi officielle + Lettre de motivation IA Word/PDF."
-                      : planTier === "1500"
-                      ? "Téléchargement PDF Haute Définition sans aucun filigrane."
-                      : "Aperçu de votre CV en temps réel avec filigrane MonCV.ai."}
-                  </p>
-
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        if (onOpenPayment) onOpenPayment("2500");
-                      }}
-                      className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all"
-                    >
-                      <Crown className="w-4 h-4" />
-                      <span>Changer de formule / Mettre à niveau</span>
-                    </button>
+                {/* Récapitulatif des fonctionnalités de chaque offre */}
+                <div className="space-y-2">
+                  <h4 className="font-bold text-slate-900 text-sm">Fonctionnalités débloquées avec votre compte :</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Création et modifications de CVs illimitées</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Espace privé « Mes CVs » sauvegardé</span>
+                    </div>
+                    <div className={`p-3 rounded-xl border flex items-center gap-2 ${
+                      isEnterpriseActive || planTier !== "free" ? "bg-emerald-50/50 border-emerald-200" : "bg-slate-50 border-slate-200 text-slate-400"
+                    }`}>
+                      <CheckCircle2 className={`w-4 h-4 ${isEnterpriseActive || planTier !== "free" ? "text-emerald-600" : "text-slate-300"}`} />
+                      <span>Export PDF Haute Définition sans filigrane {isEnterpriseActive && <strong className="text-emerald-700 ml-1">(Offert)</strong>}</span>
+                    </div>
+                    <div className={`p-3 rounded-xl border flex items-center gap-2 ${
+                      isEnterpriseActive || planTier === "2500" || planTier === "5000" ? "bg-emerald-50/50 border-emerald-200" : "bg-slate-50 border-slate-200 text-slate-400"
+                    }`}>
+                      <CheckCircle2 className={`w-4 h-4 ${isEnterpriseActive || planTier === "2500" || planTier === "5000" ? "text-emerald-600" : "text-slate-300"}`} />
+                      <span>Demande d'Emploi & Lettre de Motivation IA (Word/PDF) {isEnterpriseActive && <strong className="text-emerald-700 ml-1">(Offert)</strong>}</span>
+                    </div>
+                    <div className={`p-3 rounded-xl border flex items-center gap-2 sm:col-span-2 ${
+                      isEnterpriseActive || planTier === "5000" ? "bg-purple-50/50 border-purple-200" : "bg-slate-50 border-slate-200 text-slate-400"
+                    }`}>
+                      <Crown className={`w-4 h-4 ${isEnterpriseActive || planTier === "5000" ? "text-amber-500" : "text-slate-300"}`} />
+                      <span>Site Web Portfolio Personnel Interactif en ligne à vie {isEnterpriseActive && <strong className="text-purple-700 font-bold ml-1">(Offert VIP Entreprise)</strong>}</span>
+                    </div>
+                    {isEnterpriseActive && (
+                      <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/60 flex items-center gap-2 sm:col-span-2 text-amber-900 font-medium">
+                        <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Vivier Entreprise : Gestion Multi-Candidats &amp; Exports Word .docx illimités</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-
-              {/* Récapitulatif des fonctionnalités de chaque offre */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-slate-900 text-sm">Fonctionnalités débloquées avec votre compte :</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Création et modifications de CVs illimitées</span>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Espace privé « Mes CVs » sauvegardé</span>
-                  </div>
-                  <div className={`p-3 rounded-xl border flex items-center gap-2 ${
-                    planTier !== "free" ? "bg-emerald-50/50 border-emerald-200" : "bg-slate-50 border-slate-200 text-slate-400"
-                  }`}>
-                    <CheckCircle2 className={`w-4 h-4 ${planTier !== "free" ? "text-emerald-600" : "text-slate-300"}`} />
-                    <span>Export PDF Haute Définition sans filigrane</span>
-                  </div>
-                  <div className={`p-3 rounded-xl border flex items-center gap-2 ${
-                    planTier === "2500" || planTier === "5000" ? "bg-emerald-50/50 border-emerald-200" : "bg-slate-50 border-slate-200 text-slate-400"
-                  }`}>
-                    <CheckCircle2 className={`w-4 h-4 ${planTier === "2500" || planTier === "5000" ? "text-emerald-600" : "text-slate-300"}`} />
-                    <span>Demande d'Emploi & Lettre de Motivation IA (Word/PDF)</span>
-                  </div>
-                  <div className={`p-3 rounded-xl border flex items-center gap-2 sm:col-span-2 ${
-                    planTier === "5000" ? "bg-purple-50/50 border-purple-200" : "bg-slate-50 border-slate-200 text-slate-400"
-                  }`}>
-                    <Crown className={`w-4 h-4 ${planTier === "5000" ? "text-amber-500" : "text-slate-300"}`} />
-                    <span>Site Web Portfolio Personnel Interactif en ligne à vie</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ========================================================================= */}
           {/* 4. ONGLET DONNÉES & SAUVEGARDE */}

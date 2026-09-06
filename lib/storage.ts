@@ -418,6 +418,14 @@ export class StorageManager {
     );
   }
 
+  /**
+   * RÈGLE ENTREPRISE : Dès qu'une formule entreprise est active sur le compte,
+   * TOUTES les offres personnelles sont 100% offertes (aucun paiement individuel requis).
+   */
+  static isPersonalOffersOffered(): boolean {
+    return this.isBusinessAccount();
+  }
+
   static getBusinessProfile(): BusinessProfile | null {
     const user = this.getUser();
     return user?.business || null;

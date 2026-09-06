@@ -46,13 +46,13 @@ export const TemplateCorporate: React.FC<TemplateProps> = ({ data }) => {
                 style={{ fontSize: density.fontSize.title }}
                 className="font-black text-slate-900 tracking-tight uppercase leading-tight"
               >
-                {personal.firstName} {personal.lastName}
+                {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
               </h1>
               <p
                 style={{ color, fontSize: density.fontSize.role }}
                 className="font-bold uppercase tracking-wider mt-0.5"
               >
-                {personal.title}
+                {personal.title || "Intitulé du poste recherché"}
               </p>
             </div>
           </div>

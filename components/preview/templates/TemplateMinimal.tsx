@@ -33,13 +33,19 @@ export const TemplateMinimal: React.FC<TemplateProps> = ({ data }) => {
                 style={{ fontSize: density.fontSize.title }}
                 className="font-light tracking-tight text-zinc-900 leading-none"
               >
-                <span className="font-bold">{personal.firstName}</span> {personal.lastName}
+                {personal.firstName || personal.lastName ? (
+                  <>
+                    <span className="font-bold">{personal.firstName}</span> {personal.lastName}
+                  </>
+                ) : (
+                  <span className="text-zinc-300 font-medium">Votre Prénom & Nom</span>
+                )}
               </h1>
               <p
                 style={{ fontSize: density.fontSize.role }}
                 className="tracking-widest text-zinc-500 mt-1 uppercase font-medium"
               >
-                {personal.title}
+                {personal.title || <span className="text-zinc-300 font-normal">Intitulé du poste recherché</span>}
               </p>
             </div>
             {design.showPhoto && personal.photoUrl && (

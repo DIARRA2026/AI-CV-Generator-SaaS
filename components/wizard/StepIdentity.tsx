@@ -200,7 +200,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Ex: Jean"
+              placeholder="Ex: Amadou, Marie, Paul..."
               value={personal.firstName}
               onChange={(e) => onChangePersonal("firstName", e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
@@ -216,7 +216,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Ex: Kouassi"
+              placeholder="Ex: Diallo, Traoré, Kouadio..."
               value={personal.lastName}
               onChange={(e) => onChangePersonal("lastName", e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
@@ -230,7 +230,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
           </label>
           <input
             type="text"
-            placeholder="Ex: Commercial & Responsable Développement des Ventes"
+            placeholder="Ex: Responsable Commercial, Développeur Full-Stack, Comptable..."
             value={personal.title}
             onChange={(e) => onChangePersonal("title", e.target.value)}
             className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
@@ -248,7 +248,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="email"
-              placeholder="jean.kouassi@email.com"
+              placeholder="nom.prenom@exemple.com"
               value={personal.email}
               onChange={(e) => onChangePersonal("email", e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
@@ -264,7 +264,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="tel"
-              placeholder="+225 07 00 11 22 33"
+              placeholder="Ex: +225 07 01 02 03 04"
               value={personal.phone}
               onChange={(e) => onChangePersonal("phone", e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
@@ -370,7 +370,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({
             <Linkedin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="linkedin.com/in/jean-kouassi"
+              placeholder="linkedin.com/in/votre-nom"
               value={personal.linkedin}
               onChange={(e) => onChangePersonal("linkedin", e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"

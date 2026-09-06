@@ -41,9 +41,9 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
   const handleAddCert = () => {
     const newCert = {
       id: `cert-${Date.now()}`,
-      title: "Certification HubSpot Inbound Sales",
-      issuer: "HubSpot Academy",
-      year: "2024",
+      title: "",
+      issuer: "",
+      year: "",
     };
     onChangeSections({
       ...sections,
@@ -54,8 +54,8 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
   const handleAddProject = () => {
     const newProj = {
       id: `proj-${Date.now()}`,
-      name: "Campagne de Prospection Terrain",
-      description: "Acquisition de 45 nouveaux clients professionnels en 60 jours.",
+      name: "",
+      description: "",
     };
     onChangeSections({
       ...sections,
@@ -143,7 +143,7 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
                   updated[i].title = e.target.value;
                   onChangeSections({ ...sections, certifications: updated });
                 }}
-                placeholder="Titre de la certif"
+                placeholder="Ex: Scrum Master, AWS Cloud, PMP, Certification RH..."
                 className="col-span-5 px-2 py-1 text-xs bg-white border rounded"
               />
               <input
@@ -154,7 +154,7 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
                   updated[i].issuer = e.target.value;
                   onChangeSections({ ...sections, certifications: updated });
                 }}
-                placeholder="Organisme"
+                placeholder="Ex: Scrum.org, Coursera, IBM..."
                 className="col-span-4 px-2 py-1 text-xs bg-white border rounded"
               />
               <input
@@ -165,7 +165,7 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
                   updated[i].year = e.target.value;
                   onChangeSections({ ...sections, certifications: updated });
                 }}
-                placeholder="Année"
+                placeholder="Ex: 2024"
                 className="col-span-2 px-2 py-1 text-xs bg-white border rounded"
               />
               <button
@@ -210,7 +210,7 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
                     updated[i].name = e.target.value;
                     onChangeSections({ ...sections, projects: updated });
                   }}
-                  placeholder="Nom du projet"
+                  placeholder="Ex: Refonte du portail e-commerce B2B, Campagne de lancement..."
                   className="font-bold text-xs bg-white border px-2 py-1 rounded w-3/4"
                 />
                 <button
@@ -232,7 +232,7 @@ export const StepAdditional: React.FC<StepAdditionalProps> = ({
                   updated[i].description = e.target.value;
                   onChangeSections({ ...sections, projects: updated });
                 }}
-                placeholder="Description courte ou impact chiffré"
+                placeholder="Ex: Augmentation de 35% des ventes et gestion d'une équipe de 5 personnes"
                 className="w-full text-xs bg-white border px-2 py-1 rounded"
               />
             </div>

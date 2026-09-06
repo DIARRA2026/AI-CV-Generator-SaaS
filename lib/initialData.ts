@@ -1,13 +1,85 @@
 import { ResumeData } from "./types";
 
-export const initialResumeData: ResumeData = {
-  id: "cv-jean-kouassi-01",
-  title: "CV Commercial & Ventes B2B",
+/**
+ * GÉNÉRATEUR DE CV VIERGE (0 DONNÉE FICTIVE)
+ * Produit un CV totalement épuré, prêt pour la saisie directe par le candidat.
+ * Si une session utilisateur existe, pré-remplit uniquement son identité réelle.
+ */
+export function createEmptyResume(user?: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+} | null): ResumeData {
+  const timestamp = Date.now();
+  const rawFirstName = user?.firstName?.trim() || "";
+  const rawLastName = user?.lastName?.trim() || "";
+  const slugPart = (rawFirstName || "candidat").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  return {
+    id: `cv-${timestamp}`,
+    title: rawFirstName ? `CV de ${rawFirstName}` : "Mon Nouveau CV",
+    updatedAt: new Date().toISOString(),
+    targetProfile: "professional",
+    language: "fr",
+    slug: `cv-${slugPart}-${timestamp.toString().slice(-4)}`,
+    isPremium: false,
+    userEmail: user?.email ? user.email.toLowerCase().trim() : undefined,
+    personal: {
+      firstName: rawFirstName,
+      lastName: rawLastName,
+      title: "",
+      email: user?.email ? user.email.toLowerCase().trim() : "",
+      phone: user?.phone?.trim() || "",
+      city: user?.city?.trim() || "",
+      country: user?.country?.trim() || "Côte d'Ivoire",
+      birthDate: "",
+      birthPlace: "",
+      maritalStatus: "",
+      linkedin: "",
+      website: "",
+      photoUrl: "",
+    },
+    summary: "",
+    experiences: [],
+    educations: [],
+    skills: [],
+    languages: [],
+    sections: {
+      certifications: [],
+      projects: [],
+      interests: [],
+      references: [],
+      volunteer: [],
+    },
+    design: {
+      template: "modern",
+      primaryColor: "#2563eb",
+      fontFamily: "sans",
+      showPhoto: true,
+      spacing: "normal",
+    },
+  };
+}
+
+/**
+ * Modèle initial standard par défaut : 100% propre et vierge
+ */
+export const initialResumeData: ResumeData = createEmptyResume(null);
+
+/**
+ * MODÈLE DE DÉMONSTRATION COMPLET (Uniquement réservé à la Console Admin pour tests de prévisualisation)
+ */
+export const DEMO_SHOWCASE_RESUME: ResumeData = {
+  id: "cv-demo-showcase-01",
+  title: "CV Commercial & Ventes B2B (Démo)",
   updatedAt: new Date().toISOString(),
   targetProfile: "professional",
   language: "fr",
-  slug: "jean-kouassi-commercial",
-  isPremium: false,
+  slug: "demo-commercial-showcase",
+  isPremium: true,
   personal: {
     firstName: "Jean",
     lastName: "Kouassi",

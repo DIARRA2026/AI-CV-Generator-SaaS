@@ -338,13 +338,19 @@ export const TemplateModern: React.FC<TemplateProps> = ({ data }) => {
               style={{ fontSize: density.fontSize.title }}
               className="font-black text-slate-900 tracking-tight uppercase leading-tight"
             >
-              {personal.firstName} <span style={{ color }}>{personal.lastName}</span>
+              {personal.firstName || personal.lastName ? (
+                <>
+                  {personal.firstName} <span style={{ color }}>{personal.lastName}</span>
+                </>
+              ) : (
+                <span className="text-slate-300">Votre Prénom & Nom</span>
+              )}
             </h1>
             <p
               style={{ fontSize: density.fontSize.role }}
               className="font-bold uppercase tracking-wider text-slate-600 mt-0.5"
             >
-              {personal.title}
+              {personal.title || <span className="text-slate-300 font-normal">Intitulé du poste recherché</span>}
             </p>
           </div>
 

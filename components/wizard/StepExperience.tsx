@@ -28,17 +28,14 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
   const handleAddExperience = () => {
     const newExp: ExperienceItem = {
       id: `exp-${Date.now()}`,
-      role: "Nouveau Poste",
-      company: "Nom de l'entreprise",
-      city: "Abidjan",
-      startDate: "2023",
-      endDate: "Présent",
-      current: true,
+      role: "",
+      company: "",
+      city: "",
+      startDate: "",
+      endDate: "",
+      current: false,
       rawInput: "",
-      highlights: [
-        "Prise en charge des missions clés et coordination avec l'équipe opérationnelle.",
-        "Atteinte des objectifs fixés avec rigueur et réactivité."
-      ],
+      highlights: [],
     };
     const updated = [newExp, ...experiences];
     onChangeExperiences(updated);
@@ -91,7 +88,7 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
   const handleAddBullet = (expId: string) => {
     const exp = experiences.find((e) => e.id === expId);
     if (!exp) return;
-    const newBullets = [...exp.highlights, "Nouvelle réalisation ou responsabilité clé."];
+    const newBullets = [...exp.highlights, ""];
     handleUpdateExp(expId, { highlights: newBullets });
   };
 
@@ -172,9 +169,9 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
                       {idx + 1}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{exp.role || "Poste non renseigné"}</h4>
+                      <h4 className="font-bold text-slate-900 text-sm">{exp.role || "Nouvelle expérience"}</h4>
                       <p className="text-xs text-slate-500">
-                        {exp.company} • {exp.startDate} à {exp.current ? "Présent" : exp.endDate}
+                        {(exp.company || "Entreprise non renseignée") + (exp.startDate ? ` • ${exp.startDate} à ${exp.current ? "Présent" : exp.endDate || "Présent"}` : "")}
                       </p>
                     </div>
                   </div>
@@ -205,7 +202,7 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
                           type="text"
                           value={exp.role}
                           onChange={(e) => handleUpdateExp(exp.id, { role: e.target.value })}
-                          placeholder="Ex: Commercial B2B"
+                          placeholder="Ex: Commercial B2B, Développeur Web, Comptable..."
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-600/20"
                         />
                       </div>
@@ -217,7 +214,7 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
                           type="text"
                           value={exp.company}
                           onChange={(e) => handleUpdateExp(exp.id, { company: e.target.value })}
-                          placeholder="Ex: Ivoire Télécom"
+                          placeholder="Ex: Société Générale, Orange, Cabinet..."
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-600/20"
                         />
                       </div>
@@ -313,6 +310,7 @@ export const StepExperience: React.FC<StepExperienceProps> = ({
                             type="text"
                             value={bullet}
                             onChange={(e) => handleUpdateBullet(exp.id, bIdx, e.target.value)}
+                            placeholder="Ex: Prospection et développement d'un portefeuille de 50 clients..."
                             className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:ring-1 focus:ring-blue-600"
                           />
                           <button

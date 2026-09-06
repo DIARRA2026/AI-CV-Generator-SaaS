@@ -73,7 +73,7 @@ export const TemplateCreative: React.FC<TemplateProps> = ({ data }) => {
                 style={{ fontSize: density.fontSize.title }}
                 className="font-black tracking-tight leading-tight uppercase text-white"
               >
-                {personal.firstName} {personal.lastName}
+                {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
               </h1>
               {/* Coordonnées & État civil bien ordonnés */}
               <div

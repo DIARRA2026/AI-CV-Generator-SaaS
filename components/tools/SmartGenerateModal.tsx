@@ -81,14 +81,14 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
 
     const generated: ResumeData = {
       ...initialResumeData,
-      title: `CV de ${firstName || "Prénom"} ${lastName || "Nom"}`,
+      title: firstName || lastName ? `CV de ${[firstName, lastName].filter(Boolean).join(" ")}` : "Mon CV Professionnel",
       personal: {
         ...initialResumeData.personal,
-        firstName: firstName || "Prénom",
-        lastName: lastName || "Nom",
-        email: email || "email@exemple.com",
-        phone: phone || "+225 00 00 00 00",
-        city: city || "Abidjan",
+        firstName: firstName || "",
+        lastName: lastName || "",
+        email: email || "",
+        phone: phone || "",
+        city: city || "",
         country: country || "Côte d'Ivoire",
         title: profession || "Professionnel qualifié",
         photoUrl: "",
@@ -102,9 +102,9 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
       }. Orienté(e) résultats et passionné(e) par l'excellence professionnelle.`,
       experiences: [
         {
-          id: "exp-gen-1",
-          role: `${expData.role} ${profession || ""}`,
-          company: "Entreprise Exemple SARL",
+          id: `exp-gen-1-${Date.now()}`,
+          role: `${expData.role} ${profession || ""}`.trim(),
+          company: "Entreprise / Structure",
           city: city || "Abidjan",
           startDate: expData.years,
           endDate: "2024",
@@ -116,10 +116,10 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
           ],
         },
         {
-          id: "exp-gen-2",
-          role: `Chargé(e) de ${profession || "Projets"}`,
-          company: "Groupe International XYZ",
-          city: "Abidjan",
+          id: `exp-gen-2-${Date.now()}`,
+          role: `Chargé(e) de ${profession || "Missions"}`,
+          company: "Société / Organisation",
+          city: city || "Abidjan",
           startDate: String(parseInt(expData.years) - 3),
           endDate: expData.years,
           current: false,
@@ -131,10 +131,10 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
       ],
       educations: [
         {
-          id: "edu-gen-1",
+          id: `edu-gen-1-${Date.now()}`,
           degree: experience === "senior" ? "Master" : experience === "mid" ? "Licence" : "BTS",
           field: profession || "Gestion et Management",
-          school: "Université Félix Houphouët-Boigny",
+          school: "Université / Grande École",
           city: city || "Abidjan",
           year: String(parseInt(expData.years) - 2),
         },
@@ -357,7 +357,7 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jean"
+                    placeholder="Ex: Amadou"
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -366,7 +366,7 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Kouassi"
+                    placeholder="Ex: Diallo"
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -377,7 +377,7 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                   <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="jean.kouassi@email.com"
+                    placeholder="nom.prenom@exemple.com"
                     type="email"
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />

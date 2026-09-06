@@ -1109,7 +1109,7 @@ export const AuthModal: React.FC<Props> = ({
                           <input
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Ex: Jean-Marc"
+                            placeholder="Votre prénom"
                             autoComplete="off"
                             className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
                           />
@@ -1134,7 +1134,7 @@ export const AuthModal: React.FC<Props> = ({
                           <input
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Ex: Kouassi"
+                            placeholder="Votre nom de famille"
                             autoComplete="off"
                             className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
                           />

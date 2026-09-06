@@ -22,11 +22,11 @@ export const StepEducation: React.FC<StepEducationProps> = ({
   const handleAddEducation = () => {
     const newEdu: EducationItem = {
       id: `edu-${Date.now()}`,
-      degree: "Nouveau Diplôme / Formation",
-      field: "Domaine d'étude",
-      school: "Établissement ou Université",
-      city: "Abidjan",
-      year: "2024",
+      degree: "",
+      field: "",
+      school: "",
+      city: "",
+      year: "",
     };
     const updated = [newEdu, ...educations];
     onChangeEducations(updated);
@@ -71,33 +71,47 @@ export const StepEducation: React.FC<StepEducationProps> = ({
         </button>
       </div>
 
-      <div className="space-y-3">
-        {educations.map((edu, idx) => {
-          const isExpanded = expandedId === edu.id;
-          return (
-            <div
-              key={edu.id}
-              className={`bg-white rounded-2xl border transition-all overflow-hidden ${
-                isExpanded ? "border-blue-300 shadow-md ring-1 ring-blue-100" : "border-slate-200 hover:border-slate-300"
-              }`}
-            >
+      {educations.length === 0 ? (
+        <div className="p-8 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+          <p className="text-sm text-slate-500 mb-3">
+            Aucun diplôme ou formation ajouté pour le moment.
+          </p>
+          <button
+            type="button"
+            onClick={handleAddEducation}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+          >
+            + Ajouter ma première formation
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {educations.map((edu, idx) => {
+            const isExpanded = expandedId === edu.id;
+            return (
               <div
-                onClick={() => setExpandedId(isExpanded ? "" : edu.id)}
-                className="p-4 flex items-center justify-between cursor-pointer bg-slate-50/50 hover:bg-slate-50"
+                key={edu.id}
+                className={`bg-white rounded-2xl border transition-all overflow-hidden ${
+                  isExpanded ? "border-blue-300 shadow-md ring-1 ring-blue-100" : "border-slate-200 hover:border-slate-300"
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                    {idx + 1}
+                <div
+                  onClick={() => setExpandedId(isExpanded ? "" : edu.id)}
+                  className="p-4 flex items-center justify-between cursor-pointer bg-slate-50/50 hover:bg-slate-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">
+                        {(edu.degree || "Nouveau diplôme") + (edu.field ? ` — ${edu.field}` : "")}
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        {(edu.school || "Établissement non renseigné") + (edu.year ? ` • ${edu.year}` : "")}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">
-                      {edu.degree} {edu.field ? `— ${edu.field}` : ""}
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      {edu.school} • {edu.year}
-                    </p>
-                  </div>
-                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -183,6 +197,7 @@ export const StepEducation: React.FC<StepEducationProps> = ({
           );
         })}
       </div>
+      )}
 
       <div className="flex justify-between items-center pt-4 border-t border-slate-200">
         <button

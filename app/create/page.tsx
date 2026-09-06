@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ResumeData } from "@/lib/types";
-import { initialResumeData } from "@/lib/initialData";
+import { initialResumeData, createEmptyResume } from "@/lib/initialData";
 import { StorageManager } from "@/lib/storage";
 import { downloadResumePDF } from "@/lib/pdf-export";
 import { downloadResumeDocx } from "@/lib/docx-export";
@@ -251,9 +251,11 @@ export default function CreateCVPage() {
   };
 
   const handleResetData = () => {
-    if (confirm("Voulez-vous réinitialiser ce CV avec le profil de démonstration ?")) {
-      setResumeData(initialResumeData);
-      StorageManager.saveActiveResume(initialResumeData);
+    if (confirm("Voulez-vous effacer ce CV et repartir d'un modèle 100% vierge ?")) {
+      const user = StorageManager.getUser();
+      const empty = createEmptyResume(user);
+      setResumeData(empty);
+      StorageManager.saveActiveResume(empty);
     }
   };
 

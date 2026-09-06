@@ -27,8 +27,8 @@ export const StepLanguages: React.FC<StepLanguagesProps> = ({
   const handleAddLanguage = (name: string = "") => {
     const newLang: LanguageItem = {
       id: `lang-${Date.now()}`,
-      name: name || "Nouvelle langue",
-      level: "Intermédiaire",
+      name: name || "",
+      level: "Courant",
     };
     onChangeLanguages([...languages, newLang]);
   };
@@ -99,7 +99,7 @@ export const StepLanguages: React.FC<StepLanguagesProps> = ({
                 type="text"
                 value={l.name}
                 onChange={(e) => handleUpdate(l.id, { name: e.target.value })}
-                placeholder="Nom de la langue"
+                placeholder="Ex: Français, Anglais, Espagnol, Arabe..."
                 className="w-full font-semibold text-slate-900 text-xs px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600"
               />
             </div>

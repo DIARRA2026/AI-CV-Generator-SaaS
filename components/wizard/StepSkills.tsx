@@ -38,26 +38,33 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
         const json = await res.json();
         if (json.success && json.data) {
           const parsed = json.data;
-          const updated: SkillCategory[] = [
-            {
-              id: "sk-tools",
+          const updated: SkillCategory[] = [];
+          if (parsed.tools && Array.isArray(parsed.tools) && parsed.tools.length > 0) {
+            updated.push({
+              id: `sk-tools-${Date.now()}`,
               category: "Logiciels & Outils Maîtrisés",
-              items: parsed.tools?.length > 0 ? parsed.tools : ["Microsoft Excel", "Canva", "Word"],
-            },
-            {
-              id: "sk-business",
+              items: parsed.tools,
+            });
+          }
+          if (parsed.business && Array.isArray(parsed.business) && parsed.business.length > 0) {
+            updated.push({
+              id: `sk-business-${Date.now()}`,
               category: "Compétences Techniques Métier",
-              items: parsed.business?.length > 0 ? parsed.business : ["Gestion Commerciale", "Prospection", "Négociation"],
-            },
-            {
-              id: "sk-soft",
+              items: parsed.business,
+            });
+          }
+          if (parsed.soft && Array.isArray(parsed.soft) && parsed.soft.length > 0) {
+            updated.push({
+              id: `sk-soft-${Date.now()}`,
               category: "Qualités Humaines (Soft Skills)",
-              items: parsed.soft?.length > 0 ? parsed.soft : ["Sens de l'écoute", "Esprit d'équipe", "Rigueur"],
-            },
-          ];
-          onChangeSkills(updated);
-          setRawSkillsInput("");
-          return;
+              items: parsed.soft,
+            });
+          }
+          if (updated.length > 0) {
+            onChangeSkills(updated);
+            setRawSkillsInput("");
+            return;
+          }
         }
       }
     } catch (e) {
@@ -65,25 +72,32 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
     }
 
     const parsed = CVEngine.parseSkillsInput(rawSkillsInput);
-    const updated: SkillCategory[] = [
-      {
-        id: "sk-tools",
+    const updated: SkillCategory[] = [];
+    if (parsed.tools && parsed.tools.length > 0) {
+      updated.push({
+        id: `sk-tools-${Date.now()}`,
         category: "Logiciels & Outils Maîtrisés",
-        items: parsed.tools.length > 0 ? parsed.tools : ["Microsoft Excel", "Canva", "Word"],
-      },
-      {
-        id: "sk-business",
+        items: parsed.tools,
+      });
+    }
+    if (parsed.business && parsed.business.length > 0) {
+      updated.push({
+        id: `sk-business-${Date.now()}`,
         category: "Compétences Techniques Métier",
-        items: parsed.business.length > 0 ? parsed.business : ["Gestion Commerciale", "Prospection", "Négociation"],
-      },
-      {
-        id: "sk-soft",
+        items: parsed.business,
+      });
+    }
+    if (parsed.soft && parsed.soft.length > 0) {
+      updated.push({
+        id: `sk-soft-${Date.now()}`,
         category: "Qualités Humaines (Soft Skills)",
-        items: parsed.soft.length > 0 ? parsed.soft : ["Sens de l'écoute", "Esprit d'équipe", "Rigueur"],
-      },
-    ];
+        items: parsed.soft,
+      });
+    }
 
-    onChangeSkills(updated);
+    if (updated.length > 0) {
+      onChangeSkills(updated);
+    }
     setRawSkillsInput("");
   };
 
@@ -107,8 +121,8 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   const handleAddCategory = () => {
     const newCat: SkillCategory = {
       id: `cat-${Date.now()}`,
-      category: "Nouvelle Catégorie",
-      items: ["Compétence 1"],
+      category: "",
+      items: [],
     };
     onChangeSkills([...skills, newCat]);
   };
@@ -170,7 +184,8 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                   );
                   onChangeSkills(updated);
                 }}
-                className="font-bold text-slate-900 text-xs bg-transparent border-b border-dashed border-slate-300 focus:border-blue-600 focus:outline-none pb-0.5"
+                placeholder="Ex: Logiciels & Outils, Compétences Métier, Savoir-être..."
+                className="font-bold text-slate-900 text-xs bg-transparent border-b border-dashed border-slate-300 focus:border-blue-600 focus:outline-none pb-0.5 flex-1 mr-3"
               />
               <button
                 type="button"

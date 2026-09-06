@@ -41,13 +41,13 @@ export const TemplateATS: React.FC<TemplateProps> = ({ data }) => {
             style={{ fontSize: density.fontSize.title }}
             className="font-bold uppercase tracking-tight text-black leading-tight"
           >
-            {personal.firstName} {personal.lastName}
+            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
           </h1>
           <p
             style={{ fontSize: density.fontSize.role }}
             className="font-semibold text-black mt-0.5"
           >
-            {personal.title}
+            {personal.title || "Intitulé du poste recherché"}
           </p>
           <p
             style={{ fontSize: density.fontSize.xs }}

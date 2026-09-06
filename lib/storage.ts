@@ -1,4 +1,4 @@
-import { initialResumeData } from "./initialData";
+import { initialResumeData, createEmptyResume } from "./initialData";
 import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo, UserRole } from "./types";
 
 const STORAGE_KEY = "moncv_resumes_v1";
@@ -191,12 +191,12 @@ export class StorageManager {
       if (current?.email) {
         const seeded: RegisteredUser[] = [
           {
-            id: "user-default",
-            firstName: current.firstName || "Jean-Marc",
-            lastName: current.lastName || "Kouassi",
+            id: `user-${Date.now()}`,
+            firstName: current.firstName || "",
+            lastName: current.lastName || "",
             email: current.email.toLowerCase().trim(),
             phone: current.phone,
-            passwordHash: remembered?.password || "azerty123",
+            passwordHash: remembered?.password || "",
             createdAt: new Date().toISOString(),
           },
         ];
@@ -969,13 +969,20 @@ export class StorageManager {
     try {
       const user = this.getUser();
       if (!user || !user.email) {
-        // Visiteur non connecté : profil invité
+        // Visiteur non connecté : profil invité propre
         const guestData = localStorage.getItem("moncv_resumes_guest");
         if (guestData) {
           const parsed = JSON.parse(guestData);
-          return Array.isArray(parsed) ? parsed : [initialResumeData];
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.filter(
+              (r) => r.id !== "cv-jean-kouassi-01" && r.personal?.email !== "jean.kouassi@email.com"
+            );
+            if (cleaned.length > 0) return cleaned;
+          }
         }
-        return [initialResumeData];
+        const cleanGuest = createEmptyResume(null);
+        localStorage.setItem("moncv_resumes_guest", JSON.stringify([cleanGuest]));
+        return [cleanGuest];
       }
 
       const userEmail = user.email.toLowerCase().trim();
@@ -989,8 +996,14 @@ export class StorageManager {
 
       // FILTRAGE STRICT & CLOISONNEMENT PAR COMPTE UTILISATEUR :
       // 1. Un utilisateur ne voit STRICTEMENT QUE les CVs qui lui appartiennent
-      // 2. Nettoyage des doublons/CVs fantômes générés automatiquement (ex: "Nouveau CV 3189")
+      // 2. Nettoyage des anciennes données fictives de démo (Jean Kouassi)
+      // 3. Nettoyage des doublons/CVs fantômes générés automatiquement (ex: "Nouveau CV 3189")
       const strictlyOwned = parsed.filter((r) => {
+        // Éliminer toute trace résiduelle de mock Jean Kouassi
+        if (r.id === "cv-jean-kouassi-01" || r.personal?.email === "jean.kouassi@email.com") {
+          return false;
+        }
+
         // Le CV doit être rattaché à l'adresse email du compte connecté
         const belongsToUser =
           (r.userEmail && r.userEmail.toLowerCase().trim() === userEmail) ||
@@ -1046,24 +1059,7 @@ export class StorageManager {
   }
 
   static createDefaultUserResume(user: UserSession | null): ResumeData {
-    const newId = `cv-${Date.now()}`;
-    const newResume: ResumeData = {
-      ...initialResumeData,
-      id: newId,
-      userEmail: user?.email || undefined,
-      title: user?.firstName ? `CV de ${user.firstName}` : "Mon Nouveau CV",
-      personal: {
-        ...initialResumeData.personal,
-        firstName: user?.firstName || "",
-        lastName: user?.lastName || "",
-        email: user?.email || "",
-        phone: user?.phone || "",
-        city: user?.city || initialResumeData.personal.city,
-        country: user?.country || initialResumeData.personal.country,
-      },
-      slug: `cv-${(user?.firstName || "candidat").toLowerCase().replace(/[^a-z0-9]/g, "")}-${Date.now().toString().slice(-4)}`,
-      updatedAt: new Date().toISOString(),
-    };
+    const newResume = createEmptyResume(user);
     this.saveActiveResume(newResume);
     return newResume;
   }
@@ -1104,32 +1100,38 @@ export class StorageManager {
 
   static createNewResume(title: string, templateFrom?: ResumeData): ResumeData {
     const user = this.getUser();
-    const base = templateFrom || initialResumeData;
-    const newId = `cv-${Date.now()}`;
-    const newResume: ResumeData = {
-      ...base,
-      id: newId,
-      userEmail: user?.email || undefined,
-      title: title || "Nouveau CV Professionnel",
-      personal: {
-        ...base.personal,
-        firstName: user?.firstName || base.personal.firstName,
-        lastName: user?.lastName || base.personal.lastName,
-        email: user?.email || base.personal.email,
-        phone: user?.phone || base.personal.phone,
-        city: user?.city || base.personal.city,
-        country: user?.country || base.personal.country,
-      },
-      slug: (title || "mon-cv")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "-")
-        .replace(/-+/g, "-") + `-${Date.now().toString().slice(-4)}`,
-      updatedAt: new Date().toISOString(),
-    };
+    let newResume: ResumeData;
+
+    if (templateFrom) {
+      // Duplication basée sur un CV existant
+      const newId = `cv-${Date.now()}`;
+      newResume = {
+        ...templateFrom,
+        id: newId,
+        userEmail: user?.email || templateFrom.userEmail,
+        title: title || `${templateFrom.title} (Copie)`,
+        slug: `${(title || templateFrom.title || "mon-cv")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "-")
+          .replace(/-+/g, "-")}-${Date.now().toString().slice(-4)}`,
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      // Nouveau CV 100% vierge
+      newResume = createEmptyResume(user);
+      if (title) {
+        newResume.title = title;
+        newResume.slug = `${title
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "-")
+          .replace(/-+/g, "-")}-${Date.now().toString().slice(-4)}`;
+      }
+    }
+
     const resumes = this.getResumes();
     resumes.push(newResume);
     this.saveResumes(resumes);
-    localStorage.setItem(this.getActiveIdKey(), newId);
+    localStorage.setItem(this.getActiveIdKey(), newResume.id);
     this.registerPublicResume(newResume);
     return newResume;
   }

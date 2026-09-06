@@ -50,13 +50,13 @@ export const TemplateElegant: React.FC<TemplateProps> = ({ data }) => {
             style={{ fontSize: density.fontSize.title }}
             className="font-bold tracking-widest uppercase text-slate-900 leading-tight"
           >
-            {personal.firstName} {personal.lastName}
+            {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}` : "Votre Prénom & Nom"}
           </h1>
           <p
             style={{ color, fontSize: density.fontSize.role }}
             className="uppercase tracking-wider font-sans font-semibold mt-0.5 mb-1.5"
           >
-            {personal.title}
+            {personal.title || "Intitulé du poste recherché"}
           </p>
 
           {/* Barre de contact horizontale */}

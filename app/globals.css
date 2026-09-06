@@ -403,6 +403,32 @@ body {
   animation: shine-sweep 1.2s ease-in-out;
 }
 
+.card-shine-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-shine-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  pointer-events: none;
+}
+
+.group:hover .card-shine-inner::after,
+.card-shine-inner:hover::after {
+  animation: shine-sweep 1.2s ease-in-out;
+}
+
 .card-hover-lift {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease-out, border-color 0.25s ease-out;
 }

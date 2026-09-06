@@ -1603,7 +1603,7 @@ export default function HomePage() {
             </div>
 
             {/* Grille des 3 Formules Entreprises */}
-            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-5">
               
               {/* PACK 1 : STARTER PME (30 PROFILS) */}
               <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">
@@ -1666,14 +1666,17 @@ export default function HomePage() {
               </div>
 
               {/* PACK 2 : BUSINESS PRO (75 PROFILS) — LE BEST SELLER RECOMMANDÉ */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10 card-hover-lift card-shine">
-                {/* Badge Top Recommandé */}
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-3.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10 card-hover-lift group">
+                {/* Effet Shine confiné à l'intérieur de la carte */}
+                <div className="card-shine-inner" />
+
+                {/* Badge Top Recommandé Débordant & Entièrement Visible */}
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-4 py-1 rounded-full uppercase tracking-wider shadow-xl flex items-center gap-1.5 whitespace-nowrap z-20 ring-2 ring-slate-950/30">
                   <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950 animate-bounce-soft" />
                   <span>Recommandé • Le Choix des Cabinets RH</span>
                 </div>
 
-                <div>
+                <div className="relative z-10">
                   <div className="flex items-center justify-between gap-2 mt-1">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                       <Users className="w-3.5 h-3.5 icon-glow-blue" />
@@ -1728,7 +1731,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => handleOpenPlanPayment("enterprise75")}
-                  className="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
+                  className="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop relative z-10"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
                   <span>Activer Business Pro (45 000 F)</span>

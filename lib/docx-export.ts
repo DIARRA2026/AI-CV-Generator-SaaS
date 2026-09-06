@@ -630,3 +630,5 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
     return false;
   }
 }
+
+export const exportResumeToDocx = downloadResumeDocx;

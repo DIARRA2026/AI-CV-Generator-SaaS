@@ -1,5 +1,5 @@
 import { initialResumeData } from "./initialData";
-import { PlanTier, ResumeData } from "./types";
+import { PlanTier, ResumeData, AccountType, BusinessProfile } from "./types";
 
 const STORAGE_KEY = "moncv_resumes_v1";
 const ACTIVE_ID_KEY = "moncv_active_id";
@@ -8,6 +8,7 @@ const USERS_REGISTRY_KEY = "moncv_registered_users_v1";
 
 export interface RegisteredUser {
   id: string;
+  accountType?: AccountType;
   firstName: string;
   lastName: string;
   email: string;
@@ -15,11 +16,13 @@ export interface RegisteredUser {
   city?: string;
   country?: string;
   profession?: string;
+  business?: BusinessProfile;
   passwordHash: string;
   createdAt: string;
 }
 
 export interface UserSession {
+  accountType?: AccountType;
   firstName?: string;
   lastName?: string;
   email: string;
@@ -27,6 +30,7 @@ export interface UserSession {
   city?: string;
   country?: string;
   profession?: string;
+  business?: BusinessProfile;
   token?: string;
   planTier?: PlanTier;
   createdAt?: string;
@@ -66,6 +70,7 @@ export class StorageManager {
   }
 
   static registerUser(payload: {
+    accountType?: AccountType;
     firstName: string;
     lastName: string;
     email: string;
@@ -73,6 +78,7 @@ export class StorageManager {
     country?: string;
     city?: string;
     password: string;
+    business?: BusinessProfile;
   }): { success: boolean; user?: RegisteredUser; message?: string } {
     if (typeof window === "undefined") return { success: false, message: "Environnement non disponible" };
     try {
@@ -86,12 +92,14 @@ export class StorageManager {
 
       const newUser: RegisteredUser = {
         id: `user-${Date.now()}`,
+        accountType: payload.accountType || "candidate",
         firstName: payload.firstName.trim(),
         lastName: payload.lastName.trim(),
         email: normalizedEmail,
         phone: payload.phone?.trim() || undefined,
         country: payload.country?.trim() || "Côte d'Ivoire",
         city: payload.city?.trim() || "Abidjan",
+        business: payload.business,
         passwordHash: payload.password,
         createdAt: new Date().toISOString(),
       };
@@ -101,12 +109,14 @@ export class StorageManager {
 
       // Créer la session utilisateur active
       this.setUser({
+        accountType: newUser.accountType,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
         phone: newUser.phone,
         country: newUser.country,
         city: newUser.city,
+        business: newUser.business,
         token: `token-${Date.now()}`,
       });
 
@@ -140,10 +150,14 @@ export class StorageManager {
 
       // Connexion réussie : activer la session
       this.setUser({
+        accountType: user.accountType || "candidate",
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
+        country: user.country,
+        city: user.city,
+        business: user.business,
         token: `token-${Date.now()}`,
       });
 
@@ -374,11 +388,155 @@ export class StorageManager {
       }
       const user = this.getUser();
       if (user) {
-        this.setUser({ ...user, planTier: tier });
+        const isEnterprise =
+          tier === "enterprise30" ||
+          tier === "enterprise75" ||
+          tier === "enterprise200" ||
+          tier === "cyber15";
+        this.setUser({
+          ...user,
+          planTier: tier,
+          accountType: isEnterprise ? "business" : (user.accountType || "candidate"),
+        });
       }
     } catch (e) {
       console.error("Erreur mise à jour plan tier", e);
     }
+  }
+
+  // === ESPACE ENTREPRISE & GESTION DES RECRUTEURS ===
+  static isBusinessAccount(): boolean {
+    const user = this.getUser();
+    if (!user) return false;
+    if (user.accountType === "business") return true;
+    const plan = user.planTier || this.getPlanTier();
+    return (
+      plan === "enterprise30" ||
+      plan === "enterprise75" ||
+      plan === "enterprise200" ||
+      plan === "cyber15"
+    );
+  }
+
+  static getBusinessProfile(): BusinessProfile | null {
+    const user = this.getUser();
+    return user?.business || null;
+  }
+
+  static updateBusinessProfile(businessData: Partial<BusinessProfile>): {
+    success: boolean;
+    user?: UserSession;
+    message?: string;
+  } {
+    if (typeof window === "undefined")
+      return { success: false, message: "Environnement non disponible" };
+    try {
+      const current = this.getUser();
+      if (!current) return { success: false, message: "Aucun utilisateur connecté." };
+
+      const updatedBusiness: BusinessProfile = {
+        companyName: businessData.companyName || current.business?.companyName || "Mon Entreprise",
+        companyType: businessData.companyType || current.business?.companyType || "PME / Entreprise",
+        managerRole: businessData.managerRole || current.business?.managerRole || "Responsable RH",
+        rccm: businessData.rccm || current.business?.rccm || "",
+        taxId: businessData.taxId || current.business?.taxId || "",
+        billingAddress:
+          businessData.billingAddress ||
+          current.business?.billingAddress ||
+          `${current.city || "Abidjan"}, ${current.country || "Côte d'Ivoire"}`,
+        whatsappPhone:
+          businessData.whatsappPhone ||
+          current.business?.whatsappPhone ||
+          current.phone ||
+          "",
+      };
+
+      const updatedUser: UserSession = {
+        ...current,
+        accountType: "business",
+        business: updatedBusiness,
+      };
+
+      this.setUser(updatedUser);
+
+      const users = this.getRegisteredUsers();
+      const idx = users.findIndex(
+        (u) => u.email.toLowerCase().trim() === current.email.toLowerCase().trim()
+      );
+      if (idx !== -1) {
+        users[idx] = {
+          ...users[idx],
+          accountType: "business",
+          business: updatedBusiness,
+        };
+        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      return {
+        success: true,
+        user: updatedUser,
+        message: "Profil entreprise mis à jour avec succès !",
+      };
+    } catch (e) {
+      console.error("Erreur mise à jour profil entreprise", e);
+      return { success: false, message: "Erreur lors de la mise à jour entreprise." };
+    }
+  }
+
+  static getBusinessQuotaInfo(): {
+    allowedCount: number;
+    usedCount: number;
+    remainingCount: number;
+    usagePercent: number;
+    isExhausted: boolean;
+    distinctIdentities: string[];
+    planTier: PlanTier;
+  } {
+    const user = this.getUser();
+    const active = this.getActiveResume();
+    const plan: PlanTier = user?.planTier || active?.planTier || "free";
+
+    let allowedCount = 0;
+    if (plan === "enterprise30") allowedCount = 30;
+    else if (plan === "enterprise75") allowedCount = 75;
+    else if (plan === "enterprise200") allowedCount = 200;
+    else if (plan === "cyber15") allowedCount = 15;
+    else if (plan === "5000") allowedCount = 4;
+    else if (plan === "2500") allowedCount = 2;
+    else if (plan === "1500") allowedCount = 1;
+    else allowedCount = 0;
+
+    const resumes = this.getResumes();
+    const identitiesSet = new Set<string>();
+
+    resumes.forEach((r) => {
+      const first = (r.personal?.firstName || "").trim().toLowerCase();
+      const last = (r.personal?.lastName || "").trim().toLowerCase();
+      if (first || last) {
+        identitiesSet.add(`${first}_${last}`);
+      }
+    });
+
+    const distinctIdentities = Array.from(identitiesSet);
+    const usedCount = distinctIdentities.length;
+    const remainingCount = Math.max(0, allowedCount - usedCount);
+    const usagePercent =
+      allowedCount > 0 ? Math.min(100, Math.round((usedCount / allowedCount) * 100)) : 0;
+    const isExhausted = allowedCount > 0 && usedCount >= allowedCount;
+
+    return {
+      allowedCount,
+      usedCount,
+      remainingCount,
+      usagePercent,
+      isExhausted,
+      distinctIdentities,
+      planTier: plan,
+    };
   }
 
   // === GESTION DE MÉMORISATION DES IDENTIFIANTS (SÉCURITÉ) ===

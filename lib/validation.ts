@@ -115,6 +115,7 @@ export function validatePhone(phone: unknown): { isValid: boolean; sanitized: st
  * Validation complète d'un formulaire d'inscription
  */
 export function validateRegistrationPayload(payload: any): ValidationResult<{
+  accountType?: "candidate" | "business";
   firstName: string;
   lastName: string;
   email: string;
@@ -122,13 +123,23 @@ export function validateRegistrationPayload(payload: any): ValidationResult<{
   country: string;
   city: string;
   password: string;
+  companyName?: string;
+  companyType?: string;
+  managerRole?: string;
+  rccm?: string;
 }> {
   const errors: Record<string, string> = {};
+  const isBusiness = payload?.accountType === "business";
 
-  const firstNameVal = validateName(payload?.firstName, "Le prénom");
+  if (isBusiness) {
+    const compNameVal = validateName(payload?.companyName || payload?.firstName, "Le nom de l'entreprise");
+    if (!compNameVal.isValid) errors.companyName = compNameVal.error!;
+  }
+
+  const firstNameVal = validateName(payload?.firstName, isBusiness ? "Le prénom du responsable" : "Le prénom");
   if (!firstNameVal.isValid) errors.firstName = firstNameVal.error!;
 
-  const lastNameVal = validateName(payload?.lastName, "Le nom");
+  const lastNameVal = validateName(payload?.lastName, isBusiness ? "Le nom du responsable" : "Le nom");
   if (!lastNameVal.isValid) errors.lastName = lastNameVal.error!;
 
   const emailVal = validateEmail(payload?.email);
@@ -142,11 +153,16 @@ export function validateRegistrationPayload(payload: any): ValidationResult<{
 
   const country = sanitizeString(payload?.country) || "Côte d'Ivoire";
   const city = sanitizeString(payload?.city) || "Abidjan";
+  const companyName = sanitizeString(payload?.companyName);
+  const companyType = sanitizeString(payload?.companyType);
+  const managerRole = sanitizeString(payload?.managerRole);
+  const rccm = sanitizeString(payload?.rccm);
 
   return {
     isValid: Object.keys(errors).length === 0,
     errors,
     sanitizedData: {
+      accountType: isBusiness ? "business" : "candidate",
       firstName: firstNameVal.sanitized,
       lastName: lastNameVal.sanitized,
       email: emailVal.sanitized,
@@ -154,6 +170,10 @@ export function validateRegistrationPayload(payload: any): ValidationResult<{
       country,
       city,
       password: payload?.password || "",
+      companyName,
+      companyType,
+      managerRole,
+      rccm,
     },
   };
 }

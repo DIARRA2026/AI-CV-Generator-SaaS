@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import { StorageManager, UserSession, RegisteredUser } from "./storage";
-import { ResumeData, PlanTier } from "./types";
+import { ResumeData, PlanTier, AccountType, BusinessProfile } from "./types";
 
 export interface CloudAuthResponse {
   success: boolean;
@@ -22,6 +22,7 @@ export class SupabaseService {
    * Inscription d'un nouvel utilisateur avec gestion de vérification email
    */
   static async signUp(payload: {
+    accountType?: AccountType;
     firstName: string;
     lastName: string;
     email: string;
@@ -29,6 +30,7 @@ export class SupabaseService {
     country?: string;
     city?: string;
     password: string;
+    business?: BusinessProfile;
   }): Promise<CloudAuthResponse> {
     const cleanEmail = payload.email.toLowerCase().trim();
     const cleanFirstName = payload.firstName.trim();
@@ -50,11 +52,16 @@ export class SupabaseService {
           password: payload.password,
           options: {
             data: {
+              account_type: payload.accountType || "candidate",
               first_name: cleanFirstName,
               last_name: cleanLastName,
               phone: payload.phone?.trim(),
               country: payload.country?.trim() || "Côte d'Ivoire",
               city: payload.city?.trim() || "Abidjan",
+              company_name: payload.business?.companyName,
+              company_type: payload.business?.companyType,
+              manager_role: payload.business?.managerRole,
+              rccm: payload.business?.rccm,
             },
           },
         });

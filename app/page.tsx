@@ -7,7 +7,8 @@ import { Navbar } from "@/components/Navbar";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
-import { PlanTier } from "@/lib/types";
+import { PlanTier, AccountType } from "@/lib/types";
+import { StorageManager } from "@/lib/storage";
 import {
   Sparkles,
   ArrowRight,
@@ -204,6 +205,7 @@ export default function HomePage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedPlanPrice, setSelectedPlanPrice] = useState<PlanTier>("2500");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
   const [activeTemplate, setActiveTemplate] = useState("modern");
   const [activeColor, setActiveColor] = useState("#2563eb");
   const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -222,14 +224,21 @@ export default function HomePage() {
         return TEMPLATE_GALLERY[(idx + 1) % TEMPLATE_GALLERY.length].id;
       });
       setActiveColor((prev) => {
-        const idx = COLOR_PALETTE.indexOf(prev);
-        return COLOR_PALETTE[(idx + 1) % COLOR_PALETTE.length];
+        const palette = COLOR_PALETTE;
+        const currentIdx = palette.indexOf(prev);
+        return palette[(currentIdx + 1) % palette.length];
       });
-    }, 3500);
+    }, 4500);
     return () => clearInterval(interval);
   }, [isAutoPlay]);
 
   const handleStartCreation = () => {
+    setAuthAccountType("candidate");
+    setIsAuthOpen(true);
+  };
+
+  const handleOpenBusinessAuth = () => {
+    setAuthAccountType("business");
     setIsAuthOpen(true);
   };
 
@@ -1830,6 +1839,27 @@ export default function HomePage() {
               </a>
             </div>
 
+            {/* Accès Direct Espace Recruteur & Entreprise */}
+            <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                  <Building className="w-5 h-5" />
+                </div>
+                <div>
+                  <h5 className="font-bold text-sm text-white">Vous êtes un Cabinet RH, une Entreprise ou une Agence ?</h5>
+                  <p className="text-xs text-slate-300">Créez ou connectez votre Espace Recruteur dédié pour piloter votre vivier de candidats et vos factures normalisées.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenBusinessAuth}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer shrink-0"
+              >
+                <span>Accéder à l'Espace Recruteur</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
             {/* Réassurance & Paiement Sécurisé */}
             <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-slate-400">
               <div className="flex items-center gap-2 font-medium">
@@ -2087,9 +2117,14 @@ export default function HomePage() {
         onClose={() => setIsAuthOpen(false)}
         onSuccess={() => {
           setIsAuthOpen(false);
-          router.push("/create");
+          if (StorageManager.isBusinessAccount()) {
+            router.push("/dashboard?tab=business");
+          } else {
+            router.push("/create");
+          }
         }}
         defaultMode="register"
+        defaultAccountType={authAccountType}
       />
 
       {/* Preuve Sociale & Réassurance Live */}

@@ -22,6 +22,9 @@ import {
   ExternalLink,
   ChevronRight,
   LogOut,
+  Building,
+  Building2,
+  FileText,
 } from "lucide-react";
 import { StorageManager, UserSession } from "@/lib/storage";
 import { PlanTier } from "@/lib/types";
@@ -30,7 +33,7 @@ import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onOpenPayment?: (plan?: "1500" | "2500" | "5000") => void;
+  onOpenPayment?: (plan?: PlanTier) => void;
   onLogout?: () => void;
 }
 
@@ -40,7 +43,7 @@ export const AccountSettingsModal: React.FC<Props> = ({
   onOpenPayment,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<"profile" | "security" | "plan" | "data">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "entreprise" | "security" | "plan" | "data">("profile");
 
   // User Profile fields
   const [firstName, setFirstName] = useState("");
@@ -51,6 +54,16 @@ export const AccountSettingsModal: React.FC<Props> = ({
   const [country, setCountry] = useState("Côte d'Ivoire");
   const [profession, setProfession] = useState("");
   const [planTier, setPlanTier] = useState<PlanTier>("free");
+
+  // Business Profile fields
+  const [isBusiness, setIsBusiness] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [companyType, setCompanyType] = useState("Cabinet de Recrutement");
+  const [managerRole, setManagerRole] = useState("Directeur des Ressources Humaines");
+  const [rccm, setRccm] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [billingAddress, setBillingAddress] = useState("");
+  const [whatsappPhone, setWhatsappPhone] = useState("");
 
   // Profile Save Feedback
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -72,6 +85,9 @@ export const AccountSettingsModal: React.FC<Props> = ({
   useEffect(() => {
     if (isOpen) {
       const user = StorageManager.getUser();
+      const isBiz = StorageManager.isBusinessAccount() || user?.accountType === "business";
+      setIsBusiness(isBiz);
+
       if (user) {
         setFirstName(user.firstName || "");
         setLastName(user.lastName || "");
@@ -81,6 +97,16 @@ export const AccountSettingsModal: React.FC<Props> = ({
         setCountry(user.country || "Côte d'Ivoire");
         setProfession(user.profession || "");
         setPlanTier(user.planTier || StorageManager.getPlanTier());
+
+        if (user.business) {
+          setCompanyName(user.business.companyName || "");
+          setCompanyType(user.business.companyType || "Cabinet de Recrutement");
+          setManagerRole(user.business.managerRole || "Responsable RH");
+          setRccm(user.business.rccm || "");
+          setTaxId(user.business.taxId || "");
+          setBillingAddress(user.business.billingAddress || "");
+          setWhatsappPhone(user.business.whatsappPhone || user.phone || "");
+        }
       }
       setProfileSuccess(false);
       setProfileError(null);
@@ -111,6 +137,18 @@ export const AccountSettingsModal: React.FC<Props> = ({
       country: country.trim(),
       profession: profession.trim(),
     });
+
+    if (isBusiness || companyName.trim()) {
+      StorageManager.updateBusinessProfile({
+        companyName: companyName.trim() || "Mon Entreprise",
+        companyType: companyType.trim(),
+        managerRole: managerRole.trim(),
+        rccm: rccm.trim(),
+        taxId: taxId.trim(),
+        billingAddress: billingAddress.trim(),
+        whatsappPhone: whatsappPhone.trim() || phone.trim(),
+      });
+    }
 
     setIsSavingProfile(false);
     if (result.success) {
@@ -256,6 +294,21 @@ export const AccountSettingsModal: React.FC<Props> = ({
             <User className="w-3.5 h-3.5" />
             <span>Profil Personnel</span>
           </button>
+
+          {isBusiness && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("entreprise")}
+              className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                activeTab === "entreprise"
+                  ? "bg-white text-amber-600 shadow-sm border border-slate-200/80"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Building className="w-3.5 h-3.5 text-amber-500" />
+              <span>Profil Entreprise & Facturation OHADA</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -435,6 +488,159 @@ export const AccountSettingsModal: React.FC<Props> = ({
                     <>
                       <CheckCircle2 className="w-4 h-4" />
                       <span>Enregistrer les modifications</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 1.B ONGLET ENTREPRISE & FACTURATION OHADA                                 */}
+          {/* ========================================================================= */}
+          {activeTab === "entreprise" && (
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              {profileSuccess && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Informations de l'entreprise mises à jour avec succès !</span>
+                </div>
+              )}
+
+              <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-950 text-xs">
+                <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="font-black text-amber-900">Données Commerciales & Mentions Légales OHADA</h4>
+                  <p className="text-[11.5px] text-amber-800 leading-relaxed">
+                    Ces coordonnées figurent automatiquement sur vos Factures Normalisées OHADA, reçus fiscaux et certificats de conformité de dossiers candidats.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Raison Sociale */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Raison Sociale / Nom de l'Entreprise <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                    <Building className="w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      required
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Ex: Ivoire Recrutement SARL"
+                      className="flex-1 bg-transparent text-xs sm:text-sm focus:outline-none font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                {/* Type de Structure */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Type d'Organisation
+                  </label>
+                  <select
+                    value={companyType}
+                    onChange={(e) => setCompanyType(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Cabinet de Recrutement">Cabinet de Recrutement & RH</option>
+                    <option value="PME / Entreprise">PME / Entreprise Commerciale</option>
+                    <option value="Agence d'Intérim">Agence d'Intérim & Placement</option>
+                    <option value="Centre de Formation / Université">Centre de Formation / Grande École</option>
+                    <option value="ONG / Institution">ONG / Organisation Internationale</option>
+                    <option value="Cybercafé / Agence Services">Cybercafé & Agence Multiservices</option>
+                  </select>
+                </div>
+
+                {/* Rôle du Gestionnaire */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Votre Fonction au sein de la Structure
+                  </label>
+                  <input
+                    type="text"
+                    value={managerRole}
+                    onChange={(e) => setManagerRole(e.target.value)}
+                    placeholder="Ex: Directeur des Ressources Humaines"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* N° RCCM */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Numéro RCCM (Registre de Commerce)
+                  </label>
+                  <input
+                    type="text"
+                    value={rccm}
+                    onChange={(e) => setRccm(e.target.value)}
+                    placeholder="Ex: CI-ABJ-2024-B-12345"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* N° IFU / Compte Contribuable */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Numéro IFU / Compte Contribuable
+                  </label>
+                  <input
+                    type="text"
+                    value={taxId}
+                    onChange={(e) => setTaxId(e.target.value)}
+                    placeholder="Ex: CC 2045892 A"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Adresse du Siège */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Adresse Géographique & Siège Social
+                  </label>
+                  <input
+                    type="text"
+                    value={billingAddress}
+                    onChange={(e) => setBillingAddress(e.target.value)}
+                    placeholder="Ex: Plateau, Avenue Chardy, Abidjan"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* WhatsApp Support Pro */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Ligne WhatsApp Référente
+                  </label>
+                  <input
+                    type="tel"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                    placeholder="+225 07 XX XX XX XX"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-amber-600/20 transition-all cursor-pointer"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Enregistrement...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Mettre à jour les informations entreprise</span>
                     </>
                   )}
                 </button>

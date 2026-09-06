@@ -202,19 +202,40 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                           {currentUser.firstName} {currentUser.lastName || ""}
                         </span>
                         <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                          {currentUser.planTier === "5000"
+                          {currentUser.planTier === "enterprise200"
+                            ? "Entreprise 200"
+                            : currentUser.planTier === "enterprise75"
+                            ? "Business 75"
+                            : currentUser.planTier === "enterprise30"
+                            ? "Starter 30"
+                            : currentUser.planTier === "cyber15"
+                            ? "Cyber 15"
+                            : currentUser.planTier === "5000"
                             ? "VIP"
                             : currentUser.planTier === "2500"
                             ? "Pro"
                             : currentUser.planTier === "1500"
                             ? "Essentiel"
+                            : currentUser.accountType === "business"
+                            ? "Recruteur"
                             : "Gratuit"}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 truncate font-medium">
-                        {currentUser.email}
+                        {currentUser.business?.companyName ? `${currentUser.business.companyName} • ` : ""}{currentUser.email}
                       </p>
                     </div>
+
+                    {currentUser.accountType === "business" && (
+                      <Link
+                        href="/dashboard?tab=business"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                      >
+                        <Building className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Vivier Entreprise (Candidats)</span>
+                      </Link>
+                    )}
 
                     <button
                       type="button"

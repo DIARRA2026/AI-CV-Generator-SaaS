@@ -85,6 +85,18 @@ export interface ResumeDesign {
   spacing: "compact" | "normal" | "spacious";
 }
 
+export type AccountType = "candidate" | "business";
+
+export interface BusinessProfile {
+  companyName: string;
+  companyType?: string;
+  managerRole?: string;
+  rccm?: string;
+  taxId?: string;
+  billingAddress?: string;
+  whatsappPhone?: string;
+}
+
 export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15" | "enterprise30" | "enterprise75" | "enterprise200";
 
 export interface LicenseAccess {

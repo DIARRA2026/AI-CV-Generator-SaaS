@@ -4,30 +4,33 @@ import React, { useState, useEffect } from "react";
 import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
-  KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info
+  KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info, Building, Building2, Briefcase, FileText
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
+import { AccountType } from "@/lib/types";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   defaultMode?: "login" | "register";
+  defaultAccountType?: AccountType;
 }
 
 export const AuthModal: React.FC<Props> = ({
-  isOpen, onClose, onSuccess, defaultMode = "register",
+  isOpen, onClose, onSuccess, defaultMode = "register", defaultAccountType = "candidate",
 }) => {
   const [mode, setMode] = useState<"login" | "register" | "forgot">(defaultMode);
+  const [accountType, setAccountType] = useState<AccountType>(defaultAccountType);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  // Form fields
+  // Form fields (Candidat & Entreprise)
   const [lastName, setLastName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,6 +39,12 @@ export const AuthModal: React.FC<Props> = ({
   const [city, setCity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Business specific fields
+  const [companyName, setCompanyName] = useState("");
+  const [companyType, setCompanyType] = useState("Cabinet de Recrutement");
+  const [managerRole, setManagerRole] = useState("Responsable RH / Recrutement");
+  const [rccm, setRccm] = useState("");
 
   // Forgot password fields
   const [newPassword, setNewPassword] = useState("");
@@ -92,10 +101,15 @@ export const AuthModal: React.FC<Props> = ({
       setConfirmNewPassword("");
       setCountry("Côte d'Ivoire");
       setCity("");
+      setAccountType(defaultAccountType || "candidate");
+      setCompanyName("");
+      setCompanyType("Cabinet de Recrutement");
+      setManagerRole("Responsable RH / Recrutement");
+      setRccm("");
       setRememberMe(false);
       StorageManager.clearRememberedCreds();
     }
-  }, [isOpen, defaultMode]);
+  }, [isOpen, defaultMode, defaultAccountType]);
 
   const switchMode = (m: "login" | "register" | "forgot", preserveEmail?: string) => {
     setMode(m);
@@ -134,9 +148,16 @@ export const AuthModal: React.FC<Props> = ({
     }
 
     if (mode === "register") {
-      if (!firstName.trim()) e.firstName = "Prénom requis";
-      if (!lastName.trim()) e.lastName = "Nom requis";
-      if (!phone.trim()) e.phone = "Téléphone requis";
+      if (accountType === "business") {
+        if (!companyName.trim()) e.companyName = "Nom de l'entreprise requis";
+        if (!lastName.trim()) e.lastName = "Nom du responsable requis";
+        if (!firstName.trim()) e.firstName = "Prénom du responsable requis";
+        if (!phone.trim()) e.phone = "Téléphone WhatsApp requis";
+      } else {
+        if (!firstName.trim()) e.firstName = "Prénom requis";
+        if (!lastName.trim()) e.lastName = "Nom requis";
+        if (!phone.trim()) e.phone = "Téléphone requis";
+      }
       if (password.length < 6) e.password = "Minimum 6 caractères";
       if (password !== confirmPassword) {
         e.confirmPassword = "Les mots de passe ne correspondent pas";
@@ -197,6 +218,11 @@ export const AuthModal: React.FC<Props> = ({
           mode,
           email,
           password,
+          accountType,
+          companyName: companyName.trim(),
+          companyType,
+          managerRole: managerRole.trim(),
+          rccm: rccm.trim(),
           firstName,
           lastName,
           phone,
@@ -230,14 +256,27 @@ export const AuthModal: React.FC<Props> = ({
 
     // MODE 1 : INSCRIPTION (Cloud Supabase avec repli local sécurisé)
     if (mode === "register") {
+      const businessPayload =
+        accountType === "business"
+          ? {
+              companyName: companyName.trim() || "Mon Entreprise",
+              companyType: companyType.trim() || "Cabinet de Recrutement",
+              managerRole: managerRole.trim() || "Responsable RH",
+              rccm: rccm.trim(),
+              whatsappPhone: phone.trim(),
+            }
+          : undefined;
+
       const regResult = await SupabaseService.signUp({
-        firstName,
-        lastName,
+        accountType,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email,
         phone,
         country,
         city,
         password,
+        business: businessPayload,
       });
 
       if (!regResult.success) {
@@ -646,94 +685,356 @@ export const AuthModal: React.FC<Props> = ({
             {/* === FORMULAIRE D'INSCRIPTION : GRILLE ULTRA-COMPACTE 2 COLONNES === */}
             {mode === "register" && (
               <div className="space-y-2">
-                {/* Ligne 1 : Prénom et Nom */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Prénom */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                      Prénom <span className="text-red-500">*</span>
-                    </label>
-                    <div className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${errors.firstName ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <input
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Ex: Jean-Marc"
-                        autoComplete="off"
-                        className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
-                      />
-                    </div>
-                    {errors.firstName && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.firstName}</p>}
-                  </div>
+                {/* Sélecteur de Type de Compte : Candidat vs Entreprise / Recruteur */}
+                <div className="flex bg-slate-100 p-1 rounded-xl gap-1 mb-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountType("candidate");
+                      setErrors({});
+                    }}
+                    className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      accountType === "candidate"
+                        ? "bg-white text-blue-600 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Candidat Individuel</span>
+                  </button>
 
-                  {/* Nom */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                      Nom de famille <span className="text-red-500">*</span>
-                    </label>
-                    <div className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${errors.lastName ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <input
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Ex: Kouassi"
-                        autoComplete="off"
-                        className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
-                      />
-                    </div>
-                    {errors.lastName && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.lastName}</p>}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountType("business");
+                      setErrors({});
+                    }}
+                    className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      accountType === "business"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <Building className="w-3.5 h-3.5" />
+                    <span>Entreprise / Cabinet RH</span>
+                    <span className="text-[9px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full font-black uppercase">
+                      Pro
+                    </span>
+                  </button>
                 </div>
 
-                {/* Ligne 2 : Email et Téléphone WhatsApp */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Email */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                      Adresse Email <span className="text-red-500">*</span>
-                    </label>
-                    <div className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${errors.email ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                      <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <input
-                        type="email"
-                        name="mc_auth_email"
-                        id="mc_auth_email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="nom@exemple.com"
-                        autoComplete="off"
-                        data-lpignore="true"
-                        className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
-                      />
-                    </div>
-                    {errors.email && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.email}</p>}
-                  </div>
-
-                  {/* Numéro de Téléphone (WhatsApp / Mobile) */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center justify-between">
-                      <span>Mobile / WhatsApp <span className="text-red-500">*</span></span>
-                      <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded border border-blue-100">
-                        {getDialCodeForCountry(country)}
+                {/* Bandeau d'information pour le compte Entreprise */}
+                {accountType === "business" && (
+                  <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/70 rounded-xl flex items-start gap-2 text-blue-900 text-[11px] mb-1">
+                    <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-extrabold block text-blue-950 text-xs">
+                        Espace Recruteur & Gestion Multi-Candidats
                       </span>
-                    </label>
-                    <div className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${errors.phone ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <input
-                        type="tel"
-                        name="mc_auth_phone"
-                        id="mc_auth_phone"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="07 00 00 00 00"
-                        autoComplete="off"
-                        data-lpignore="true"
-                        className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
-                      />
+                      <p className="text-blue-700/90 leading-tight mt-0.5">
+                        Idéal pour cabinets de recrutement, DRH et PME (30, 75 ou 200 profils, facturation normalisée OHADA et exports illimités).
+                      </p>
                     </div>
-                    {errors.phone && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.phone}</p>}
                   </div>
-                </div>
+                )}
+
+                {accountType === "business" ? (
+                  <>
+                    {/* Entreprise : Ligne 1 - Nom de l'Entreprise / Raison Sociale & Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Raison Sociale / Nom Entreprise <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.companyName
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            placeholder="Ex: Cabinet Talent Afrique"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.companyName && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.companyName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Type de Structure
+                        </label>
+                        <select
+                          value={companyType}
+                          onChange={(e) => setCompanyType(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500 text-slate-800"
+                        >
+                          <option value="Cabinet de Recrutement">Cabinet de Recrutement</option>
+                          <option value="Agence d'Intérim">Agence d'Intérim</option>
+                          <option value="PME / Grande Entreprise">PME / Entreprise</option>
+                          <option value="Centre de Formation / École">Centre de Formation / École</option>
+                          <option value="Cybercafé / Rédacteur Pro">Cybercafé / Rédacteur Pro</option>
+                          <option value="ONG / Association">ONG / Institution</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Entreprise : Ligne 2 - Responsable RH & Fonction */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Prénom du Gestionnaire <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.firstName
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Ex: Marie"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.firstName && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.firstName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Nom du Gestionnaire <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.lastName
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Ex: Koné"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.lastName && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.lastName}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Entreprise : Ligne 3 - Email Pro & WhatsApp */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Email Professionnel <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.email
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="rh@entreprise.ci"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.email && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.email}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center justify-between">
+                          <span>WhatsApp Pro <span className="text-red-500">*</span></span>
+                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded border border-blue-100">
+                            {getDialCodeForCountry(country)}
+                          </span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.phone
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="07 00 00 00 00"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.phone && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.phone}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Entreprise : Ligne 4 - N° RCCM / IFU (Optionnel pour Facturation OHADA) */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center justify-between">
+                        <span>N° RCCM ou IFU / NIF (Optionnel)</span>
+                        <span className="text-[9px] text-slate-400">Pour votre facture normalisée</span>
+                      </label>
+                      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                        <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <input
+                          value={rccm}
+                          onChange={(e) => setRccm(e.target.value)}
+                          placeholder="Ex: CI-ABJ-03-2024-B12-04892"
+                          autoComplete="off"
+                          className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* CANDIDAT : Ligne 1 - Prénom et Nom */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Prénom <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.firstName
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Ex: Jean-Marc"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.firstName && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.firstName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Nom de famille <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.lastName
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Ex: Kouassi"
+                            autoComplete="off"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.lastName && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.lastName}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CANDIDAT : Ligne 2 - Email et Téléphone WhatsApp */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                          Adresse Email <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.email
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="email"
+                            name="mc_auth_email"
+                            id="mc_auth_email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="nom@exemple.com"
+                            autoComplete="off"
+                            data-lpignore="true"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.email && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.email}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center justify-between">
+                          <span>Mobile / WhatsApp <span className="text-red-500">*</span></span>
+                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded border border-blue-100">
+                            {getDialCodeForCountry(country)}
+                          </span>
+                        </label>
+                        <div
+                          className={`flex items-center gap-1.5 bg-slate-50 border rounded-lg px-2.5 py-1.5 transition-all ${
+                            errors.phone
+                              ? "border-red-400 bg-red-50/20"
+                              : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"
+                          }`}
+                        >
+                          <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="tel"
+                            name="mc_auth_phone"
+                            id="mc_auth_phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="07 00 00 00 00"
+                            autoComplete="off"
+                            data-lpignore="true"
+                            className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 min-w-0 font-medium"
+                          />
+                        </div>
+                        {errors.phone && (
+                          <p className="text-red-500 text-[9.5px] mt-0.5">{errors.phone}</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Ligne 3 : Pays & Ville de résidence (Intégration compacte) */}
                 <div className="bg-slate-50/70 p-2 rounded-xl border border-slate-200/70">

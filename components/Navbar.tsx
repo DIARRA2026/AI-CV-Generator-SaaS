@@ -721,8 +721,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         onClose={() => setIsAuthOpen(false)}
         onSuccess={() => {
           setIsAuthOpen(false);
-          setCurrentUser(StorageManager.getUser());
-          router.push(targetRedirect);
+          const u = StorageManager.getUser();
+          setCurrentUser(u);
+          if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
+            router.push("/dashboard?tab=business");
+          } else {
+            router.push(targetRedirect || "/dashboard");
+          }
         }}
         defaultMode={authMode}
       />

@@ -99,6 +99,20 @@ export interface BusinessProfile {
 
 export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15" | "enterprise30" | "enterprise75" | "enterprise200";
 
+export interface UserSubscriptionInfo {
+  planTier: PlanTier;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  phoneNumber?: string;
+  transactionRef: string;
+  subscribedAt: string;
+  expiresAt: string | null; // null = à vie
+  accountType: AccountType;
+  allowedCandidates: number;
+  companyName?: string;
+}
+
 export interface LicenseAccess {
   planTier: PlanTier;
   paidAt?: string;

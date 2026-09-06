@@ -217,24 +217,41 @@ export default function HomePage() {
   const [activeClientProfile, setActiveClientProfile] = useState<ResumeData | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isBusinessAccount, setIsBusinessAccount] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLandingExplicit, setIsLandingExplicit] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setIsLoggedIn(StorageManager.isLoggedIn());
-    setIsBusinessAccount(StorageManager.isBusinessAccount());
-  }, []);
-
-  // Logique de profil client actif : si un client est sélectionné, sa page prime
+  // Séparation stricte Espace Client & Landing Page :
+  // Dès qu'un client se connecte ou se reconnecte, son espace dédié prime immédiatement
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const isLandingExplicit = params.get("landing") === "true";
-    const viewMode = localStorage.getItem("moncv_view_mode");
+    const landingExplicit = params.get("landing") === "true";
+    setIsLandingExplicit(landingExplicit);
 
+    const logged = StorageManager.isLoggedIn();
+    const isBiz = StorageManager.isBusinessAccount();
+    const user = StorageManager.getUser();
+
+    setIsLoggedIn(logged);
+    setIsBusinessAccount(isBiz);
+    setCurrentUser(user);
+
+    // Redirection automatique dès la reconnexion vers l'espace client dédié
+    if (logged && !landingExplicit) {
+      if (isBiz) {
+        router.replace("/dashboard?tab=business");
+        return;
+      } else {
+        router.replace("/dashboard");
+        return;
+      }
+    }
+
+    const viewMode = localStorage.getItem("moncv_view_mode");
     const active = StorageManager.getActiveResume();
     if (active && (active.slug || active.id)) {
-      if (!isLandingExplicit && viewMode === "client") {
+      if (!landingExplicit && viewMode === "client") {
         router.replace(`/c/${active.slug || active.id}`);
         return;
       }
@@ -296,6 +313,42 @@ export default function HomePage() {
         onOpenPayment={() => handleOpenPlanPayment("2500")}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
+
+      {/* Bannière de séparation stricte Espace Client / Landing Page pour utilisateur connecté */}
+      {isLoggedIn && isLandingExplicit && (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white px-4 py-3 border-b border-indigo-900/60 shadow-md sticky top-16 z-30 no-print">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                Session active :{" "}
+                <strong className="text-white font-bold">
+                  {currentUser?.firstName || ""} {currentUser?.lastName || ""}
+                </strong>{" "}
+                {isBusinessAccount ? (
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-black uppercase text-[10px] ml-1 border border-amber-400/30">
+                    Espace Entreprise RH
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-black uppercase text-[10px] ml-1 border border-blue-400/30">
+                    Espace Candidat
+                  </span>
+                )}{" "}
+                <span className="text-slate-400 font-normal">({currentUser?.email})</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={isBusinessAccount ? "/dashboard?tab=business" : "/dashboard"}
+                className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm text-xs"
+              >
+                <span>{isBusinessAccount ? "Accéder à l'Espace Vivier RH Entreprise" : "Accéder à mon Espace Candidat"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bannière de bascule rapide vers la page dédiée du profil client actif */}
       {activeClientProfile && (
@@ -2200,10 +2253,11 @@ export default function HomePage() {
         onClose={() => setIsAuthOpen(false)}
         onSuccess={() => {
           setIsAuthOpen(false);
-          if (StorageManager.isBusinessAccount()) {
+          const u = StorageManager.getUser();
+          if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
             router.push("/dashboard?tab=business");
           } else {
-            router.push("/create");
+            router.push("/dashboard");
           }
         }}
         defaultMode="register"

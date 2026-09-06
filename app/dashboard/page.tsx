@@ -133,6 +133,8 @@ export default function DashboardPage() {
         }
         if (params.get("tab") === "business") {
           setActiveTab("business");
+        } else if (params.get("tab") === "candidate") {
+          setActiveTab("candidate");
         }
       }
     };
@@ -1328,7 +1330,11 @@ export default function DashboardPage() {
           setIsLoggedIn(true);
           const u = StorageManager.getUser();
           setCurrentUser(u);
-          setIsBusinessAccount(StorageManager.isBusinessAccount());
+          const isBiz = StorageManager.isBusinessAccount();
+          setIsBusinessAccount(isBiz);
+          if (isBiz) {
+            setActiveTab("business");
+          }
           setBusinessQuota(StorageManager.getBusinessQuotaInfo());
           setResumes(StorageManager.getResumes());
           setIsAuthOpen(false);

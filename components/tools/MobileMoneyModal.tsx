@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
@@ -42,55 +43,65 @@ const ALL_PLANS: Omit<PlanConfig, "icon">[] = [
     id: "2500", category: "particulier",
     name: "Pack Candidature Pro", price: "2 500 FCFA",
     badge: "Recommandé", highlight: true,
-    desc: "CV illimité + Lettre IA + Demande d'emploi • Jusqu'à 2 déclinaisons / profils",
-    confirmTitle: "Pack Candidature Pro Complet Débloqué",
-    confirmDesc: "Votre CV sans filigrane, votre Demande d'emploi officielle et votre Lettre de motivation IA sont tous prêts à l'emploi.",
-    confirmGradient: "from-blue-50 to-indigo-50", confirmBorder: "border-blue-200", confirmTextColor: "text-blue-700",
+    desc: "Export PDF HD + Lettre de motivation IA + Demande d'emploi officielle • Jusqu'à 2 profils",
+    confirmTitle: "Candidature Pro 100% Débloquée !",
+    confirmDesc: "Vous avez accès au générateur de lettre de motivation IA et de demande d'emploi administrative sur 2 profils candidats.",
+    confirmGradient: "from-indigo-50 to-indigo-50", confirmBorder: "border-indigo-200", confirmTextColor: "text-indigo-700",
   },
   {
     id: "5000", category: "particulier",
-    name: "Pack VIP & Multi-Profils", price: "5 000 FCFA",
-    badge: "Famille & Pro", highlight: false,
-    desc: "Tout inclus + 4 Candidats autorisés + Portfolio Web en ligne personnel",
-    confirmTitle: "Pack VIP & Portfolio Web Personnel Activé !",
-    confirmDesc: "Votre site web Portfolio complet est désormais en ligne avec lien public, exports illimités et Support VIP WhatsApp 7j/7.",
-    confirmGradient: "from-purple-50 to-pink-50", confirmBorder: "border-purple-200", confirmTextColor: "text-purple-700",
+    name: "Pack VIP & Portfolio Web", price: "5 000 FCFA",
+    badge: "Prestige VIP", highlight: false,
+    desc: "Tous les outils + Page Web Portfolio personnelle en ligne avec QR Code HD • 4 profils",
+    confirmTitle: "Portfolio VIP & QR Code Activés !",
+    confirmDesc: "Votre page web personnelle est en ligne. Partagez votre lien exclusif et votre QR Code auprès des recruteurs.",
+    confirmGradient: "from-purple-50 to-purple-50", confirmBorder: "border-purple-200", confirmTextColor: "text-purple-700",
   },
-  // ── Entreprise ──
+  // ── Entreprise / B2B ──
+  {
+    id: "cyber15", category: "entreprise",
+    name: "Pass Cybercafé & Secrétariat", price: "15 000 FCFA",
+    badge: "Centres de Services", highlight: false,
+    desc: "15 Profils candidats complets (1 000 F/CV) • Exports Word (.docx) & PDF illimités • Support WhatsApp prioritaire",
+    confirmTitle: "Pass Cybercafé (15 Candidats) Activé !",
+    confirmDesc: "Vos 15 crédits candidats sans expiration sont disponibles dans votre Espace Recruteur avec facturation normalisée OHADA.",
+    confirmGradient: "from-teal-50 to-teal-50", confirmBorder: "border-teal-200", confirmTextColor: "text-teal-700",
+  },
   {
     id: "enterprise30", category: "entreprise",
-    name: "Pack Starter PME", price: "20 000 FCFA",
-    badge: "30 Profils", highlight: false,
-    desc: "30 candidats • Téléchargements illimités • Tous les 6 modèles • PDF + Word",
-    confirmTitle: "Pack Starter PME — 30 Profils Activé !",
-    confirmDesc: "30 profils débloqués avec téléchargements illimités (PDF + Word). Tous les 6 modèles de CV sont accessibles pour vos candidats.",
-    confirmGradient: "from-teal-50 to-emerald-50", confirmBorder: "border-teal-200", confirmTextColor: "text-teal-700",
+    name: "Pack Starter PME", price: "45 000 FCFA",
+    badge: "Starter RH", highlight: false,
+    desc: "30 Profils candidats complets • Vivier centralisé • Facture normalisée OHADA • Exports Word/PDF",
+    confirmTitle: "Pack Starter RH (30 Candidats) Activé !",
+    confirmDesc: "Votre vivier de 30 profils candidats est immédiatement opérationnel. Toutes les offres personnelles vous sont 100% offertes.",
+    confirmGradient: "from-emerald-50 to-emerald-50", confirmBorder: "border-emerald-200", confirmTextColor: "text-emerald-700",
   },
   {
     id: "enterprise75", category: "entreprise",
-    name: "Pack Business Pro", price: "45 000 FCFA",
-    badge: "Recommandé", highlight: true,
-    desc: "75 candidats • Tous les modèles • PDF + Word • Support prioritaire WhatsApp",
-    confirmTitle: "Pack Business Pro — 75 Profils Activé !",
-    confirmDesc: "75 profils débloqués avec exports illimités. Support prioritaire WhatsApp activé pour votre entreprise.",
-    confirmGradient: "from-indigo-50 to-blue-50", confirmBorder: "border-indigo-200", confirmTextColor: "text-indigo-700",
+    name: "Pack Business Pro RH", price: "95 000 FCFA",
+    badge: "Le Plus Choisi", highlight: true,
+    desc: "75 Profils candidats complets • Vivier RH collaboratif • Facture OHADA • Assistance prioritaire 7j/7",
+    confirmTitle: "Pack Business Pro (75 Candidats) Activé !",
+    confirmDesc: "Votre vivier RH de 75 profils est débloqué à vie. Vos recrutements sont accélérés avec l'assistance dédiée INNOVA GROUP.",
+    confirmGradient: "from-amber-50 to-amber-50", confirmBorder: "border-amber-200", confirmTextColor: "text-amber-700",
   },
   {
     id: "enterprise200", category: "entreprise",
-    name: "Pack Entreprise Premium", price: "100 000 FCFA",
-    badge: "200 Profils", highlight: false,
-    desc: "200 candidats • Tous les modèles • Support dédié + Accompagnement prise en main",
-    confirmTitle: "Pack Entreprise Premium — 200 Profils Activé !",
-    confirmDesc: "200 profils débloqués avec exports illimités. Support dédié et accompagnement personnalisé à la prise en main activés.",
-    confirmGradient: "from-amber-50 to-orange-50", confirmBorder: "border-amber-200", confirmTextColor: "text-amber-700",
+    name: "Pack Entreprise & Cabinet", price: "195 000 FCFA",
+    badge: "Volume Élite", highlight: false,
+    desc: "200 Profils candidats complets • Gestionnaire de compte dédié • Facture OHADA avec RCCM • Intégration sur mesure",
+    confirmTitle: "Pack Entreprise (200 Candidats) Activé !",
+    confirmDesc: "Votre compte bénéficie du quota maximum de 200 profils candidats, d'un gestionnaire de compte dédié et de la priorité absolue.",
+    confirmGradient: "from-purple-50 to-purple-50", confirmBorder: "border-purple-200", confirmTextColor: "text-purple-700",
   },
 ];
 
-// Icônes mappées par ID (les composants React ne peuvent pas être dans un const statique hors du render)
-const PLAN_ICONS: Record<string, React.ReactNode> = {
-  "1500": <FileText className="w-4 h-4" />,
-  "2500": <Sparkles className="w-4 h-4" />,
-  "5000": <Crown className="w-4 h-4" />,
+const PLAN_ICONS: Record<PlanTier, React.ReactNode> = {
+  "free": <Sparkles className="w-4 h-4" />,
+  "1500": <Sparkles className="w-4 h-4" />,
+  "2500": <Crown className="w-4 h-4" />,
+  "5000": <Globe className="w-4 h-4" />,
+  "cyber15": <FileText className="w-4 h-4" />,
   "enterprise30": <Building className="w-4 h-4" />,
   "enterprise75": <Users className="w-4 h-4" />,
   "enterprise200": <Crown className="w-4 h-4" />,
@@ -111,6 +122,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   onSuccess,
   defaultPlan = "2500",
 }) => {
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<"wave" | "orange" | "mtn" | "card">("wave");
   const [phoneNumber, setPhoneNumber] = useState("+225 07 ");
@@ -142,15 +154,20 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     setIsProcessing(true);
     setTimeout(() => {
       const activeCv = StorageManager.getActiveResume();
+      const transactionRef = `MM_${paymentMethod.toUpperCase()}_${Date.now()}`;
       if (activeCv) {
         const updatedWithLicense = registerPaymentSuccess(
           activeCv,
           selectedPlan,
-          `MM_${paymentMethod.toUpperCase()}_${Date.now()}`
+          transactionRef
         );
         StorageManager.saveActiveResume(updatedWithLicense);
       }
-      StorageManager.setPlanTier(selectedPlan);
+      StorageManager.setPlanTier(selectedPlan, {
+        paymentMethod: `Mobile Money (${paymentMethod.toUpperCase()})`,
+        phoneNumber: phoneNumber.trim(),
+        transactionRef,
+      });
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
@@ -224,7 +241,21 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              {selectedPlan === "5000" ? (
+              {selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSuccess();
+                    onClose();
+                    setIsDone(false);
+                    router.push("/dashboard?tab=business");
+                  }}
+                  className="flex-1 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+                >
+                  <Building className="w-4 h-4" />
+                  <span>Accéder à mon Espace Vivier RH Entreprise →</span>
+                </button>
+              ) : selectedPlan === "5000" ? (
                 <a
                   href={`/c/${StorageManager.getActiveResume()?.slug}`}
                   target="_blank"

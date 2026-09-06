@@ -1,10 +1,11 @@
 import { initialResumeData } from "./initialData";
-import { PlanTier, ResumeData, AccountType, BusinessProfile } from "./types";
+import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo } from "./types";
 
 const STORAGE_KEY = "moncv_resumes_v1";
 const ACTIVE_ID_KEY = "moncv_active_id";
 const USER_KEY = "moncv_user_session_v1";
 const USERS_REGISTRY_KEY = "moncv_registered_users_v1";
+const PENDING_SUB_KEY = "moncv_pending_subscription_v1";
 
 export interface RegisteredUser {
   id: string;
@@ -19,6 +20,8 @@ export interface RegisteredUser {
   business?: BusinessProfile;
   passwordHash: string;
   createdAt: string;
+  planTier?: PlanTier;
+  subscription?: UserSubscriptionInfo;
 }
 
 export interface UserSession {
@@ -34,9 +37,142 @@ export interface UserSession {
   token?: string;
   planTier?: PlanTier;
   createdAt?: string;
+  subscription?: UserSubscriptionInfo;
 }
 
 export class StorageManager {
+  // === GESTION DES ABONNEMENTS ET FORMULES PÉRENNES ===
+  static getSubscriptionKey(email: string): string {
+    return `moncv_sub_${email.toLowerCase().trim()}`;
+  }
+
+  static getUserSubscription(email?: string): UserSubscriptionInfo | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const targetEmail = email || this.getUser()?.email;
+      if (!targetEmail) return null;
+      const cleanEmail = targetEmail.toLowerCase().trim();
+
+      // 1. Clé permanente d'abonnement dédiée par email
+      const direct = localStorage.getItem(this.getSubscriptionKey(cleanEmail));
+      if (direct) {
+        return JSON.parse(direct);
+      }
+
+      // 2. Recherche dans le registre d'utilisateurs
+      const users = this.getRegisteredUsers();
+      const matched = users.find((u) => u.email.toLowerCase().trim() === cleanEmail);
+      if (matched?.subscription) {
+        return matched.subscription;
+      }
+
+      // 3. Session active
+      const user = this.getUser();
+      if (user?.email?.toLowerCase().trim() === cleanEmail && user.subscription) {
+        return user.subscription;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  static saveUserSubscription(email: string, sub: UserSubscriptionInfo): void {
+    if (typeof window === "undefined" || !email) return;
+    try {
+      const cleanEmail = email.toLowerCase().trim();
+      const updatedSub: UserSubscriptionInfo = {
+        ...sub,
+        subscribedAt: sub.subscribedAt || new Date().toISOString(),
+        expiresAt: null, // toujours à vie sans expiration
+      };
+
+      // 1. Écriture dans la clé permanente inviolable par utilisateur
+      localStorage.setItem(this.getSubscriptionKey(cleanEmail), JSON.stringify(updatedSub));
+
+      // 2. Mise à jour dans le registre des utilisateurs inscrits
+      const users = this.getRegisteredUsers();
+      const userIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+      if (userIdx !== -1) {
+        users[userIdx].planTier = updatedSub.planTier;
+        users[userIdx].subscription = updatedSub;
+        if (
+          updatedSub.accountType === "business" ||
+          updatedSub.planTier.startsWith("enterprise") ||
+          updatedSub.planTier === "cyber15"
+        ) {
+          users[userIdx].accountType = "business";
+        }
+        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      }
+
+      // 3. Mise à jour de la session active si connectée avec cet email
+      const current = this.getUser();
+      if (current && current.email.toLowerCase().trim() === cleanEmail) {
+        const isEnterprise =
+          updatedSub.accountType === "business" ||
+          updatedSub.planTier.startsWith("enterprise") ||
+          updatedSub.planTier === "cyber15";
+        this.setUser({
+          ...current,
+          planTier: updatedSub.planTier,
+          subscription: updatedSub,
+          accountType: isEnterprise ? "business" : (current.accountType || "candidate"),
+        });
+      }
+
+      // 4. Si formule Entreprise, débloquer tous les CVs du compte (100% offerts)
+      if (
+        updatedSub.accountType === "business" ||
+        updatedSub.planTier.startsWith("enterprise") ||
+        updatedSub.planTier === "cyber15"
+      ) {
+        const resumes = this.getResumes();
+        if (resumes.length > 0) {
+          const unlocked = resumes.map((r) => ({
+            ...r,
+            isPremium: true,
+            planTier: updatedSub.planTier,
+          }));
+          const userStorageKey = `moncv_resumes_${cleanEmail}`;
+          localStorage.setItem(userStorageKey, JSON.stringify(unlocked));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(unlocked));
+        }
+      }
+
+      window.dispatchEvent(new Event("storage"));
+    } catch (e) {
+      console.error("Erreur sauvegarde abonnement utilisateur", e);
+    }
+  }
+
+  static setPendingSubscription(sub: UserSubscriptionInfo): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(PENDING_SUB_KEY, JSON.stringify(sub));
+    } catch (e) {
+      console.error("Erreur enregistrement abonnement en attente", e);
+    }
+  }
+
+  static getPendingSubscription(): UserSubscriptionInfo | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const data = localStorage.getItem(PENDING_SUB_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  static clearPendingSubscription(): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(PENDING_SUB_KEY);
+    } catch {}
+  }
+
   // === GESTION DES COMPTES UTILISATEURS & AUTHENTIFICATION SÉCURISÉE ===
   static getRegisteredUsers(): RegisteredUser[] {
     if (typeof window === "undefined") return [];
@@ -90,9 +226,23 @@ export class StorageManager {
         return { success: false, message: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter." };
       }
 
+      // Restauration de tout abonnement préalable ou en attente
+      const pendingSub = this.getPendingSubscription();
+      const existingSub = this.getUserSubscription(normalizedEmail);
+      const appliedSub = pendingSub || existingSub;
+
+      let resolvedPlan: PlanTier = appliedSub?.planTier || "free";
+      let resolvedAccountType: AccountType =
+        payload.accountType ||
+        (appliedSub?.accountType === "business" ||
+        resolvedPlan.startsWith("enterprise") ||
+        resolvedPlan === "cyber15"
+          ? "business"
+          : "candidate");
+
       const newUser: RegisteredUser = {
         id: `user-${Date.now()}`,
-        accountType: payload.accountType || "candidate",
+        accountType: resolvedAccountType,
         firstName: payload.firstName.trim(),
         lastName: payload.lastName.trim(),
         email: normalizedEmail,
@@ -102,10 +252,17 @@ export class StorageManager {
         business: payload.business,
         passwordHash: payload.password,
         createdAt: new Date().toISOString(),
+        planTier: resolvedPlan,
+        subscription: appliedSub || undefined,
       };
 
       users.push(newUser);
       localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+
+      if (appliedSub) {
+        this.saveUserSubscription(normalizedEmail, appliedSub);
+        this.clearPendingSubscription();
+      }
 
       // Créer la session utilisateur active
       this.setUser({
@@ -117,6 +274,8 @@ export class StorageManager {
         country: newUser.country,
         city: newUser.city,
         business: newUser.business,
+        planTier: newUser.planTier || "free",
+        subscription: newUser.subscription,
         token: `token-${Date.now()}`,
       });
 
@@ -148,9 +307,35 @@ export class StorageManager {
         };
       }
 
+      // Restauration garantie et inviolable de l'offre souscrite
+      const savedSub = this.getUserSubscription(normalizedEmail);
+      const pendingSub = this.getPendingSubscription();
+      const effectiveSub = pendingSub || savedSub || user.subscription;
+
+      if (pendingSub) {
+        this.saveUserSubscription(normalizedEmail, pendingSub);
+        this.clearPendingSubscription();
+      }
+
+      let restoredPlan: PlanTier = effectiveSub?.planTier || user.planTier || "free";
+      const isEnterprise =
+        restoredPlan.startsWith("enterprise") ||
+        restoredPlan === "cyber15" ||
+        user.accountType === "business";
+
+      const restoredAccountType: AccountType = isEnterprise ? "business" : (user.accountType || "candidate");
+
+      // Mise à jour de l'utilisateur dans le registre pour pérenniser l'offre
+      user.planTier = restoredPlan;
+      user.accountType = restoredAccountType;
+      if (effectiveSub) {
+        user.subscription = effectiveSub;
+      }
+      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+
       // Connexion réussie : activer la session
       this.setUser({
-        accountType: user.accountType || "candidate",
+        accountType: restoredAccountType,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -158,6 +343,8 @@ export class StorageManager {
         country: user.country,
         city: user.city,
         business: user.business,
+        planTier: restoredPlan,
+        subscription: user.subscription,
         token: `token-${Date.now()}`,
       });
 
@@ -364,20 +551,77 @@ export class StorageManager {
   static getPlanTier(): PlanTier {
     if (typeof window === "undefined") return "free";
     try {
-      const active = this.getActiveResume();
-      if (active?.planTier) return active.planTier;
-      if (active?.isPremium) return "2500";
       const user = this.getUser();
-      if (user?.planTier) return user.planTier;
+      if (user?.planTier && user.planTier !== "free") return user.planTier;
+      if (user?.email) {
+        const sub = this.getUserSubscription(user.email);
+        if (sub?.planTier && sub.planTier !== "free") return sub.planTier;
+      }
+      const active = this.getActiveResume();
+      if (active?.planTier && active.planTier !== "free") return active.planTier;
+      if (active?.isPremium) return "2500";
       return "free";
     } catch {
       return "free";
     }
   }
 
-  static setPlanTier(tier: PlanTier): void {
+  static setPlanTier(tier: PlanTier, details?: Partial<UserSubscriptionInfo>): void {
     if (typeof window === "undefined") return;
     try {
+      const isEnterprise =
+        tier === "enterprise30" ||
+        tier === "enterprise75" ||
+        tier === "enterprise200" ||
+        tier === "cyber15";
+
+      let allowedCandidates = 0;
+      let defaultAmount = 0;
+      if (tier === "enterprise200") {
+        allowedCandidates = 200;
+        defaultAmount = 195000;
+      } else if (tier === "enterprise75") {
+        allowedCandidates = 75;
+        defaultAmount = 95000;
+      } else if (tier === "enterprise30") {
+        allowedCandidates = 30;
+        defaultAmount = 45000;
+      } else if (tier === "cyber15") {
+        allowedCandidates = 15;
+        defaultAmount = 15000;
+      } else if (tier === "5000") {
+        allowedCandidates = 4;
+        defaultAmount = 5000;
+      } else if (tier === "2500") {
+        allowedCandidates = 2;
+        defaultAmount = 2500;
+      } else if (tier === "1500") {
+        allowedCandidates = 1;
+        defaultAmount = 1500;
+      }
+
+      const user = this.getUser();
+
+      const subInfo: UserSubscriptionInfo = {
+        planTier: tier,
+        amount: details?.amount || defaultAmount,
+        currency: details?.currency || "FCFA",
+        paymentMethod: details?.paymentMethod || "Mobile Money (Wave / Orange / MTN)",
+        phoneNumber: details?.phoneNumber || user?.phone,
+        transactionRef: details?.transactionRef || `TRX-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,
+        subscribedAt: new Date().toISOString(),
+        expiresAt: null,
+        accountType: isEnterprise ? "business" : (details?.accountType || user?.accountType || "candidate"),
+        allowedCandidates: details?.allowedCandidates || allowedCandidates,
+        companyName: details?.companyName || user?.business?.companyName,
+      };
+
+      if (!user?.email) {
+        this.setPendingSubscription(subInfo);
+      } else {
+        this.saveUserSubscription(user.email, subInfo);
+      }
+
       const active = this.getActiveResume();
       if (active) {
         this.saveActiveResume({
@@ -386,18 +630,18 @@ export class StorageManager {
           planTier: tier,
         });
       }
-      const user = this.getUser();
+
       if (user) {
-        const isEnterprise =
-          tier === "enterprise30" ||
-          tier === "enterprise75" ||
-          tier === "enterprise200" ||
-          tier === "cyber15";
         this.setUser({
           ...user,
           planTier: tier,
+          subscription: subInfo,
           accountType: isEnterprise ? "business" : (user.accountType || "candidate"),
         });
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
       }
     } catch (e) {
       console.error("Erreur mise à jour plan tier", e);
@@ -505,13 +749,16 @@ export class StorageManager {
     planTier: PlanTier;
   } {
     const user = this.getUser();
+    const sub = user?.email ? this.getUserSubscription(user.email) : null;
     const active = this.getActiveResume();
-    const plan: PlanTier = user?.planTier || active?.planTier || "free";
+    const plan: PlanTier = user?.planTier || sub?.planTier || active?.planTier || "free";
 
     let allowedCount = 0;
-    if (plan === "enterprise30") allowedCount = 30;
+    if (sub?.allowedCandidates && sub.allowedCandidates > 0) {
+      allowedCount = sub.allowedCandidates;
+    } else if (plan === "enterprise200") allowedCount = 200;
     else if (plan === "enterprise75") allowedCount = 75;
-    else if (plan === "enterprise200") allowedCount = 200;
+    else if (plan === "enterprise30") allowedCount = 30;
     else if (plan === "cyber15") allowedCount = 15;
     else if (plan === "5000") allowedCount = 4;
     else if (plan === "2500") allowedCount = 2;

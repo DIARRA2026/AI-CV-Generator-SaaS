@@ -78,13 +78,16 @@ export class SupabaseService {
         // Si la vérification par email est exigée par Supabase
         if (!data?.session && data?.user) {
           const userSession = StorageManager.getUser() || {
+            accountType: payload.accountType || "candidate",
             email: cleanEmail,
             firstName: cleanFirstName,
             lastName: cleanLastName,
             phone: payload.phone?.trim(),
             country: payload.country?.trim(),
             city: payload.city?.trim(),
-            planTier: "free" as PlanTier,
+            business: payload.business,
+            planTier: localResult.user?.planTier || "free",
+            subscription: localResult.user?.subscription,
             createdAt: new Date().toISOString(),
           };
           return {
@@ -96,15 +99,19 @@ export class SupabaseService {
         }
 
         if (data?.session) {
+          const activeUser = StorageManager.getUser();
           const userSession: UserSession = {
+            accountType: activeUser?.accountType || payload.accountType || "candidate",
             email: cleanEmail,
             firstName: cleanFirstName,
             lastName: cleanLastName,
             phone: payload.phone?.trim(),
             country: payload.country?.trim(),
             city: payload.city?.trim(),
+            business: payload.business,
             token: data.session.access_token,
-            planTier: "free",
+            planTier: activeUser?.planTier || localResult.user?.planTier || "free",
+            subscription: activeUser?.subscription || localResult.user?.subscription,
             createdAt: new Date().toISOString(),
           };
           StorageManager.setUser(userSession);
@@ -116,36 +123,25 @@ export class SupabaseService {
     }
 
     if (localResult.success && localResult.user) {
-      const session: UserSession = {
-        email: localResult.user.email,
-        firstName: localResult.user.firstName,
-        lastName: localResult.user.lastName,
-        phone: localResult.user.phone,
-        city: localResult.user.city,
-        country: localResult.user.country,
-        token: `local-${Date.now()}`,
-        planTier: "free",
-        createdAt: localResult.user.createdAt,
-      };
-      StorageManager.setUser(session);
-      return { success: true, user: session };
+      const activeUser = StorageManager.getUser();
+      return { success: true, user: activeUser || (localResult.user as any) };
     }
 
     return { success: false, message: localResult.message || "Erreur lors de la création du compte." };
   }
 
   /**
-   * Connexion utilisateur avec détection intelligente (Cloud Supabase + LocalStorage)
+   * Connexion sécurisée avec repli automatique LocalStorage et tolérance déconnectée
    */
   static async signIn(email: string, password: string): Promise<CloudAuthResponse> {
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1. Si Supabase Cloud est connecté
+    // 1. Essai de connexion avec Supabase Cloud si connecté
     if (this.isAvailable() && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
-          password: password,
+          password,
         });
 
         if (!error && data?.user) {
@@ -156,24 +152,51 @@ export class SupabaseService {
             .eq("id", data.user.id)
             .single();
 
+          const localUsers = StorageManager.getRegisteredUsers();
+          const localMatch = localUsers.find((u) => u.email.toLowerCase().trim() === cleanEmail);
+          const savedSub = StorageManager.getUserSubscription(cleanEmail);
+
+          const resolvedPlan: PlanTier =
+            (profile?.plan_tier as PlanTier) ||
+            localMatch?.planTier ||
+            savedSub?.planTier ||
+            "free";
+
+          const isEnterprise =
+            resolvedPlan.startsWith("enterprise") ||
+            resolvedPlan === "cyber15" ||
+            profile?.account_type === "business" ||
+            localMatch?.accountType === "business";
+
+          const resolvedAccountType: AccountType = isEnterprise
+            ? "business"
+            : (profile?.account_type || localMatch?.accountType || "candidate");
+
           const resolvedFirstName =
             profile?.first_name ||
             data.user.user_metadata?.first_name ||
+            localMatch?.firstName ||
             (cleanEmail.split("@")[0].charAt(0).toUpperCase() + cleanEmail.split("@")[0].slice(1));
 
           const userSession: UserSession = {
             email: data.user.email || cleanEmail,
+            accountType: resolvedAccountType,
             firstName: resolvedFirstName,
-            lastName: profile?.last_name || data.user.user_metadata?.last_name || "",
-            phone: profile?.phone || data.user.user_metadata?.phone,
-            country: profile?.country || data.user.user_metadata?.country,
-            city: profile?.city || data.user.user_metadata?.city,
-            planTier: (profile?.plan_tier as PlanTier) || "free",
+            lastName: profile?.last_name || data.user.user_metadata?.last_name || localMatch?.lastName || "",
+            phone: profile?.phone || data.user.user_metadata?.phone || localMatch?.phone,
+            country: profile?.country || data.user.user_metadata?.country || localMatch?.country,
+            city: profile?.city || data.user.user_metadata?.city || localMatch?.city,
+            business: localMatch?.business,
+            planTier: resolvedPlan,
+            subscription: savedSub || localMatch?.subscription,
             token: data.session?.access_token,
             createdAt: data.user.created_at,
           };
 
           StorageManager.setUser(userSession);
+          if (savedSub) {
+            StorageManager.saveUserSubscription(cleanEmail, savedSub);
+          }
           return { success: true, user: userSession };
         }
 
@@ -182,19 +205,8 @@ export class SupabaseService {
           // Vérifier si le compte existe en local pour permettre l'accès direct sans blocage
           const localCheck = StorageManager.verifyLogin(cleanEmail, password);
           if (localCheck.success && localCheck.user) {
-            const session: UserSession = {
-              email: localCheck.user.email,
-              firstName: localCheck.user.firstName,
-              lastName: localCheck.user.lastName,
-              phone: localCheck.user.phone,
-              city: localCheck.user.city,
-              country: localCheck.user.country,
-              token: `local-${Date.now()}`,
-              planTier: "free",
-              createdAt: localCheck.user.createdAt,
-            };
-            StorageManager.setUser(session);
-            return { success: true, user: session };
+            const activeUser = StorageManager.getUser();
+            return { success: true, user: activeUser || (localCheck.user as any) };
           }
 
           return {
@@ -208,19 +220,8 @@ export class SupabaseService {
         if (error && error.message.toLowerCase().includes("invalid login credentials")) {
           const localCheck = StorageManager.verifyLogin(cleanEmail, password);
           if (localCheck.success && localCheck.user) {
-            const session: UserSession = {
-              email: localCheck.user.email,
-              firstName: localCheck.user.firstName,
-              lastName: localCheck.user.lastName,
-              phone: localCheck.user.phone,
-              city: localCheck.user.city,
-              country: localCheck.user.country,
-              token: `local-${Date.now()}`,
-              planTier: "free",
-              createdAt: localCheck.user.createdAt,
-            };
-            StorageManager.setUser(session);
-            return { success: true, user: session };
+            const activeUser = StorageManager.getUser();
+            return { success: true, user: activeUser || (localCheck.user as any) };
           }
 
           // Si le mot de passe est faux mais l'email existe
@@ -259,19 +260,8 @@ export class SupabaseService {
       return { success: false, message: localResult.message || "Mot de passe incorrect." };
     }
 
-    const session: UserSession = {
-      email: localResult.user.email,
-      firstName: localResult.user.firstName,
-      lastName: localResult.user.lastName,
-      phone: localResult.user.phone,
-      city: localResult.user.city,
-      country: localResult.user.country,
-      token: `local-${Date.now()}`,
-      planTier: "free",
-      createdAt: localResult.user.createdAt,
-    };
-    StorageManager.setUser(session);
-    return { success: true, user: session };
+    const activeUser = StorageManager.getUser();
+    return { success: true, user: activeUser || (localResult.user as any) };
   }
 
   /**

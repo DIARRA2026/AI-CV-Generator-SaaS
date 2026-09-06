@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ResumeData } from "@/lib/types";
+import { downloadJobApplicationDocx } from "@/lib/letter-docx-export";
 import {
   X, Briefcase, Building2, MapPin, FileText, Sparkles, Loader2,
   Copy, Check, ChevronDown, Printer, User, Phone, Mail, Download,
@@ -122,30 +123,8 @@ Veuillez agréer, ${civilite} l'expression de mes salutations distinguées.
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportWord = () => {
-    const filename = `Demande_Emploi_${company}_${jobTitle}`.replace(/\s+/g, "_");
-    const formattedParagraphs = letter
-      .split("\n")
-      .map((line) => `<p style="margin-bottom: 8pt; line-height: 1.5; font-family: 'Times New Roman', serif; font-size: 12pt;">${line.trim() || "&nbsp;"}</p>`)
-      .join("");
-
-    const header = `<html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>${filename}</title>
-    <style>
-      @page { size: A4; margin: 2.5cm 2cm 2.5cm 3cm; }
-      body { font-family: 'Times New Roman', serif; font-size: 12pt; color: #000000; }
-    </style>
-    </head><body>${formattedParagraphs}</body></html>`;
-
-    const blob = new Blob(['\ufeff', header], { type: 'application/msword;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportWord = async () => {
+    await downloadJobApplicationDocx(letter, company, jobTitle);
     setShowExportMenu(false);
   };
 

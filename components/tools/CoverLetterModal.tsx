@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import jsPDF from "jspdf";
 import { ResumeData } from "@/lib/types";
 import { CVEngine } from "@/lib/cv-engine";
+import { downloadCoverLetterDocx } from "@/lib/letter-docx-export";
 import { X, Sparkles, Copy, Check, Download, RefreshCw, Wand2, FileText, ChevronDown } from "lucide-react";
 
 interface CoverLetterModalProps {
@@ -41,31 +42,10 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Exporter au format Word (.docx)
-  const handleExportWord = () => {
-    const filename = `Lettre_Motivation_${resumeData.personal.lastName || "Candidat"}`;
-    const formattedParagraphs = letterContent
-      .split("\n")
-      .map((line) => `<p style="margin-bottom: 10pt; line-height: 1.5; font-family: Arial, sans-serif; font-size: 11pt;">${line.trim() || "&nbsp;"}</p>`)
-      .join("");
-
-    const header = `<html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>${filename}</title>
-    <style>
-      @page { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
-      body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; color: #1e293b; }
-    </style>
-    </head><body>${formattedParagraphs}</body></html>`;
-
-    const blob = new Blob(['\ufeff', header], { type: 'application/msword;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  // Exporter au format Word (.docx) natif et professionnel
+  const handleExportWord = async () => {
+    const lastName = resumeData.personal.lastName || "Candidat";
+    await downloadCoverLetterDocx(letterContent, lastName);
     setShowExportMenu(false);
   };
 

@@ -48,6 +48,7 @@ import {
   Mail,
   MessageCircle,
   Send,
+  Scale,
 } from "lucide-react";
 
 // Données des templates pour l'exposition & la démo interactive
@@ -274,19 +275,15 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Titre Principal Moderne, Équilibré & Stylé */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-extrabold text-slate-900 tracking-tight leading-tight max-w-2xl mx-auto text-center px-1">
-              Répondez à quelques questions. <br className="hidden sm:inline" />
-              Votre{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                CV d'Excellence
-              </span>{" "}
-              est prêt en 5 minutes.
+            {/* Titre Principal Moderne, Ultra-Percutant & Stylé */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[46px] font-black text-slate-900 tracking-tight leading-[1.15] max-w-3xl mx-auto text-center px-1">
+              Décrochez <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-flow">3× Plus d'Entretiens</span>. <br className="hidden sm:inline" />
+              Votre CV d'Élite Reformaté par l'IA en 5 Minutes.
             </h1>
 
-            {/* Sous-titre Épuré & Lisible */}
-            <p className="mt-3.5 text-xs sm:text-sm md:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-normal text-center px-1">
-              Fini les rejets silencieux et les heures perdues sur Word. Notre IA transforme vos réponses en un CV percutant selon la <strong className="text-slate-900 font-semibold">méthode STAR</strong>, optimisé pour les <strong className="text-slate-900 font-semibold">robots ATS</strong> et conforme aux exigences des recruteurs.
+            {/* Sous-titre Épuré, Puissant & Concret */}
+            <p className="mt-4 text-xs sm:text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal text-center px-1">
+              <strong>85% des CV sont rejetés en silence par les robots ATS</strong> avant même qu'un recruteur ne les ouvre. MonCV.ai reformule automatiquement vos réalisations selon la <strong className="text-slate-900 font-bold">méthode STAR</strong>, verrouille une mise en page A4 chirurgicale et génère vos demandes d'emploi officielles prêtes à signer.
             </p>
 
             {/* CTAs d'action Compacts & Animés */}
@@ -294,26 +291,26 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={handleStartCreation}
-                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer animate-cta-loop shadow-xl shadow-blue-600/30 active:scale-98"
+                className="group w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer animate-cta-loop shadow-xl shadow-blue-600/30 active:scale-98"
               >
-                <Sparkles className="w-4 h-4 text-blue-200 shrink-0" />
-                <span className="whitespace-nowrap font-black">Créer mon CV Gratuitement</span>
-                <ArrowRight className="w-4 h-4 shrink-0" />
+                <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow shrink-0" />
+                <span className="whitespace-nowrap font-black">Créer mon CV Gagnant Gratuitement</span>
+                <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-1.5 transition-transform" />
               </button>
 
               <div className="w-full sm:w-auto grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:gap-3">
                 <a
                   href="#exposition-modeles"
-                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:border-blue-300 cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:border-blue-300 cursor-pointer card-hover-lift"
                 >
-                  <Eye className="w-4 h-4 text-blue-600 shrink-0" />
+                  <Eye className="w-4 h-4 text-blue-600 animate-bounce-soft shrink-0" />
                   <span className="whitespace-nowrap">Modèles</span>
                 </a>
 
                 <Link
                   href="/portfolio"
                   target="_blank"
-                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-purple-50 hover:bg-purple-100/90 text-purple-900 font-bold rounded-2xl border border-purple-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer btn-press"
+                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-purple-50 hover:bg-purple-100/90 text-purple-900 font-bold rounded-2xl border border-purple-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer btn-press card-hover-lift"
                 >
                   <Globe className="w-4 h-4 text-purple-600 shrink-0" />
                   <span className="whitespace-nowrap">Portfolio</span>
@@ -349,24 +346,57 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[11px] sm:text-xs font-semibold text-slate-600 text-center">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 icon-glow-emerald" />
                   <span>Sans inscription obligatoire</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0 icon-glow-blue animate-pulse-soft" />
                   <span>Score ATS 0-100% en direct</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
-                  <span>Wave & Mobile Money acceptés</span>
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
+                  <span>Paiements Wave & Mobile Money sécurisés</span>
                 </span>
               </div>
             </div>
 
-            {/* APERÇU LIVE INTERACTIF DU CV & PRESTIGE MOCKUP */}
+            {/* APERÇU LIVE INTERACTIF DU CV & PRESTIGE MOCKUP AVEC SCANNER ATS */}
             <div className="mt-12 max-w-4xl mx-auto relative">
+              
+              {/* Badge flottant Gauche (Score ATS) */}
+              <div className="hidden md:flex absolute -top-5 -left-6 z-30 items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-emerald-200/90 shadow-xl shadow-emerald-500/10 animate-float pointer-events-none">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                  <ShieldCheck className="w-5 h-5 icon-glow-emerald" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                    <span>Score ATS : 98.4%</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">Zéro rejet algorithmique</p>
+                </div>
+              </div>
+
+              {/* Badge flottant Droite (Prêt en 5 min) */}
+              <div className="hidden md:flex absolute -bottom-5 -right-6 z-30 items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white backdrop-blur-md border border-slate-700/90 shadow-2xl shadow-blue-600/20 animate-float-reverse pointer-events-none">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <Zap className="w-4 h-4 icon-glow-blue animate-pulse-soft" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black text-white flex items-center gap-1.5">
+                    <span>Prêt en 5 Minutes</span>
+                    <Sparkles className="w-3 h-3 text-amber-300 animate-spin-slow" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium">PDF Vectoriel + Word DOCX</p>
+                </div>
+              </div>
+
               {/* Cadre de simulation avec barre de titre */}
-              <div className="rounded-3xl border border-slate-200/80 bg-white shadow-2xl overflow-hidden text-left relative transition-all hover:shadow-blue-500/10">
+              <div className="rounded-3xl border border-slate-200/80 bg-white shadow-2xl overflow-hidden text-left relative transition-all hover:shadow-blue-500/15 card-shine group">
+                
+                {/* Ligne de Scan Laser ATS animée haute technologie */}
+                <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_20px_rgba(52,211,153,0.9)] animate-scanline pointer-events-none z-20" />
+
                 {/* Barre de navigation simulée */}
                 <div className="bg-slate-100/90 border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -379,7 +409,7 @@ export default function HomePage() {
                     <span className="truncate">moncv.ai/c/jean-marc-kouassi</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-spin-slow" />
                     <span className="hidden sm:inline">Optimisé STAR & ATS</span>
                   </div>
                 </div>
@@ -388,7 +418,7 @@ export default function HomePage() {
                 <div className="p-6 sm:p-8 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-blue-600/25 shrink-0">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-blue-600/25 shrink-0 animate-pulse-soft">
                         JMK
                       </div>
                       <div>
@@ -406,7 +436,7 @@ export default function HomePage() {
 
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-black rounded-xl flex items-center gap-1.5 shadow-2xs">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                         Score ATS : 98% Conforme
                       </span>
                     </div>
@@ -414,9 +444,9 @@ export default function HomePage() {
 
                   {/* Badges flottants d'avantages majeurs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5">
-                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 card-hover-lift">
                       <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                        <FileCheck className="w-4 h-4" />
+                        <FileCheck className="w-4 h-4 icon-glow-blue" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900">PDF Haute Définition</p>
@@ -424,9 +454,9 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 card-hover-lift">
                       <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                        <Briefcase className="w-4 h-4" />
+                        <Briefcase className="w-4 h-4 icon-glow-amber" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900">Demande d'Emploi</p>
@@ -434,9 +464,9 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 card-hover-lift">
                       <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                        <Wand2 className="w-4 h-4" />
+                        <Wand2 className="w-4 h-4 icon-glow-purple" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900">Lettre de Motivation IA</p>
@@ -448,24 +478,36 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* BANDEAU METRIQUES DE CONFIANCE */}
+            {/* BANDEAU METRIQUES DE CONFIANCE HAUT IMPACT */}
             <div className="mt-12 max-w-4xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-2xl sm:text-3xl font-black text-blue-600">+18 450</div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-0.5">CVs Téléchargés</div>
+                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl sm:text-3xl font-black text-blue-600">+18 450</span>
+                    <FileText className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">CVs Téléchargés</div>
                 </div>
-                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-2xl sm:text-3xl font-black text-emerald-600">98.4%</div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-0.5">Validation Robots ATS</div>
+                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-600">98.4%</span>
+                    <ShieldCheck className="w-5 h-5 text-emerald-400 icon-glow-emerald" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">Validation Robots ATS</div>
                 </div>
-                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-2xl sm:text-3xl font-black text-indigo-600">3.2x Plus</div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-0.5">D'appels Recruteurs</div>
+                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl sm:text-3xl font-black text-indigo-600">3.2× Plus</span>
+                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">D'appels Recruteurs</div>
                 </div>
-                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-2xl sm:text-3xl font-black text-amber-500">5 Minutes</div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-0.5">Chrono avec l'IA</div>
+                <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-500">5 Minutes</span>
+                    <Clock className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">Chrono avec l'IA</div>
                 </div>
               </div>
             </div>
@@ -935,6 +977,175 @@ export default function HomePage() {
         </section>
 
         {/* ========================================================================= */}
+        {/* 4-BIS. LE COMPARATIF SANS CONCESSION (MONCV.AI VS TOUTE CONCURRENCE)     */}
+        {/* ========================================================================= */}
+        <section className="py-14 sm:py-20 bg-white border-y border-slate-200 relative overflow-hidden">
+          {/* Halo d'arrière-plan */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-50/70 rounded-full blur-3xl -z-10 pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-3 border border-blue-100 shadow-2xs">
+                <Scale className="w-4 h-4 text-blue-600 animate-bounce-soft" />
+                <span>Le Comparatif Sans Appel • Logique Défiant Toute Concurrence</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                Pourquoi MonCV.ai Écrase les Solutions Traditionnelles
+              </h2>
+              <p className="text-slate-600 text-xs sm:text-sm mt-3 leading-relaxed">
+                Ne confiez plus votre carrière au hasard ou à des outils obsolètes. Comparez objectivement ce que vous obtenez en postulant auprès des entreprises en Afrique et à l'international.
+              </p>
+            </div>
+
+            {/* Tableau Comparatif Desktop & Mobile */}
+            <div className="overflow-x-auto pb-4">
+              <div className="min-w-[760px] bg-white rounded-3xl border-2 border-slate-200 shadow-xl overflow-hidden">
+                {/* Header du Tableau */}
+                <div className="grid grid-cols-12 bg-slate-900 text-white text-xs font-black p-4 items-center">
+                  <div className="col-span-4 uppercase tracking-wider text-slate-400 pl-2">
+                    Critères d'Évaluation
+                  </div>
+                  <div className="col-span-3 text-center py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md flex items-center justify-center gap-1.5 text-white">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
+                    <span>MonCV.ai (IA 2026)</span>
+                  </div>
+                  <div className="col-span-2 text-center text-slate-300 font-bold">
+                    Microsoft Word
+                  </div>
+                  <div className="col-span-2 text-center text-slate-300 font-bold">
+                    Canva
+                  </div>
+                  <div className="col-span-1 text-center text-slate-300 font-bold text-[10.5px]">
+                    Freelance
+                  </div>
+                </div>
+
+                {/* Lignes du Tableau */}
+                {[
+                  {
+                    critere: "Taux de Passage Robots ATS",
+                    sub: "Indexation sémantique sans tableaux bloquants",
+                    moncv: "98.4% de passage garanti",
+                    moncvStatus: true,
+                    word: "25% (blocages fréquents)",
+                    canva: "15% (texte non indexé)",
+                    free: "50% (aléatoire)",
+                  },
+                  {
+                    critere: "Temps de Conception Moyen",
+                    sub: "Du premier clic au téléchargement final",
+                    moncv: "⚡ 5 minutes chrono",
+                    moncvStatus: true,
+                    word: "3 à 5 heures de calvaire",
+                    canva: "2 à 4 heures de bidouillage",
+                    free: "4 à 7 jours d'attente",
+                  },
+                  {
+                    critere: "Réécriture IA selon la Méthode STAR",
+                    sub: "Transformation des tâches en accomplissements chiffrés",
+                    moncv: "Automatique en direct",
+                    moncvStatus: true,
+                    word: "Aucune assistance",
+                    canva: "Aucune assistance",
+                    free: "Selon le prestataire",
+                  },
+                  {
+                    critere: "Demande d'Emploi Officielle Africaine",
+                    sub: "Conforme aux normes administratives (CI, SN, BF, CM)",
+                    moncv: "Incluse en 1 clic",
+                    moncvStatus: true,
+                    word: "À rédiger de zéro",
+                    canva: "Modèles inadaptés",
+                    free: "+5 000 à 10 000 F en sus",
+                  },
+                  {
+                    critere: "Site Web Portfolio Personnel en Ligne",
+                    sub: "Lien public VIP, responsive mobile & QR Code HD",
+                    moncv: "Inclus (Pack VIP)",
+                    moncvStatus: true,
+                    word: "Impossible",
+                    canva: "Impossible",
+                    free: "50 000 F à 100 000 F",
+                  },
+                  {
+                    critere: "Format A4 Anti-Débordement Garanti",
+                    sub: "Verrouillage strict sans page blanche accidentelle",
+                    moncv: "100% calibré au millimètre",
+                    moncvStatus: true,
+                    word: "Sauts de page constants",
+                    canva: "Risque de rognage",
+                    free: "Non garanti sur mobile",
+                  },
+                  {
+                    critere: "Tarif & Mode de Paiement Accessible",
+                    sub: "Sans carte bancaire obligatoire, sans abonnement caché",
+                    moncv: "Dès 1 500 F (Wave / MoMo)",
+                    moncvStatus: true,
+                    word: "99 000 F / an (Office)",
+                    canva: "15 000 F / mois (Carte CB)",
+                    free: "25 000 à 50 000 F",
+                  },
+                ].map((row, idx) => (
+                  <div
+                    key={idx}
+                    className={`grid grid-cols-12 p-3.5 sm:p-4 items-center text-xs border-b border-slate-100 transition-colors hover:bg-blue-50/40 ${
+                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                    }`}
+                  >
+                    <div className="col-span-4 pl-2">
+                      <p className="font-extrabold text-slate-900">{row.critere}</p>
+                      <p className="text-[10px] text-slate-500">{row.sub}</p>
+                    </div>
+
+                    <div className="col-span-3 text-center py-1.5 px-2 rounded-xl bg-blue-50 text-blue-900 font-extrabold flex items-center justify-center gap-1.5 border border-blue-200/80 shadow-2xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 icon-glow-emerald" />
+                      <span className="text-[11.5px] truncate">{row.moncv}</span>
+                    </div>
+
+                    <div className="col-span-2 text-center text-slate-500 font-medium flex items-center justify-center gap-1">
+                      <XCircle className="w-3 h-3 text-red-400 shrink-0" />
+                      <span className="truncate text-[11px]">{row.word}</span>
+                    </div>
+
+                    <div className="col-span-2 text-center text-slate-500 font-medium flex items-center justify-center gap-1">
+                      <XCircle className="w-3 h-3 text-red-400 shrink-0" />
+                      <span className="truncate text-[11px]">{row.canva}</span>
+                    </div>
+
+                    <div className="col-span-1 text-center text-slate-500 font-medium flex items-center justify-center gap-1">
+                      <span className="truncate text-[10.5px]">{row.free}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Ruban d'appel à l'action sous le tableau */}
+            <div className="mt-8 p-5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-lg card-shine">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                  <Flame className="w-5 h-5 text-amber-300 animate-pulse-soft" />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm sm:text-base">Le calcul est vite fait. Pourquoi perdre plus de temps ?</h4>
+                  <p className="text-xs text-blue-100">Rejoignez l'élite des candidats recrutés dès aujourd'hui.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleStartCreation}
+                className="px-6 py-3 bg-white hover:bg-blue-50 text-blue-700 font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer shrink-0 animate-cta-loop"
+              >
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span>Créer mon CV en 5 Minutes</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
         {/* 5. TÉMOIGNAGES RÉELS — DÉFILEMENT CONTINU DE LA DROITE VERS LA GAUCHE */}
         {/* ========================================================================= */}
         <section className="py-10 sm:py-14 bg-slate-50 overflow-hidden relative border-t border-slate-200">
@@ -1026,7 +1237,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
               
               {/* OFFRE 1 : GRATUIT (0 FCFA) */}
-              <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all relative">
+              <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all relative card-hover-lift card-shine">
                 <div>
                   <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-200 text-slate-700 mb-2">
                     Découverte
@@ -1040,7 +1251,7 @@ export default function HomePage() {
                   </p>
 
                   <div className="mt-4 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 text-[10.5px] text-amber-900 font-semibold">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse-soft" />
                     <span>Filigrane MonCV.ai visible • Téléchargement PDF impossible</span>
                   </div>
 
@@ -1078,7 +1289,7 @@ export default function HomePage() {
               </div>
 
               {/* OFFRE 2 : PACK ESSENTIEL (1 500 FCFA) */}
-              <div className="p-6 rounded-3xl bg-white border-2 border-blue-200 flex flex-col justify-between shadow-sm hover:border-blue-400 transition-all relative">
+              <div className="p-6 rounded-3xl bg-white border-2 border-blue-200 flex flex-col justify-between shadow-sm hover:border-blue-400 transition-all relative card-hover-lift card-shine">
                 <div>
                   <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-100 text-blue-800 mb-2">
                     Standard
@@ -1093,7 +1304,7 @@ export default function HomePage() {
 
                   <ul className="mt-5 space-y-2.5 text-xs text-slate-700">
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 icon-glow-emerald" />
                       <span><strong>Export PDF HD SANS FILIGRANE</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
@@ -1120,13 +1331,13 @@ export default function HomePage() {
                   onClick={() => handleOpenPlanPayment("1500")}
                   className="mt-6 w-full py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-2xl border border-blue-200 text-center text-xs transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 animate-cta-loop"
                 >
-                  <Smartphone className="w-3.5 h-3.5" />
+                  <Smartphone className="w-3.5 h-3.5 animate-bounce-soft" />
                   <span>Choisir l'Essentiel (1 500 F)</span>
                 </button>
               </div>
 
               {/* OFFRE 3 : PACK CANDIDATURE PRO (2 500 FCFA) - RECOMMANDÉ */}
-              <div className="p-6 rounded-3xl bg-gradient-to-b from-blue-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden ring-4 ring-blue-500/80 animate-pulse-glow">
+              <div className="p-6 rounded-3xl bg-gradient-to-b from-blue-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden ring-4 ring-blue-500/80 animate-pulse-glow card-hover-lift card-shine">
                 <div className="absolute top-3 right-3 bg-blue-500 text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   Recommandé
@@ -1146,23 +1357,23 @@ export default function HomePage() {
 
                   <ul className="mt-5 space-y-2.5 text-xs text-blue-100">
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
                       <span><strong>CV PDF HD sans filigrane</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
                       <span><strong>+ DEMANDE D'EMPLOI OFFICIELLE</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
                       <span><strong>+ LETTRE DE MOTIVATION IA</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
                       <span>Scanner ATS face aux offres d'emploi</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
                       <span>Lien de partage public + QR Code HD</span>
                     </li>
                   </ul>
@@ -1173,15 +1384,15 @@ export default function HomePage() {
                   onClick={() => handleOpenPlanPayment("2500")}
                   className="mt-6 w-full py-3.5 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-2xl text-center text-xs shadow-lg shadow-blue-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
                   <span>Activer le Pack Pro (2 500 F)</span>
                 </button>
               </div>
 
               {/* OFFRE 4 : PACK CARRIÈRE VIP & PORTFOLIO (5 000 FCFA) */}
-              <div className="p-6 rounded-3xl bg-gradient-to-b from-purple-950 via-slate-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden border-2 border-purple-400">
+              <div className="p-6 rounded-3xl bg-gradient-to-b from-purple-950 via-slate-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden border-2 border-purple-400 card-hover-lift card-shine">
                 <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
-                  <Crown className="w-3 h-3 text-amber-300" />
+                  <Crown className="w-3 h-3 text-amber-300 animate-bounce-soft" />
                   VIP & Portfolio
                 </div>
 
@@ -1199,12 +1410,12 @@ export default function HomePage() {
 
                   <ul className="mt-5 space-y-2.5 text-xs text-purple-100">
                     <li className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                      <Crown className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber animate-bounce-soft" />
                       <span><strong>Toutes les fonctionnalités incluses</strong></span>
                     </li>
                     <li className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-pink-400 shrink-0" />
+                        <Globe className="w-4 h-4 text-pink-400 shrink-0 icon-glow-purple" />
                         <span><strong>+ PORTFOLIO WEB PERSONNEL INTERACTIF</strong></span>
                       </div>
                       <Link
@@ -1236,7 +1447,7 @@ export default function HomePage() {
                   onClick={() => handleOpenPlanPayment("5000")}
                   className="mt-6 w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:to-pink-500 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                 >
-                  <Crown className="w-4 h-4" />
+                  <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
                   <span>Débloquer le VIP (5 000 F)</span>
                 </button>
               </div>
@@ -1395,11 +1606,11 @@ export default function HomePage() {
             <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
               
               {/* PACK 1 : STARTER PME (30 PROFILS) */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md">
+              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                      <Building className="w-3.5 h-3.5" />
+                      <Building className="w-3.5 h-3.5 icon-glow-emerald" />
                       Starter PME
                     </div>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
@@ -1422,7 +1633,7 @@ export default function HomePage() {
 
                   <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
                     <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 icon-glow-emerald" />
                       <span>30 Candidats / Profils complets débloqués</span>
                     </li>
                     <li className="flex items-center gap-2.5">
@@ -1447,25 +1658,25 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => handleOpenPlanPayment("enterprise30")}
-                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-teal-600 text-white font-extrabold rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-teal-600/30"
+                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-teal-600 text-white font-extrabold rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-teal-600/30 card-hover-lift"
                 >
-                  <Building className="w-4 h-4" />
+                  <Building className="w-4 h-4 animate-bounce-soft" />
                   <span>Activer Starter PME (20 000 F)</span>
                 </button>
               </div>
 
               {/* PACK 2 : BUSINESS PRO (75 PROFILS) — LE BEST SELLER RECOMMANDÉ */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10">
+              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10 card-hover-lift card-shine">
                 {/* Badge Top Recommandé */}
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-3.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1.5 whitespace-nowrap">
-                  <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
+                  <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950 animate-bounce-soft" />
                   <span>Recommandé • Le Choix des Cabinets RH</span>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between gap-2 mt-1">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      <Users className="w-3.5 h-3.5" />
+                      <Users className="w-3.5 h-3.5 icon-glow-blue" />
                       Business Pro
                     </div>
                     <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
@@ -1488,11 +1699,11 @@ export default function HomePage() {
 
                   <ul className="mt-6 space-y-2.5 text-xs text-slate-200">
                     <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber" />
                       <span>75 Candidats / Profils complets débloqués</span>
                     </li>
                     <li className="flex items-center gap-2.5 font-semibold text-indigo-200">
-                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 animate-spin-slow" />
                       <span>Demandes d'Emploi Officielles & Lettres IA incluses</span>
                     </li>
                     <li className="flex items-center gap-2.5">
@@ -1519,18 +1730,18 @@ export default function HomePage() {
                   onClick={() => handleOpenPlanPayment("enterprise75")}
                   className="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
                   <span>Activer Business Pro (45 000 F)</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
 
               {/* PACK 3 : ENTREPRISE PREMIUM (200 PROFILS) — VOLUME MAXIMAL */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md">
+              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      <Crown className="w-3.5 h-3.5" />
+                      <Crown className="w-3.5 h-3.5 icon-glow-amber animate-bounce-soft" />
                       Entreprise Premium
                     </div>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
@@ -1553,7 +1764,7 @@ export default function HomePage() {
 
                   <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
                     <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber" />
                       <span>200 Candidats / Profils complets débloqués</span>
                     </li>
                     <li className="flex items-center gap-2.5 font-bold text-emerald-300">
@@ -1582,9 +1793,9 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => handleOpenPlanPayment("enterprise200")}
-                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-amber-600 hover:text-slate-950 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-amber-600/30"
+                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-amber-600 hover:text-slate-950 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-amber-600/30 card-hover-lift"
                 >
-                  <Crown className="w-4 h-4" />
+                  <Crown className="w-4 h-4 animate-bounce-soft" />
                   <span>Activer Premium (100 000 F)</span>
                 </button>
               </div>

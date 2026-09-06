@@ -69,7 +69,7 @@ export const BUSINESS_PLANS: PlanOption[] = [
   {
     id: "enterprise30",
     name: "Pack Starter PME",
-    price: "45 000 FCFA",
+    price: "20 000 FCFA",
     badge: "30 Candidats",
     desc: "30 profils candidats complets • Vivier RH centralisé • Facture normalisée OHADA.",
     highlight: false,
@@ -77,7 +77,7 @@ export const BUSINESS_PLANS: PlanOption[] = [
   {
     id: "enterprise75",
     name: "Pack Business Pro RH",
-    price: "95 000 FCFA",
+    price: "45 000 FCFA",
     badge: "Le Plus Choisi ★",
     desc: "75 profils candidats complets • Vivier collaboratif • Facture OHADA • Support 7j/7.",
     highlight: true,
@@ -85,7 +85,7 @@ export const BUSINESS_PLANS: PlanOption[] = [
   {
     id: "enterprise200",
     name: "Pack Entreprise & Cabinet",
-    price: "195 000 FCFA",
+    price: "100 000 FCFA",
     badge: "200 Candidats",
     desc: "200 profils candidats complets • Gestionnaire de compte dédié • Intégration sur mesure.",
     highlight: false,

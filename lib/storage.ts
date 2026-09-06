@@ -681,13 +681,13 @@ export class StorageManager {
       let defaultAmount = 0;
       if (tier === "enterprise200") {
         allowedCandidates = 200;
-        defaultAmount = 195000;
+        defaultAmount = 100000;
       } else if (tier === "enterprise75") {
         allowedCandidates = 75;
-        defaultAmount = 95000;
+        defaultAmount = 45000;
       } else if (tier === "enterprise30") {
         allowedCandidates = 30;
-        defaultAmount = 45000;
+        defaultAmount = 20000;
       } else if (tier === "cyber15") {
         allowedCandidates = 15;
         defaultAmount = 15000;

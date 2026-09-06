@@ -361,9 +361,9 @@ export class AdminService {
         "2500": 2500,
         "5000": 5000,
         cyber15: 15000,
-        enterprise30: 30000,
-        enterprise75: 75000,
-        enterprise200: 200000,
+        enterprise30: 20000,
+        enterprise75: 45000,
+        enterprise200: 100000,
       };
 
       allUsers.forEach((u) => {
@@ -1035,9 +1035,9 @@ export class AdminService {
         "2500": 2500,
         "5000": 5000,
         cyber15: 15000,
-        enterprise30: 30000,
-        enterprise75: 75000,
-        enterprise200: 200000,
+        enterprise30: 20000,
+        enterprise75: 45000,
+        enterprise200: 100000,
       };
 
       const isBusiness = planTier.startsWith("enterprise") || planTier === "cyber15";

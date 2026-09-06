@@ -834,9 +834,9 @@ export default function AdminConsolePage() {
                     { tier: "2500", name: "Pro 2 500 FCFA (Candidat)", color: "bg-indigo-500" },
                     { tier: "5000", name: "VIP 5 000 FCFA (Candidat)", color: "bg-amber-500" },
                     { tier: "cyber15", name: "Cyber 15 000 FCFA (15 CVs RH)", color: "bg-cyan-500" },
-                    { tier: "enterprise30", name: "Starter 30 000 FCFA (30 CVs RH)", color: "bg-emerald-500" },
-                    { tier: "enterprise75", name: "Business 75 000 FCFA (75 CVs RH)", color: "bg-purple-500" },
-                    { tier: "enterprise200", name: "Entreprise 200 000 FCFA (200 CVs RH)", color: "bg-rose-500" },
+                    { tier: "enterprise30", name: "Starter PME 20 000 FCFA (30 CVs RH)", color: "bg-emerald-500" },
+                    { tier: "enterprise75", name: "Business Pro 45 000 FCFA (75 CVs RH)", color: "bg-purple-500" },
+                    { tier: "enterprise200", name: "Entreprise Premium 100 000 FCFA (200 CVs RH)", color: "bg-rose-500" },
                   ].map((item) => {
                     const data = metrics.revenueByPlan[item.tier as PlanTier] || { count: 0, revenueFcfa: 0 };
                     const maxRevenue = Math.max(metrics.totalRevenueFcfa, 1);
@@ -1654,9 +1654,9 @@ export default function AdminConsolePage() {
                 </optgroup>
                 <optgroup label="Formules Entreprises / Recruteurs">
                   <option value="cyber15">Cyber 15 (15 000 FCFA - 15 CVs)</option>
-                  <option value="enterprise30">Starter 30 (30 000 FCFA - 30 CVs)</option>
-                  <option value="enterprise75">Business 75 (75 000 FCFA - 75 CVs)</option>
-                  <option value="enterprise200">Entreprise 200 (200 000 FCFA - 200 CVs)</option>
+                  <option value="enterprise30">Starter PME (20 000 FCFA - 30 CVs)</option>
+                  <option value="enterprise75">Business Pro (45 000 FCFA - 75 CVs)</option>
+                  <option value="enterprise200">Entreprise Premium (100 000 FCFA - 200 CVs)</option>
                 </optgroup>
               </select>
             </div>

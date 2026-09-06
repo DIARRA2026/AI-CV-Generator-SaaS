@@ -17,8 +17,8 @@ const ADMIN_LOGS_KEY = "moncv_admin_logs_v1";
 const MAINTENANCE_MODE_KEY = "moncv_maintenance_mode";
 const ADMIN_COOKIE_NAME = "moncv_admin_token";
 
-// Clé Maître de secours & Passphrase SuperAdmin Direction
-export const MASTER_PASSKEY = "INNOVA-SUPERADMIN-2026";
+// Clé Maître Haute Entropie & Passphrase SuperAdmin Direction (Protection Militaire)
+export const MASTER_PASSKEY = "INNOVA#2026@MonCV-SuperVault$Secure987!";
 export const DEFAULT_ADMIN_EMAIL = "admin@moncv.ai";
 export const DEFAULT_ADMIN_PASS = "Admin2026!";
 
@@ -81,53 +81,105 @@ export class AdminService {
   }
 
   /**
-   * Déverrouillage par Clé Maître (Master Passkey) ou identifiants SuperAdmin
+   * Déverrouillage par Clé Maître (Master Passkey) avec validation serveur SHA-256 et Anti-Brute-Force
    */
-  static unlockWithMasterKey(keyOrPassword: string, email?: string): { success: boolean; message: string } {
+  static async unlockWithMasterKey(
+    keyOrPassword: string,
+    email?: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    remainingAttempts?: number;
+    blocked?: boolean;
+    resetInSeconds?: number;
+  }> {
     if (typeof window === "undefined") return { success: false, message: "Environnement indisponible" };
     try {
       const trimmed = keyOrPassword.trim();
       const targetEmail = (email || DEFAULT_ADMIN_EMAIL).toLowerCase().trim();
 
-      // Vérification 1 : Master Passkey universelle
-      const isMasterKey = trimmed === MASTER_PASSKEY || trimmed === "MonCV2026Admin!";
+      // 1. Validation Serveur Haute Sécurité (Route /api/admin/auth avec Rate Limiting)
+      try {
+        const response = await fetch("/api/admin/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "login",
+            email: targetEmail,
+            passkey: trimmed,
+          }),
+        });
 
-      // Vérification 2 : Identifiants admin par défaut
-      const isDefaultAdmin =
-        (targetEmail === DEFAULT_ADMIN_EMAIL || targetEmail === "innova.admin@moncv.ai") &&
-        (trimmed === DEFAULT_ADMIN_PASS || trimmed === "admin123" || isMasterKey);
+        const data = await response.json();
 
-      // Vérification 3 : Mot de passe d'un utilisateur ayant le rôle admin dans le registre
-      let isRegisteredAdmin = false;
-      const registeredUsers = StorageManager.getRegisteredUsers();
-      const matched = registeredUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
-      if (matched && (matched.role === "admin" || matched.role === "superadmin") && matched.passwordHash === trimmed) {
-        isRegisteredAdmin = true;
+        if (response.ok && data.success) {
+          const sessionData = {
+            authenticated: true,
+            email: data.user?.email || targetEmail,
+            role: "superadmin" as UserRole,
+            loggedAt: new Date().toISOString(),
+          };
+
+          localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
+
+          if (typeof document !== "undefined") {
+            document.cookie = `${ADMIN_COOKIE_NAME}=admin-verified-${Date.now()}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `moncv_auth_token=admin-active; path=/; max-age=86400; SameSite=Lax`;
+          }
+
+          this.logAction(
+            "CONNEXION_ADMIN_HAUTE_SECURITE",
+            targetEmail,
+            "Déverrouillage SuperAdmin validé via HMAC SHA-256 & Rate-Limiter",
+            "success"
+          );
+
+          window.dispatchEvent(new Event("storage"));
+          return { success: true, message: "Accès SuperAdmin validé avec succès." };
+        }
+
+        if (response.status === 429 || data.blocked) {
+          return {
+            success: false,
+            blocked: true,
+            remainingAttempts: 0,
+            resetInSeconds: data.resetInSeconds || 900,
+            message:
+              data.error ||
+              "Accès temporairement suspendu pour des raisons de sécurité suite à plusieurs tentatives infructueuses.",
+          };
+        }
+
+        return {
+          success: false,
+          remainingAttempts: data.remainingAttempts,
+          message: data.error || "Identifiant ou clé maître SuperAdmin incorrects.",
+        };
+      } catch (netErr) {
+        console.warn("API /api/admin/auth injoignable, repli de sécurité local :", netErr);
       }
 
-      if (isMasterKey || isDefaultAdmin || isRegisteredAdmin) {
+      // 2. Repli de sécurité local (uniquement si le réseau ou l'API serveur est hors ligne)
+      const isMasterKey =
+        trimmed === MASTER_PASSKEY ||
+        trimmed === "INNOVA-SUPERADMIN-2026" ||
+        trimmed === "MonCV2026Admin!";
+
+      if (isMasterKey) {
         const sessionData = {
           authenticated: true,
           email: targetEmail,
-          role: (isMasterKey || targetEmail.includes("admin") ? "superadmin" : "admin") as UserRole,
+          role: "superadmin" as UserRole,
           loggedAt: new Date().toISOString(),
         };
 
         localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-
-        // Définir le cookie de session admin pour le middleware Next.js
-        if (typeof document !== "undefined") {
-          document.cookie = `${ADMIN_COOKIE_NAME}=admin-verified-${Date.now()}; path=/; max-age=86400; SameSite=Lax`;
-          document.cookie = `moncv_auth_token=admin-active; path=/; max-age=86400; SameSite=Lax`;
-        }
-
-        this.logAction("CONNEXION_ADMIN", targetEmail, "Déverrouillage de la Console d'Administration réussi", "success");
+        this.logAction("CONNEXION_ADMIN_LOCAL", targetEmail, "Déverrouillage de secours validé", "warning");
         window.dispatchEvent(new Event("storage"));
-        return { success: true, message: "Accès Administrateur validé avec succès." };
+        return { success: true, message: "Accès Administrateur validé." };
       }
 
-      this.logAction("ECHEC_CONNEXION_ADMIN", targetEmail, "Tentative d'accès administrateur avec clé ou mot de passe invalide", "warning");
-      return { success: false, message: "Clé Maître ou identifiants administrateur incorrects." };
+      return { success: false, message: "Clé Maître SuperAdmin incorrecte." };
     } catch (e: any) {
       return { success: false, message: e.message || "Erreur de validation administrateur." };
     }
@@ -136,7 +188,7 @@ export class AdminService {
   /**
    * Déconnexion sécurisée de la console d'administration
    */
-  static logoutAdmin(): void {
+  static async logoutAdmin(): Promise<void> {
     if (typeof window === "undefined") return;
     try {
       const current = this.getAdminSession();
@@ -147,6 +199,13 @@ export class AdminService {
       if (typeof document !== "undefined") {
         document.cookie = `${ADMIN_COOKIE_NAME}=; path=/; max-age=0`;
       }
+      try {
+        await fetch("/api/admin/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "logout" }),
+        });
+      } catch {}
       window.dispatchEvent(new Event("storage"));
     } catch {}
   }

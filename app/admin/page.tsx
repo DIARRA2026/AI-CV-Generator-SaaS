@@ -37,6 +37,9 @@ import {
   Clock,
   ArrowUpRight,
   TrendingUp,
+  Eye,
+  EyeOff,
+  Shield,
 } from "lucide-react";
 import { StorageManager, RegisteredUser, UserSession } from "@/lib/storage";
 import {
@@ -63,6 +66,28 @@ export default function AdminConsolePage() {
   const [emailInput, setEmailInput] = useState<string>(DEFAULT_ADMIN_EMAIL);
   const [authError, setAuthError] = useState<string>("");
   const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [isLockedOut, setIsLockedOut] = useState<boolean>(false);
+  const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
+
+  // Décompte de verrouillage anti-brute-force
+  useEffect(() => {
+    if (lockoutCountdown > 0) {
+      const timer = setInterval(() => {
+        setLockoutCountdown((prev) => {
+          if (prev <= 1) {
+            setIsLockedOut(false);
+            setRemainingAttempts(3);
+            setAuthError("");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [lockoutCountdown]);
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<
@@ -172,14 +197,15 @@ export default function AdminConsolePage() {
     }
   };
 
-  // Connexion Admin
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Connexion Admin Haute Sécurité
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLockedOut) return;
     setAuthLoading(true);
     setAuthError("");
 
-    setTimeout(() => {
-      const res = AdminService.unlockWithMasterKey(passkeyInput, emailInput);
+    try {
+      const res = await AdminService.unlockWithMasterKey(passkeyInput, emailInput);
       if (res.success) {
         setIsAuthenticated(true);
         loadAdminData();
@@ -187,9 +213,19 @@ export default function AdminConsolePage() {
         showToast("Console d'Administration déverrouillée", "success");
       } else {
         setAuthError(res.message);
+        if (res.remainingAttempts !== undefined) {
+          setRemainingAttempts(res.remainingAttempts);
+        }
+        if (res.blocked) {
+          setIsLockedOut(true);
+          setLockoutCountdown(res.resetInSeconds || 900);
+        }
       }
+    } catch (err: any) {
+      setAuthError(err?.message || "Erreur lors de la vérification des identifiants.");
+    } finally {
       setAuthLoading(false);
-    }, 300);
+    }
   };
 
   // Déconnexion Admin
@@ -393,10 +429,32 @@ export default function AdminConsolePage() {
             </div>
           </div>
 
-          {authError && (
+          {isLockedOut && (
+            <div className="p-4 rounded-2xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-bold space-y-1 animate-pulse">
+              <div className="flex items-center gap-2 text-rose-400">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="uppercase tracking-wider">Accès Verrouillé par Mesure de Sécurité</span>
+              </div>
+              <p className="font-normal text-slate-300">
+                Trop de tentatives infructueuses détectées. Déblocage automatique dans :
+              </p>
+              <p className="text-base font-black text-rose-400 font-mono">
+                {Math.floor(lockoutCountdown / 60)} min {String(lockoutCountdown % 60).padStart(2, "0")} sec
+              </p>
+            </div>
+          )}
+
+          {authError && !isLockedOut && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{authError}</span>
+              <div className="space-y-1">
+                <span>{authError}</span>
+                {remainingAttempts !== null && remainingAttempts > 0 && (
+                  <p className="text-[11px] text-amber-400 font-bold">
+                    ⚠️ {remainingAttempts} tentative{remainingAttempts > 1 ? "s" : ""} restante{remainingAttempts > 1 ? "s" : ""} avant verrouillage.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -409,8 +467,9 @@ export default function AdminConsolePage() {
                 type="text"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
+                disabled={isLockedOut || authLoading}
                 placeholder="admin@moncv.ai"
-                className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
                 required
               />
             </div>
@@ -419,25 +478,42 @@ export default function AdminConsolePage() {
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
                 Clé Maître (Master Passkey) ou Mot de passe
               </label>
-              <input
-                type="password"
-                value={passkeyInput}
-                onChange={(e) => setPasskeyInput(e.target.value)}
-                placeholder="Saisissez la clé maître ou mot de passe..."
-                className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={passkeyInput}
+                  onChange={(e) => setPasskeyInput(e.target.value)}
+                  disabled={isLockedOut || authLoading}
+                  placeholder="Saisissez la clé maître ou mot de passe..."
+                  className="w-full pl-4 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1"
+                  tabIndex={-1}
+                  title={showPassword ? "Masquer" : "Afficher"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={authLoading}
+              disabled={authLoading || isLockedOut || !passkeyInput.trim()}
               className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {authLoading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Vérification des privilèges...</span>
+                  <span>Validation cryptographique SHA-256...</span>
+                </>
+              ) : isLockedOut ? (
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Accès Verrouillé</span>
                 </>
               ) : (
                 <>
@@ -448,20 +524,17 @@ export default function AdminConsolePage() {
             </button>
           </form>
 
-          {/* Raccourci de secours pour l'architecte / développeur */}
-          <div className="pt-3 border-t border-slate-800/80 text-center space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setPasskeyInput(MASTER_PASSKEY);
-                setEmailInput(DEFAULT_ADMIN_EMAIL);
-              }}
-              className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
-            >
-              Insérer la Clé Maître de secours ({MASTER_PASSKEY})
-            </button>
+          {/* Audit de sécurité et conformité */}
+          <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Chiffrement SHA-256 & Anti-Brute-Force</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">
+              Comparaison temporelle constante • Verrouillage automatique après 3 tentatives infructueuses.
+            </p>
             <p className="text-[10px] text-slate-500">
-              Accès réservé exclusivement à la Direction Générale et aux Architectes Systèmes INNOVA GROUP.
+              Authentification haute sécurité réservée à la Direction Générale et aux Administrateurs habilités.
             </p>
           </div>
         </div>

@@ -14,9 +14,10 @@ import { PlanTier } from "@/lib/types";
 interface NavbarProps {
   onOpenPayment?: (plan?: PlanTier) => void;
   onOpenAuth?: () => void;
+  isEnterprisePage?: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth, isEnterprisePage = false }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [targetRedirect, setTargetRedirect] = useState<string>("/dashboard");
@@ -98,15 +99,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
       }`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
           {/* Logo - Toutes les écritures alignées sur une seule ligne */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 btn-press shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/25 shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform duration-300">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[15px] sm:text-base font-black tracking-tight text-slate-900 leading-none whitespace-nowrap">
-                MonCV<span className="text-blue-600">.ai</span>
+            <div className="flex items-center gap-2">
+              <span className="font-black text-lg tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-900 bg-clip-text text-transparent">
+                MonCV.ai
               </span>
-              <span className="hidden min-[380px]:inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[9px] sm:text-[9.5px] font-bold text-blue-600 border border-blue-100/80 whitespace-nowrap leading-none">
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[9.5px] font-bold text-blue-700 border border-blue-100/80 leading-none">
                 ATS & IA
               </span>
             </div>
@@ -123,39 +124,46 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
               <span>Mes CVs</span>
             </button>
 
-            <button
-              type="button"
-              onClick={handleNewCvClick}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer btn-press"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Nouveau CV</span>
-            </button>
+            {/* Ces 4 boutons sont masqués sur la page entreprise à la demande de l'utilisateur */}
+            {!isEnterprisePage && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleNewCvClick}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer btn-press"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Nouveau CV</span>
+                </button>
 
-            <Link
-              href="/portfolio"
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 rounded-xl transition-all cursor-pointer btn-press border border-indigo-100"
-            >
-              <Globe className="w-4 h-4 text-indigo-600" />
-              <span>Portfolio Web</span>
-              <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
-                VIP
-              </span>
-            </Link>
+                <Link
+                  href="/portfolio"
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 rounded-xl transition-all cursor-pointer btn-press border border-indigo-100"
+                >
+                  <Globe className="w-4 h-4 text-indigo-600" />
+                  <span>Portfolio Web</span>
+                  <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
+                    VIP
+                  </span>
+                </Link>
 
-            <Link
-              href="/#business"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
-            >
-              <Building className="w-3.5 h-3.5 text-amber-600" />
-              <span>Entreprises</span>
-              <span className="px-1.5 py-0.2 rounded-md bg-amber-600 text-white text-[9px] font-black uppercase">
-                B2B
-              </span>
-            </Link>
+                {(!currentUser || currentUser.accountType !== "business") && (
+                  <Link
+                    href="/#business"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
+                  >
+                    <Building className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Entreprises</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-amber-600 text-white text-[9px] font-black uppercase">
+                      B2B
+                    </span>
+                  </Link>
+                )}
 
-            {/* Sélecteur de Changement de Profil Client */}
-            <ProfileSwitcher />
+                {/* Sélecteur de Changement de Profil Client */}
+                <ProfileSwitcher />
+              </>
+            )}
 
             {!currentUser ? (
               <button
@@ -473,21 +481,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
 
             {/* Liens de Navigation Mobile */}
             <div className="p-4 space-y-2 flex-1">
-              {/* Sélecteur de profil mobile */}
-              <div className="pb-1">
-                <ProfileSwitcher className="w-full" />
-              </div>
+              {!isEnterprisePage && (
+                <>
+                  {/* Sélecteur de profil mobile */}
+                  <div className="pb-1">
+                    <ProfileSwitcher className="w-full" />
+                  </div>
 
-              <button
-                onClick={(e) => {
-                  setIsMobileDrawerOpen(false);
-                  handleNewCvClick(e);
-                }}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs cursor-pointer btn-press"
-              >
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span>Créer un Nouveau CV</span>
-              </button>
+                  <button
+                    onClick={(e) => {
+                      setIsMobileDrawerOpen(false);
+                      handleNewCvClick(e);
+                    }}
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs cursor-pointer btn-press"
+                  >
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span>Créer un Nouveau CV</span>
+                  </button>
+                </>
+              )}
 
               <button
                 onClick={(e) => {
@@ -500,33 +512,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                 <span>Mes CVs & Candidatures</span>
               </button>
 
-              <Link
-                href="/portfolio"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-purple-50/70 text-purple-900 font-bold text-xs cursor-pointer btn-press border border-purple-200/60"
-              >
-                <div className="flex items-center gap-3">
-                  <Globe className="w-4 h-4 text-purple-600" />
-                  <span>Portfolio Web Interactif</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
-                  VIP
-                </span>
-              </Link>
+              {!isEnterprisePage && (
+                <>
+                  <Link
+                    href="/portfolio"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-purple-50/70 text-purple-900 font-bold text-xs cursor-pointer btn-press border border-purple-200/60"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-4 h-4 text-purple-600" />
+                      <span>Portfolio Web Interactif</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
+                      VIP
+                    </span>
+                  </Link>
 
-              <Link
-                href="/#business"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50/70 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200/60"
-              >
-                <div className="flex items-center gap-3">
-                  <Building className="w-4 h-4 text-amber-600" />
-                  <span>Offres Entreprises & RH</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[9.5px] font-black uppercase">
-                  B2B
-                </span>
-              </Link>
+                  {(!currentUser || currentUser.accountType !== "business") && (
+                    <Link
+                      href="/#business"
+                      onClick={() => setIsMobileDrawerOpen(false)}
+                      className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50/70 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200/60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Building className="w-4 h-4 text-amber-600" />
+                        <span>Offres Entreprises & RH</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[9.5px] font-black uppercase">
+                        B2B
+                      </span>
+                    </Link>
+                  )}
+                </>
+              )}
 
               <Link
                 href="/#modeles"

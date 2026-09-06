@@ -285,6 +285,7 @@ export default function DashboardPage() {
       <Navbar
         onOpenPayment={() => setIsPaymentOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        isEnterprisePage={isBusinessAccount && activeTab === "business"}
       />
 
       {/* Contenu principal selon statut de connexion */}

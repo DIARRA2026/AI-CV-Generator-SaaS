@@ -1,5 +1,5 @@
 import { initialResumeData } from "./initialData";
-import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo } from "./types";
+import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo, UserRole } from "./types";
 
 const STORAGE_KEY = "moncv_resumes_v1";
 const ACTIVE_ID_KEY = "moncv_active_id";
@@ -10,6 +10,8 @@ const PENDING_SUB_KEY = "moncv_pending_subscription_v1";
 export interface RegisteredUser {
   id: string;
   accountType?: AccountType;
+  role?: UserRole;
+  isSuspended?: boolean;
   firstName: string;
   lastName: string;
   email: string;
@@ -26,6 +28,8 @@ export interface RegisteredUser {
 
 export interface UserSession {
   accountType?: AccountType;
+  role?: UserRole;
+  isSuspended?: boolean;
   firstName?: string;
   lastName?: string;
   email: string;
@@ -301,6 +305,13 @@ export class StorageManager {
         };
       }
 
+      if (user.isSuspended) {
+        return {
+          success: false,
+          message: "Ce compte a été suspendu par un administrateur. Veuillez contacter le support MonCV.ai.",
+        };
+      }
+
       if (user.passwordHash !== password) {
         return {
           success: false,
@@ -337,6 +348,7 @@ export class StorageManager {
       // Connexion réussie : activer la session
       this.setUser({
         accountType: restoredAccountType,
+        role: user.role || (normalizedEmail === "admin@moncv.ai" || normalizedEmail === "innova.admin@moncv.ai" ? "superadmin" : undefined),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -511,6 +523,73 @@ export class StorageManager {
       }
     } catch (e) {
       console.error("Erreur suppression compte", e);
+    }
+  }
+
+  // === ADMINISTRATION & SUPERVISION ===
+  static isAdmin(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      const user = this.getUser();
+      if (user?.role === "admin" || user?.role === "superadmin") return true;
+      const email = user?.email?.toLowerCase().trim();
+      if (email === "admin@moncv.ai" || email === "innova.admin@moncv.ai") return true;
+      const adminSession = localStorage.getItem("moncv_admin_session");
+      return Boolean(adminSession);
+    } catch {
+      return false;
+    }
+  }
+
+  static updateRegisteredUser(email: string, updates: Partial<RegisteredUser>): boolean {
+    if (typeof window === "undefined" || !email) return false;
+    try {
+      const users = this.getRegisteredUsers();
+      const normEmail = email.toLowerCase().trim();
+      const idx = users.findIndex((u) => u.email.toLowerCase().trim() === normEmail);
+      if (idx === -1) return false;
+
+      users[idx] = { ...users[idx], ...updates };
+      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+
+      // Si l'utilisateur modifié est l'utilisateur connecté, synchroniser sa session
+      const current = this.getUser();
+      if (current && current.email.toLowerCase().trim() === normEmail) {
+        this.setUser({
+          ...current,
+          ...updates,
+          subscription: updates.subscription || current.subscription,
+        });
+      }
+      window.dispatchEvent(new Event("storage"));
+      return true;
+    } catch (e) {
+      console.error("Erreur updateRegisteredUser", e);
+      return false;
+    }
+  }
+
+  static deleteRegisteredUser(email: string): boolean {
+    if (typeof window === "undefined" || !email) return false;
+    try {
+      const users = this.getRegisteredUsers();
+      const normEmail = email.toLowerCase().trim();
+      const filtered = users.filter((u) => u.email.toLowerCase().trim() !== normEmail);
+      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(filtered));
+
+      localStorage.removeItem(this.getSubscriptionKey(normEmail));
+      localStorage.removeItem(`moncv_resumes_${normEmail}`);
+      localStorage.removeItem(`moncv_active_id_${normEmail}`);
+
+      const current = this.getUser();
+      if (current && current.email.toLowerCase().trim() === normEmail) {
+        this.logout();
+      }
+      window.dispatchEvent(new Event("storage"));
+      return true;
+    } catch (e) {
+      console.error("Erreur deleteRegisteredUser", e);
+      return false;
     }
   }
 

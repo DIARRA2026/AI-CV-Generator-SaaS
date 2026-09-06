@@ -177,3 +177,52 @@ export interface ATSAnalysisResult {
     reason: string;
   }[];
 }
+
+// === ADMINISTRATION & SUPERVISION GLOBALE ===
+
+export type UserRole = "candidate" | "business" | "admin" | "superadmin";
+
+export interface AdminAuditLog {
+  id: string;
+  timestamp: string;
+  adminEmail: string;
+  action: string;
+  targetUserEmail?: string;
+  details?: string;
+  severity?: "info" | "warning" | "error" | "success";
+}
+
+export interface SystemDiagnosticCheck {
+  id: string;
+  title: string;
+  category: "subscriptions" | "resumes" | "quotas" | "cloud" | "ai" | "storage";
+  status: "healthy" | "warning" | "critical" | "pending";
+  message: string;
+  lastRunAt?: string;
+  affectedCount?: number;
+  autoFixAvailable?: boolean;
+  fixActionId?: string;
+}
+
+export interface SystemMetricSummary {
+  totalUsers: number;
+  totalCandidates: number;
+  totalBusinesses: number;
+  totalAdmins: number;
+  totalResumes: number;
+  paidUsersCount: number;
+  conversionRate: number; // en %
+  totalRevenueFcfa: number;
+  revenueByPlan: Record<PlanTier, { count: number; revenueFcfa: number }>;
+  activeSubscriptionsCount: number;
+  averageAtsScore: number;
+}
+
+export interface SystemHealthStatus {
+  serverStatus: "operational" | "degraded" | "down";
+  cloudDbStatus: "connected" | "disconnected" | "fallback";
+  storageStatus: "healthy" | "warning" | "full";
+  storageUsedKb: number;
+  maintenanceMode: boolean;
+  lastCheckedAt: string;
+}

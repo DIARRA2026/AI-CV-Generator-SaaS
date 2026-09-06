@@ -233,6 +233,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ) : null}
 
+            {StorageManager.isAdmin() && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/90 rounded-xl transition-all cursor-pointer shadow-xs btn-press"
+                title="Console d'Administration Globale"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                <span>Console Admin</span>
+                <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
+                  Admin
+                </span>
+              </Link>
+            )}
+
             {currentUser ? (
               <div className="relative pl-1" id="user-profile-menu">
                 <button
@@ -286,6 +300,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {currentUser.business?.companyName ? `${currentUser.business.companyName} • ` : ""}{currentUser.email}
                       </p>
                     </div>
+
+                    {StorageManager.isAdmin() && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-purple-800 bg-purple-50/70 hover:bg-purple-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-purple-200/60"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
+                        <span>Console Super Admin</span>
+                        <span className="ml-auto text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-600 text-white">
+                          Admin
+                        </span>
+                      </Link>
+                    )}
 
                     {currentUser.accountType === "business" && (
                       <Link
@@ -643,6 +671,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                       VIP
                     </span>
                   </Link>
+
+                  {StorageManager.isAdmin() && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMobileDrawerOpen(false)}
+                      className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-purple-900 text-purple-100 font-bold text-xs cursor-pointer btn-press border border-purple-700 shadow-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-4 h-4 text-purple-300" />
+                        <span>Console Super Admin</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500 text-white text-[9px] font-black uppercase">
+                        Admin
+                      </span>
+                    </Link>
+                  )}
 
                   {(currentUser?.accountType === "business" || StorageManager.isBusinessAccount()) && (
                     <Link

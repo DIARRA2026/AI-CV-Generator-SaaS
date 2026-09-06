@@ -6,9 +6,10 @@ import type { NextRequest } from "next/server";
  * Développé par INNOVA GROUP
  * 
  * Rôles :
- * 1. Protection stricte des routes privées (/dashboard, /create)
- * 2. Vérification de la présence des jetons d'authentification (Supabase / Session)
- * 3. Injection des en-têtes HTTP de sécurité (Anti-Clickjacking, Anti-MIME, CSP)
+ * 1. Protection stricte des routes privées (/dashboard, /create, /portfolio/edit)
+ * 2. Contrôle d'accès et sécurité de la console Super Admin (/admin)
+ * 3. Vérification de la présence des jetons d'authentification (Supabase / Session / Admin)
+ * 4. Injection des en-têtes HTTP de sécurité OWASP (Anti-Clickjacking, Anti-MIME, CSP)
  */
 
 // Routes nécessitant une authentification obligatoire

@@ -12,6 +12,7 @@ import { SupabaseService } from "@/lib/supabaseService";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
 import { AccountType, PlanTier } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 export interface PlanOption {
   id: PlanTier;
@@ -109,6 +110,7 @@ export const AuthModal: React.FC<Props> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const { t, dict, isRTL } = useTranslation();
 
   // Form fields (Candidat & Entreprise)
   const [lastName, setLastName] = useState("");
@@ -605,16 +607,16 @@ export const AuthModal: React.FC<Props> = ({
 
           <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
             {mode === "login"
-              ? "Connexion à votre espace candidat"
+              ? dict.auth.loginTitle
               : mode === "register"
-              ? "Créer votre compte candidat"
+              ? dict.auth.registerTitle
               : "Modifier votre mot de passe"}
           </h2>
           <p className="text-slate-500 text-[10.5px] mt-0.5 max-w-xs mx-auto">
             {mode === "login"
-              ? "Retrouvez vos CVs ATS et votre Portfolio Web VIP"
+              ? dict.auth.loginSubtitle
               : mode === "register"
-              ? "Générez des CVs certifiés ATS et décrochez des entretiens"
+              ? dict.auth.registerSubtitle
               : "Indiquez l'email de votre compte pour redéfinir un mot de passe"}
           </p>
         </div>
@@ -632,7 +634,7 @@ export const AuthModal: React.FC<Props> = ({
               }`}
             >
               <UserPlus className="w-3 h-3" />
-              <span>S'inscrire</span>
+              <span>{dict.auth.registerTab}</span>
             </button>
 
             <button
@@ -645,7 +647,7 @@ export const AuthModal: React.FC<Props> = ({
               }`}
             >
               <LogIn className="w-3 h-3" />
-              <span>Se connecter</span>
+              <span>{dict.auth.loginTab}</span>
             </button>
           </div>
         ) : (
@@ -794,7 +796,7 @@ export const AuthModal: React.FC<Props> = ({
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
-                    <span>Candidat Individuel</span>
+                    <span>{dict.auth.candidateRole}</span>
                   </button>
 
                   <button
@@ -813,7 +815,7 @@ export const AuthModal: React.FC<Props> = ({
                     }`}
                   >
                     <Building className="w-3.5 h-3.5" />
-                    <span>Entreprise / Cabinet RH</span>
+                    <span>{dict.auth.enterpriseRole}</span>
                     <span className="text-[9px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full font-black uppercase">
                       Pro
                     </span>
@@ -825,7 +827,7 @@ export const AuthModal: React.FC<Props> = ({
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-black text-slate-900 flex items-center gap-1.5">
                       <Crown className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Choisissez votre formule d'accès :</span>
+                      <span>{accountType === "business" ? dict.auth.chooseEnterprisePlan : dict.auth.chooseCandidatePlan}</span>
                     </label>
                     <span className="text-[10px] text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
                       {accountType === "business" ? "Tarif B2B • Vivier RH" : "Tarifs Clairs en FCFA"}
@@ -1466,9 +1468,9 @@ export const AuthModal: React.FC<Props> = ({
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>
                       {mode === "login"
-                        ? "Vérification..."
+                        ? dict.auth.loggingIn
                         : mode === "register"
-                        ? "Création du compte..."
+                        ? dict.auth.registering
                         : "Mise à jour..."}
                     </span>
                   </>
@@ -1490,11 +1492,11 @@ export const AuthModal: React.FC<Props> = ({
                     )}
                     <span>
                       {mode === "login"
-                        ? "Se connecter"
+                        ? dict.auth.submitLogin
                         : mode === "register"
                         ? selectedPlan === "free"
-                          ? "Créer mon Compte Gratuit"
-                          : `Créer mon Compte & Activer (${currentPlan?.price || ""})`
+                          ? dict.auth.submitRegister
+                          : `${dict.auth.submitRegister} (${currentPlan?.price || ""})`
                         : "Valider le mot de passe"}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1511,13 +1513,13 @@ export const AuthModal: React.FC<Props> = ({
               {/* Lien bascule mode */}
               {mode !== "forgot" && (
                 <p className="text-center text-[11px] text-slate-500 pt-1">
-                  {mode === "register" ? "Vous avez déjà un compte ?" : "Pas encore de compte ?"}{" "}
+                  {mode === "register" ? dict.auth.hasAccount : dict.auth.noAccount}{" "}
                   <button
                     type="button"
                     onClick={() => switchMode(mode === "login" ? "register" : "login")}
                     className="text-blue-600 font-bold hover:underline cursor-pointer ml-1"
                   >
-                    {mode === "register" ? "Se connecter" : "Créer un compte"}
+                    {mode === "register" ? dict.auth.loginLink : dict.auth.createAccountLink}
                   </button>
                 </p>
               )}

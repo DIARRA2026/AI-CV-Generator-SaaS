@@ -9,6 +9,8 @@ import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
 import { PlanTier, AccountType, ResumeData } from "@/lib/types";
 import { StorageManager } from "@/lib/storage";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import {
   Sparkles,
   ArrowRight,
@@ -221,6 +223,7 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLandingExplicit, setIsLandingExplicit] = useState(false);
   const router = useRouter();
+  const { t, dict, isRTL } = useTranslation();
 
   // Séparation stricte Espace Client & Landing Page :
   // Dès qu'un client se connecte ou se reconnecte, son espace dédié prime immédiatement
@@ -384,7 +387,7 @@ export default function HomePage() {
               </span>
               <span className="text-slate-900 font-bold whitespace-nowrap">+18 450 CVs créés</span>
               <span className="text-slate-300">•</span>
-              <span className="text-blue-600 font-semibold whitespace-nowrap">Afrique & Monde</span>
+              <span className="text-blue-600 font-semibold whitespace-nowrap">{dict.hero.badge}</span>
               <span className="px-1.5 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] rounded-full font-bold uppercase tracking-wider shadow-xs shrink-0">
                 IA 2026
               </span>
@@ -392,13 +395,16 @@ export default function HomePage() {
 
             {/* Titre Principal Moderne, Ultra-Percutant & Stylé */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[46px] font-black text-slate-900 tracking-tight leading-[1.15] max-w-3xl mx-auto text-center px-1">
-              Décrochez <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-flow">3× Plus d'Entretiens</span>. <br className="hidden sm:inline" />
-              Votre CV d'Élite Reformaté par l'IA en 5 Minutes.
+              {dict.hero.titlePart1}{" "}
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-flow">
+                {dict.hero.titleHighlight}
+              </span>{" "}
+              {dict.hero.titlePart2}
             </h1>
 
             {/* Sous-titre Épuré, Puissant & Concret */}
             <p className="mt-4 text-xs sm:text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal text-center px-1">
-              <strong>85% des CV sont rejetés en silence par les robots ATS</strong> avant même qu'un recruteur ne les ouvre. MonCV.ai reformule automatiquement vos réalisations selon la <strong className="text-slate-900 font-bold">méthode STAR</strong>, verrouille une mise en page A4 chirurgicale et génère vos demandes d'emploi officielles prêtes à signer.
+              {dict.hero.subtitle}
             </p>
 
             {/* CTAs d'action Compacts & Animés */}
@@ -412,9 +418,9 @@ export default function HomePage() {
                 <span className="whitespace-nowrap font-black">
                   {isLoggedIn
                     ? isBusinessAccount
-                      ? "Accéder à mon Espace Vivier RH"
-                      : "Accéder à mes CVs & Candidatures"
-                    : "Créer mon CV Gagnant Gratuitement"}
+                      ? dict.nav.backToEnterprise
+                      : dict.nav.myCvs
+                    : dict.hero.ctaCreateCv}
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-1.5 transition-transform" />
               </button>
@@ -2205,22 +2211,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left text-[11px] text-slate-400">
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[11px] text-slate-400">
             <p className="leading-relaxed text-center sm:text-left">
-              © 2026 MonCV.ai — Une solution logicielle conçue et éditée par <strong className="text-slate-600 font-semibold">INNOVA GROUP</strong>. Tous droits réservés.
+              © 2026 MonCV.ai — Une solution logicielle conçue et éditée par <strong className="text-slate-600 font-semibold">{dict.footer.companyName}</strong>. {dict.footer.rights}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-medium text-slate-500 text-center">
-              <span>Abidjan 🇨🇮</span>
-              <span>•</span>
-              <span>Dakar 🇸🇳</span>
-              <span>•</span>
-              <span>Douala 🇨🇲</span>
-              <span>•</span>
-              <span>Ouagadougou 🇧🇫</span>
-              <span>•</span>
-              <span>Bamako 🇲🇱</span>
-              <span>•</span>
-              <span>Paris 🇫🇷</span>
+
+            <div className="flex items-center gap-3">
+              <LanguageSelector variant="footer" />
+              <div className="hidden md:flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-medium text-slate-500 text-center">
+                <span>Abidjan 🇨🇮</span>
+                <span>•</span>
+                <span>Dakar 🇸🇳</span>
+                <span>•</span>
+                <span>Douala 🇨🇲</span>
+                <span>•</span>
+                <span>Paris 🇫🇷</span>
+              </div>
             </div>
           </div>
         </div>

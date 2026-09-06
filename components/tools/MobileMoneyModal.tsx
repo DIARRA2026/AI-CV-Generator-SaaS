@@ -7,6 +7,7 @@ import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, Che
 import { StorageManager } from "@/lib/storage";
 import { registerPaymentSuccess } from "@/lib/license-manager";
 import { PlanTier } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 // ─── Configuration unique de toutes les offres ───────────────────────────────
 type PlanCategory = "particulier" | "entreprise";
@@ -208,6 +209,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [planTab, setPlanTab] = useState<PlanCategory>("particulier");
+  const { t, dict, isRTL } = useTranslation();
 
   useEffect(() => {
     if (isOpen && defaultPlan) {
@@ -309,7 +311,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 }`}
               >
                 <FileText className={`w-4 h-4 ${planTab === "particulier" ? "text-blue-600" : "text-slate-500"}`} />
-                <span>Particulier & Candidat</span>
+                <span>{dict.pricing.candidatesTab}</span>
                 <span className="hidden sm:inline text-[10px] font-semibold text-slate-400">
                   (1 à 4 CV)
                 </span>
@@ -325,7 +327,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 }`}
               >
                 <Building className={`w-4 h-4 ${planTab === "entreprise" ? "text-indigo-600" : "text-slate-500"}`} />
-                <span>Entreprise & Recruteur</span>
+                <span>{dict.pricing.enterprisesTab}</span>
                 <span className="hidden sm:inline text-[10px] font-semibold text-slate-400">
                   (15 à 200 CV)
                 </span>

@@ -9,6 +9,8 @@ import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
 import { StorageManager, UserSession } from "@/lib/storage";
 import { PlanTier } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface NavbarProps {
   onOpenPayment?: (plan?: PlanTier) => void;
@@ -32,6 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
+  const { t, dict, isRTL } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -148,12 +151,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {StorageManager.isBusinessAccount() || currentUser?.accountType === "business" ? (
                   <>
                     <Building className="w-4 h-4 text-slate-950 shrink-0" />
-                    <span>← RETOUR DANS L'ESPACE ENTREPRISE</span>
+                    <span>{dict.nav.backToEnterprise}</span>
                   </>
                 ) : (
                   <>
                     <LayoutDashboard className="w-4 h-4 text-blue-600" />
-                    <span>← Mes CVs</span>
+                    <span>{dict.nav.backToDashboard}</span>
                   </>
                 )}
               </button>
@@ -164,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-all cursor-pointer btn-press"
               >
                 <Building className="w-4 h-4 text-amber-600" />
-                <span>Vivier Candidats</span>
+                <span>{dict.nav.candidatePool}</span>
               </button>
             ) : (
               <>
@@ -174,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
                 >
                   <LayoutDashboard className="w-4 h-4 text-slate-500" />
-                  <span>Mes CVs</span>
+                  <span>{dict.nav.myCvs}</span>
                 </button>
 
                 {currentUser && (
@@ -184,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer btn-press"
                   >
                     <FileText className="w-4 h-4" />
-                    <span>Nouveau CV</span>
+                    <span>{dict.nav.newCv}</span>
                   </button>
                 )}
 
@@ -193,9 +196,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 rounded-xl transition-all cursor-pointer btn-press border border-indigo-100"
                 >
                   <Globe className="w-4 h-4 text-indigo-600" />
-                  <span>Portfolio Web</span>
+                  <span>{dict.nav.portfolioWeb}</span>
                   <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
-                    VIP
+                    {dict.nav.vip}
                   </span>
                 </Link>
 
@@ -205,14 +208,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
                   >
                     <Building className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Entreprises</span>
+                    <span>{dict.nav.enterprise}</span>
                     <span className="px-1.5 py-0.2 rounded-md bg-amber-600 text-white text-[9px] font-black uppercase">
-                      B2B
+                      {dict.nav.b2b}
                     </span>
                   </Link>
                 )}
               </>
             )}
+
+            {/* Sélecteur de Langue Desktop */}
+            <LanguageSelector variant="navbar" />
 
             {!currentUser ? (
               <button
@@ -229,7 +235,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Se connecter ou créer un compte"
               >
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                <span>Se connecter ou Créer un compte</span>
+                <span>{dict.nav.loginRegister}</span>
               </button>
             ) : null}
 
@@ -240,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Console d'Administration Globale"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                <span>Console Admin</span>
+                <span>{dict.nav.adminConsole}</span>
                 <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
                   Admin
                 </span>
@@ -335,7 +341,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                     >
                       <Settings className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>Paramètres du compte</span>
+                      <span>{dict.nav.settings}</span>
                     </button>
 
                     <button
@@ -347,7 +353,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                     >
                       <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
-                      <span>Mes CVs & Candidatures</span>
+                      <span>{dict.nav.myCvs}</span>
                     </button>
 
                     {onOpenPayment && (
@@ -375,7 +381,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="w-full px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                     >
                       <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>Se déconnecter</span>
+                      <span>{dict.nav.logout}</span>
                     </button>
                   </div>
                 )}
@@ -591,7 +597,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="py-2 px-3 text-center text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl cursor-pointer btn-press"
                     >
-                      Connexion
+                      {dict.auth.loginTab}
                     </button>
                     <button
                       onClick={() => {
@@ -601,11 +607,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="py-2 px-3 text-center text-xs font-bold text-white bg-blue-600 rounded-xl cursor-pointer btn-press shadow-xs"
                     >
-                      S'inscrire
+                      {dict.auth.registerTab}
                     </button>
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Sélecteur de Langue Mobile */}
+            <div className="px-4 py-2 border-b border-slate-100 bg-white">
+              <LanguageSelector variant="mobile" />
             </div>
 
             {/* Liens de Navigation Mobile */}
@@ -619,7 +630,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs cursor-pointer btn-press border border-blue-200"
                 >
                   <LayoutDashboard className="w-4 h-4 text-blue-600" />
-                  <span>← Retour à Mes CVs</span>
+                  <span>{dict.nav.backToDashboard}</span>
                 </button>
               ) : isEnterprisePage ? (
                 <button
@@ -630,7 +641,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-xs cursor-pointer btn-press border border-amber-200"
                 >
                   <Building className="w-4 h-4 text-amber-600" />
-                  <span>Vivier RH &amp; Candidats</span>
+                  <span>{dict.nav.candidatePool}</span>
                 </button>
               ) : (
                 <>
@@ -642,7 +653,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
                   >
                     <LayoutDashboard className="w-4 h-4 text-slate-500" />
-                    <span>Mes CVs & Candidatures</span>
+                    <span>{dict.nav.myCvs}</span>
                   </button>
 
                   {currentUser && (
@@ -654,7 +665,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs cursor-pointer btn-press"
                     >
                       <FileText className="w-4 h-4 text-blue-600" />
-                      <span>Créer un Nouveau CV</span>
+                      <span>{dict.nav.newCv}</span>
                     </button>
                   )}
 
@@ -665,10 +676,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <Globe className="w-4 h-4 text-purple-600" />
-                      <span>Portfolio Web Interactif</span>
+                      <span>{dict.nav.portfolioWeb}</span>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
-                      VIP
+                      {dict.nav.vip}
                     </span>
                   </Link>
 
@@ -718,10 +729,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <Building className="w-4 h-4 text-amber-600" />
-                        <span>Offres Entreprises & RH</span>
+                        <span>{dict.nav.enterprise}</span>
                       </div>
                       <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[9.5px] font-black uppercase">
-                        B2B
+                        {dict.nav.b2b}
                       </span>
                     </Link>
                   )}
@@ -764,7 +775,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
                 >
                   <Settings className="w-4 h-4 text-slate-500" />
-                  <span>Paramètres du Compte</span>
+                  <span>{dict.nav.settings}</span>
                 </button>
               )}
 
@@ -800,7 +811,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer btn-press"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Se déconnecter</span>
+                  <span>{dict.nav.logout}</span>
                 </button>
               </div>
             )}

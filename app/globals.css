@@ -465,5 +465,31 @@ body {
   animation: gradient-flow 4s ease infinite;
 }
 
+/* ==========================================================================
+   Support de localisation & Mode RTL (Arabe)
+   ========================================================================== */
+[dir="rtl"] {
+  direction: rtl;
+}
 
+[dir="rtl"] .text-left {
+  text-align: right;
+}
 
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] input:not([type="email"]):not([type="tel"]):not([type="password"]),
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="password"],
+[dir="rtl"] .font-mono,
+[dir="rtl"] code {
+  direction: ltr;
+}

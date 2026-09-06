@@ -53,6 +53,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
+import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
 
 /**
  * CONFIGURATION DU THÈME DES CARTES (Format exact Inspiré du Mockup SaaS)
@@ -302,6 +303,72 @@ export default function PublicCandidateCVPage() {
       ? candidateProjects
       : candidateProjects.filter((cp) => cp.category === activeFilter);
 
+  // Génération dynamique et intelligente des offres professionnelles du client
+  const candidateRole = p.title || "Expert Professionnel";
+  const isDriverOrTransport = /conducteur|chauffeur|transport|logistique|permis/i.test(candidateRole);
+  const isTechOrIT = /développeur|ingénieur|tech|logiciel|fullstack|data|dev|it|web/i.test(candidateRole);
+  const hasExp = resumeData.experiences && resumeData.experiences.length > 0;
+
+  const clientOffers = [
+    {
+      title: isDriverOrTransport
+        ? `Recrutement CDI / CDD — ${p.title || "Conducteur Professionnel"}`
+        : isTechOrIT
+        ? `Recrutement CDI / CDD — ${p.title || "Ingénieur Tech"}`
+        : `Recrutement CDI / CDD — ${candidateRole}`,
+      categoryType: "POSTE PERMANENT",
+      badge: "★ DISPONIBLE IMMÉDIAT",
+      color: "blue",
+      icon: Briefcase,
+      step: "Profil certifié → Entretien direct → Prise de fonction",
+      subtitle: isDriverOrTransport
+        ? "Mise à disposition d'un professionnel expérimenté, ponctuel et respectueux des normes de sécurité routière"
+        : `Intégration d'un profil opérationnel ${hasExp ? "avec expérience éprouvée" : "de haut niveau"}`,
+      deliverables: isDriverOrTransport
+        ? ["Conduite sécurisée & défensive", "Maîtrise des itinéraires urbains & régionaux", "Respect rigoureux de la mécanique & de l'entretien", "Discrétion et ponctualité exemplaire"]
+        : ["Autonomie opérationnelle immédiate", "Adhésion aux objectifs stratégiques", "Reporting d'avancement régulier", "Respect strict des délais et standards"],
+      priceIndication: "Selon contrat & grille salariale",
+    },
+    {
+      title: isDriverOrTransport
+        ? "Missions Ponctuelles & Déplacements VIP"
+        : isTechOrIT
+        ? "Consulting & Mission Freelance"
+        : "Prestation Experte & Mission Ciblée",
+      categoryType: "PRESTATION SUR-MESURE",
+      badge: "★ FLEXIBLE & RÉACTIF",
+      color: "emerald",
+      icon: Zap,
+      step: "Cadrage du besoin → Planification → Exécution sans faille",
+      subtitle: isDriverOrTransport
+        ? "Transports de délégations, événements officiels ou remplacements logistiques d'urgence"
+        : "Intervention rapide et spécialisée sur vos chantiers prioritaires",
+      deliverables: isDriverOrTransport
+        ? ["Disponibilité soirs et week-ends sur demande", "Véhicule soigné et vérifications préventives", "Itinéraires optimisés anti-bouchons", "Accueil courtois de vos partenaires & clients"]
+        : ["Audit des besoins spécifiques", "Livrables clés en main", "Transfert de compétences", "Support opérationnel garanti"],
+      priceIndication: "Forfait journalier ou selon mission",
+    },
+    {
+      title: isDriverOrTransport
+        ? "Supervision & Coordination de Flotte"
+        : isTechOrIT
+        ? "Conception & Direction de Projet"
+        : "Coordination & Pilotage Opérationnel",
+      categoryType: "PILOTAGE & LEADERSHIP",
+      badge: "★ SÉCURITÉ & RÉSULTATS",
+      color: "purple",
+      icon: Award,
+      step: "Organisation → Suivi rigoureux → Contrôle qualité 100%",
+      subtitle: isDriverOrTransport
+        ? "Organisation logistique, suivi d'entretien et gestion d'itinéraires critiques"
+        : "Pilotage complet du projet de la formalisation à la livraison finale",
+      deliverables: isDriverOrTransport
+        ? ["Contrôle technique régulier et suivi carnet de bord", "Optimisation des consommations de carburant", "Coordination d'itinéraires et sécurité des biens", "Sens élevé de la responsabilité"]
+        : ["Cahier des charges & jalons agiles", "Contrôle qualité permanent", "Documentation complète", "Garantie de conformité"],
+      priceIndication: "Sur proposition ou accord direct",
+    },
+  ];
+
   const candidateFullName = `${p.firstName || "Candidat"} ${p.lastName || ""}`.trim();
   const cleanPhone = p.phone?.replace(/\s+/g, "") || "";
   const whatsappUrl = cleanPhone
@@ -436,18 +503,21 @@ export default function PublicCandidateCVPage() {
             </button>
 
 
+            {/* Sélecteur de Changement de Profil Client & Espaces */}
+            <ProfileSwitcher currentSlug={slug} isDark={isDark} />
+
             {/* Bouton Retour Accueil MonCV.ai */}
             <Link
-              href="/"
+              href="/?landing=true"
               className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 ${
                 isDark
                   ? "bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-xs"
               }`}
-              title="Retourner à l'accueil MonCV.ai"
+              title="Afficher la présentation complète MonCV.ai"
             >
               <Home className="w-3.5 h-3.5 text-blue-500 group-hover:-translate-x-0.5 transition-transform duration-300" />
-              <span className="hidden sm:inline whitespace-nowrap">Accueil MonCV.ai</span>
+              <span className="hidden sm:inline whitespace-nowrap">MonCV.ai</span>
             </Link>
 
             {/* Bouton Menu Mobile */}
@@ -471,14 +541,19 @@ export default function PublicCandidateCVPage() {
               isDark ? "bg-[#0b0c10] border-slate-800" : "bg-white border-slate-200"
             }`}
           >
+            {/* Raccourci Changement de Profil Mobile */}
+            <div className="pt-1 pb-1">
+              <ProfileSwitcher currentSlug={slug} isDark={isDark} className="w-full" />
+            </div>
+
             {/* Actions rapides Mobile */}
             <Link
-              href="/"
+              href="/?landing=true"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-md shadow-blue-600/20"
             >
               <Home className="w-4 h-4" />
-              <span>← Retour à l'accueil MonCV.ai</span>
+              <span>← Accueil Découverte MonCV.ai</span>
             </Link>
             <a
               href="#contact"
@@ -1121,41 +1196,7 @@ export default function PublicCandidateCVPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  {
-                    title: "Recrutement CDI / CDD",
-                    categoryType: "POSTE PERMANENT",
-                    badge: "★ DISPONIBLE",
-                    color: "blue",
-                    icon: Briefcase,
-                    step: "Profil → Entretien → Intégration : Immédiat",
-                    subtitle: "Intégration au sein d'une équipe produit ou technique",
-                    deliverables: ["Disponibilité immédiate", "Autonomie opérationnelle", "Adhésion aux objectifs", "Reporting régulier"],
-                    priceIndication: "Selon contrat & grille",
-                  },
-                  {
-                    title: "Consulting & Mission Freelance",
-                    categoryType: "PRESTATION EXPERTE",
-                    badge: "★ SUR-MESURE",
-                    color: "emerald",
-                    icon: Zap,
-                    step: "Cadrage → Sprints → Livrables : Garanti",
-                    subtitle: "Intervention ciblée sur vos chantiers prioritaires",
-                    deliverables: ["Audit des besoins", "Livrables clés en main", "Transfert de compétences", "Support post-livraison"],
-                    priceIndication: "TJM ou Forfait négocié",
-                  },
-                  {
-                    title: "Conception & Direction de Projet",
-                    categoryType: "PILOTAGE STRATÉGIQUE",
-                    badge: "★ LEADERSHIP",
-                    color: "purple",
-                    icon: Award,
-                    step: "Stratégie → Jalons Agiles → Recette : 100%",
-                    subtitle: "De la formalisation du besoin au déploiement en production",
-                    deliverables: ["Spécifications détaillées", "Suivi des jalons agiles", "Contrôle qualité", "Documentation complète"],
-                    priceIndication: "Sur cahier des charges",
-                  },
-                ].map((srv, idx) => {
+                {clientOffers.map((srv, idx) => {
                   const IconComp = srv.icon;
                   const themeStyle = getCardTheme(srv.color);
                   return (

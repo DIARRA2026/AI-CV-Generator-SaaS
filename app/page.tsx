@@ -7,7 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
-import { PlanTier, AccountType } from "@/lib/types";
+import { PlanTier, AccountType, ResumeData } from "@/lib/types";
 import { StorageManager } from "@/lib/storage";
 import {
   Sparkles,
@@ -214,7 +214,25 @@ export default function HomePage() {
   const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [activeClientProfile, setActiveClientProfile] = useState<ResumeData | null>(null);
   const router = useRouter();
+
+  // Logique de profil client actif : si un client est sélectionné, sa page prime
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const isLandingExplicit = params.get("landing") === "true";
+    const viewMode = localStorage.getItem("moncv_view_mode");
+
+    const active = StorageManager.getActiveResume();
+    if (active && (active.slug || active.id)) {
+      if (!isLandingExplicit && viewMode === "client") {
+        router.replace(`/c/${active.slug || active.id}`);
+        return;
+      }
+      setActiveClientProfile(active);
+    }
+  }, [router]);
 
   useEffect(() => {
     if (!isAutoPlay) return;
@@ -255,6 +273,36 @@ export default function HomePage() {
         onOpenPayment={() => handleOpenPlanPayment("2500")}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
+
+      {/* Bannière de bascule rapide vers la page dédiée du profil client actif */}
+      {activeClientProfile && (
+        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 text-white px-4 py-2.5 shadow-md border-b border-indigo-900/60 no-print">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-bold">
+                Profil Client Actif : {activeClientProfile.personal.firstName || ""} {activeClientProfile.personal.lastName || ""}
+              </span>
+              <span className="text-slate-400 hidden sm:inline">•</span>
+              <span className="text-blue-300 hidden sm:inline font-medium">
+                {activeClientProfile.personal.title || "Candidat"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/c/${activeClientProfile.slug || activeClientProfile.id}`}
+                onClick={() => {
+                  if (typeof window !== "undefined") localStorage.setItem("moncv_view_mode", "client");
+                }}
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm text-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Afficher sa page exclusive avec ses offres →</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         {/* ========================================================================= */}

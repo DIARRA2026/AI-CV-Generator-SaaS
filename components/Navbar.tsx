@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
+import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
 import { StorageManager, UserSession } from "@/lib/storage";
 import { PlanTier } from "@/lib/types";
 
@@ -152,6 +153,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
                 B2B
               </span>
             </Link>
+
+            {/* Sélecteur de Changement de Profil Client */}
+            <ProfileSwitcher />
 
             {!currentUser ? (
               <button
@@ -437,7 +441,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPayment, onOpenAuth }) => 
             </div>
 
             {/* Liens de Navigation Mobile */}
-            <div className="p-4 space-y-1.5 flex-1">
+            <div className="p-4 space-y-2 flex-1">
+              {/* Sélecteur de profil mobile */}
+              <div className="pb-1">
+                <ProfileSwitcher className="w-full" />
+              </div>
+
               <button
                 onClick={(e) => {
                   setIsMobileDrawerOpen(false);

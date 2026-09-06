@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { StorageManager } from "@/lib/storage";
+import { ProfileSwitcher } from "@/components/tools/ProfileSwitcher";
 import {
   Sparkles,
   ArrowRight,
@@ -476,9 +479,18 @@ const PORTFOLIO_CONFIG = {
 };
 
 export default function PortfolioLandingPage() {
+  const router = useRouter();
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [activeFilter, setActiveFilter] = useState<string>("Tous");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Redirection automatique vers la page du client actif avec ses offres
+  useEffect(() => {
+    const active = StorageManager.getActiveResume();
+    if (active && (active.slug || active.id)) {
+      router.replace(`/c/${active.slug || active.id}`);
+    }
+  }, [router]);
 
   // Formulaire de contact
   const [contactName, setContactName] = useState("");
@@ -586,20 +598,23 @@ export default function PortfolioLandingPage() {
             ))}
           </nav>
 
-          {/* Actions : Theme Toggle + CTA Me Contacter + Retour Accueil */}
+          {/* Actions : ProfileSwitcher + Theme Toggle + CTA Me Contacter + Retour Accueil */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Bouton Retour à la page d'accueil MonCV.ai avec Animation Pro */}
+            {/* Sélecteur de profil client */}
+            <ProfileSwitcher isDark={isDark} />
+
+            {/* Bouton Retour à la page d'accueil MonCV.ai */}
             <Link
-              href="/"
+              href="/?landing=true"
               className={`group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black border transition-all duration-300 whitespace-nowrap cursor-pointer shadow-md hover:scale-105 active:scale-95 shrink-0 ${
                 isDark
                   ? "bg-[#141620] hover:bg-[#1a1d2c] border-slate-700/80 hover:border-blue-500/80 text-slate-100 shadow-black/50 hover:shadow-blue-500/20"
                   : "bg-white hover:bg-slate-50 border-slate-200 hover:border-blue-400 text-slate-800 shadow-slate-200/60"
               }`}
-              title="Retour à la page d'accueil MonCV.ai"
+              title="Afficher la présentation MonCV.ai"
             >
               <Home className="w-3.5 h-3.5 text-blue-500 group-hover:-translate-x-0.5 transition-transform duration-300 shrink-0" />
-              <span className="whitespace-nowrap">Accueil MonCV.ai</span>
+              <span className="whitespace-nowrap">MonCV.ai</span>
             </Link>
 
             {/* Toggle Dark / Light mode avec Animation Rotation */}

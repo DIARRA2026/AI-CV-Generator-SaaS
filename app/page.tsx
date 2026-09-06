@@ -1730,7 +1730,7 @@ export default function HomePage() {
             </div>
 
             {/* Grille des 3 Formules Entreprises */}
-            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-5">
+            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-8 sm:pt-10 overflow-visible">
               
               {/* PACK 1 : STARTER PME (30 PROFILS) */}
               <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">

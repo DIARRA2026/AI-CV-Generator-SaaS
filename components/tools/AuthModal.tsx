@@ -17,6 +17,7 @@ export interface PlanOption {
   id: PlanTier;
   name: string;
   price: string;
+  perProfile?: string;
   badge: string;
   desc: string;
   highlight: boolean;
@@ -57,37 +58,32 @@ export const CANDIDATE_PLANS: PlanOption[] = [
   },
 ];
 
-export const BUSINESS_PLANS: PlanOption[] = [
-  {
-    id: "cyber15",
-    name: "Pass Cybercafé & Services",
-    price: "15 000 FCFA",
-    badge: "15 Candidats",
-    desc: "15 profils complets débloqués (1 000 F/CV) • Exports Word (.docx) & PDF illimités.",
-    highlight: false,
-  },
+export const BUSINESS_PLANS: (PlanOption & { perProfile?: string })[] = [
   {
     id: "enterprise30",
     name: "Pack Starter PME",
     price: "20 000 FCFA",
+    perProfile: "~667 F / profil",
     badge: "30 Candidats",
-    desc: "30 profils candidats complets • Vivier RH centralisé • Facture normalisée OHADA.",
+    desc: "Idéal pour petites structures, startups & promotions de 20-30 apprenants (30 profils complets débloqués).",
     highlight: false,
   },
   {
     id: "enterprise75",
-    name: "Pack Business Pro RH",
+    name: "Pack Business Pro",
     price: "45 000 FCFA",
-    badge: "Le Plus Choisi ★",
-    desc: "75 profils candidats complets • Vivier collaboratif • Facture OHADA • Support 7j/7.",
+    perProfile: "600 F / profil",
+    badge: "Recommandé ★",
+    desc: "La formule reine pour cabinets de recrutement, agences d'intérim & DRH actives (75 profils complets).",
     highlight: true,
   },
   {
     id: "enterprise200",
-    name: "Pack Entreprise & Cabinet",
+    name: "Pack Entreprise Premium",
     price: "100 000 FCFA",
+    perProfile: "500 F / profil (-67%)",
     badge: "200 Candidats",
-    desc: "200 profils candidats complets • Gestionnaire de compte dédié • Intégration sur mesure.",
+    desc: "Pour grandes entreprises, ONG internationales, universités & réseaux de cybercafés (200 profils complets).",
     highlight: false,
   },
 ];
@@ -581,7 +577,9 @@ export const AuthModal: React.FC<Props> = ({
       onMouseDown={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-[430px] max-h-[92vh] overflow-hidden relative flex flex-col transform transition-all border border-slate-100 my-auto"
+        className={`bg-white rounded-3xl shadow-2xl w-full ${
+          mode === "register" && accountType === "business" ? "max-w-xl sm:max-w-2xl" : "max-w-[450px]"
+        } max-h-[92vh] overflow-hidden relative flex flex-col transform transition-all border border-slate-100 my-auto`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Barre dégradée supérieure d'accentuation */}
@@ -784,7 +782,7 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("candidate");
-                      if (selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15") {
+                      if (selectedPlan.startsWith("enterprise")) {
                         setSelectedPlan("free");
                       }
                       setErrors({});
@@ -803,7 +801,7 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("business");
-                      if (!selectedPlan.startsWith("enterprise") && selectedPlan !== "cyber15") {
+                      if (!selectedPlan.startsWith("enterprise")) {
                         setSelectedPlan("enterprise75");
                       }
                       setErrors({});
@@ -834,14 +832,14 @@ export const AuthModal: React.FC<Props> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  <div className={`grid gap-2 ${accountType === "business" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
                     {(accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS).map((p) => {
                       const isSelected = selectedPlan === p.id;
                       return (
                         <div
                           key={p.id}
                           onClick={() => setSelectedPlan(p.id)}
-                          className={`p-2 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between select-none ${
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between select-none ${
                             isSelected
                               ? accountType === "business"
                                 ? "bg-amber-50/90 border-amber-500 ring-2 ring-amber-400/30 shadow-xs"
@@ -849,49 +847,56 @@ export const AuthModal: React.FC<Props> = ({
                               : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70"
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div
-                                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                  isSelected
-                                    ? accountType === "business"
-                                      ? "border-amber-600 bg-amber-600 text-white"
-                                      : "border-blue-600 bg-blue-600 text-white"
-                                    : "border-slate-300 bg-white"
+                          <div>
+                            <div className="flex items-start justify-between gap-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div
+                                  className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                                    isSelected
+                                      ? accountType === "business"
+                                        ? "border-amber-600 bg-amber-600 text-white"
+                                        : "border-blue-600 bg-blue-600 text-white"
+                                      : "border-slate-300 bg-white"
+                                  }`}
+                                >
+                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                                <span className="text-[11px] font-black text-slate-900 truncate">
+                                  {p.name}
+                                </span>
+                              </div>
+                              <span
+                                className={`text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap ${
+                                  p.highlight
+                                    ? "bg-amber-500 text-white shadow-xs"
+                                    : isSelected
+                                    ? "bg-blue-100 text-blue-900 border border-blue-200"
+                                    : "bg-slate-100 text-slate-600 border border-slate-200"
                                 }`}
                               >
-                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                              </div>
-                              <span className="text-[11px] font-bold text-slate-900 truncate">
-                                {p.name}
+                                {p.badge}
                               </span>
                             </div>
-                            <span
-                              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md shrink-0 ${
-                                p.highlight
-                                  ? "bg-amber-100 text-amber-900 border border-amber-200"
-                                  : isSelected
-                                  ? "bg-blue-100 text-blue-900"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}
-                            >
-                              {p.badge}
-                            </span>
-                          </div>
 
-                          <div className="mt-1 flex items-baseline justify-between gap-1">
-                            <span
-                              className={`text-xs sm:text-sm font-black ${
-                                accountType === "business" ? "text-amber-700" : "text-blue-700"
-                              }`}
-                            >
-                              {p.price}
-                            </span>
-                          </div>
+                            <div className="mt-1.5 flex items-baseline justify-between gap-1">
+                              <span
+                                className={`text-xs sm:text-sm font-black ${
+                                  accountType === "business" ? "text-amber-900" : "text-blue-700"
+                                }`}
+                              >
+                                {p.price}
+                              </span>
+                              {p.perProfile && (
+                                <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200/60 whitespace-nowrap">
+                                  {p.perProfile}
+                                </span>
+                              )}
+                            </div>
 
-                          <p className="text-[9.5px] text-slate-500 leading-tight mt-0.5 line-clamp-2">
-                            {p.desc}
-                          </p>
+                            <p className="text-[10px] text-slate-500 leading-tight mt-1">
+                              {p.desc}
+                            </p>
+                          </div>
                         </div>
                       );
                     })}

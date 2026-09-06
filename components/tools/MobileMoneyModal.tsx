@@ -5,12 +5,104 @@ import confetti from "canvas-confetti";
 import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { registerPaymentSuccess } from "@/lib/license-manager";
+import { PlanTier } from "@/lib/types";
+
+// ─── Configuration unique de toutes les offres ───────────────────────────────
+type PlanCategory = "particulier" | "entreprise";
+
+interface PlanConfig {
+  id: PlanTier;
+  category: PlanCategory;
+  name: string;
+  price: string;
+  badge: string;
+  desc: string;
+  icon: React.ReactNode;
+  highlight: boolean;
+  // Confirmation post-paiement
+  confirmTitle: string;
+  confirmDesc: string;
+  confirmGradient: string;
+  confirmBorder: string;
+  confirmTextColor: string;
+}
+
+const ALL_PLANS: Omit<PlanConfig, "icon">[] = [
+  // ── Particulier ──
+  {
+    id: "1500", category: "particulier",
+    name: "Pack Essentiel (1 Profil)", price: "1 500 FCFA",
+    badge: "Profil Unique", highlight: false,
+    desc: "Téléchargements PDF & Word illimités • 1 Candidat (retouches et modèles à volonté)",
+    confirmTitle: "CV HD Sans Filigrane Débloqué",
+    confirmDesc: "Le filigrane a été retiré. Vous pouvez désormais exporter votre CV au format A4 Vectoriel Haute Définition.",
+    confirmGradient: "from-blue-50 to-blue-50", confirmBorder: "border-blue-200", confirmTextColor: "text-blue-700",
+  },
+  {
+    id: "2500", category: "particulier",
+    name: "Pack Candidature Pro", price: "2 500 FCFA",
+    badge: "Recommandé", highlight: true,
+    desc: "CV illimité + Lettre IA + Demande d'emploi • Jusqu'à 2 déclinaisons / profils",
+    confirmTitle: "Pack Candidature Pro Complet Débloqué",
+    confirmDesc: "Votre CV sans filigrane, votre Demande d'emploi officielle et votre Lettre de motivation IA sont tous prêts à l'emploi.",
+    confirmGradient: "from-blue-50 to-indigo-50", confirmBorder: "border-blue-200", confirmTextColor: "text-blue-700",
+  },
+  {
+    id: "5000", category: "particulier",
+    name: "Pack VIP & Multi-Profils", price: "5 000 FCFA",
+    badge: "Famille & Pro", highlight: false,
+    desc: "Tout inclus + 4 Candidats autorisés + Portfolio Web en ligne personnel",
+    confirmTitle: "Pack VIP & Portfolio Web Personnel Activé !",
+    confirmDesc: "Votre site web Portfolio complet est désormais en ligne avec lien public, exports illimités et Support VIP WhatsApp 7j/7.",
+    confirmGradient: "from-purple-50 to-pink-50", confirmBorder: "border-purple-200", confirmTextColor: "text-purple-700",
+  },
+  // ── Entreprise ──
+  {
+    id: "enterprise30", category: "entreprise",
+    name: "Pack Starter PME", price: "20 000 FCFA",
+    badge: "30 Profils", highlight: false,
+    desc: "30 candidats • Téléchargements illimités • Tous les 6 modèles • PDF + Word",
+    confirmTitle: "Pack Starter PME — 30 Profils Activé !",
+    confirmDesc: "30 profils débloqués avec téléchargements illimités (PDF + Word). Tous les 6 modèles de CV sont accessibles pour vos candidats.",
+    confirmGradient: "from-teal-50 to-emerald-50", confirmBorder: "border-teal-200", confirmTextColor: "text-teal-700",
+  },
+  {
+    id: "enterprise75", category: "entreprise",
+    name: "Pack Business Pro", price: "45 000 FCFA",
+    badge: "Recommandé", highlight: true,
+    desc: "75 candidats • Tous les modèles • PDF + Word • Support prioritaire WhatsApp",
+    confirmTitle: "Pack Business Pro — 75 Profils Activé !",
+    confirmDesc: "75 profils débloqués avec exports illimités. Support prioritaire WhatsApp activé pour votre entreprise.",
+    confirmGradient: "from-indigo-50 to-blue-50", confirmBorder: "border-indigo-200", confirmTextColor: "text-indigo-700",
+  },
+  {
+    id: "enterprise200", category: "entreprise",
+    name: "Pack Entreprise Premium", price: "100 000 FCFA",
+    badge: "200 Profils", highlight: false,
+    desc: "200 candidats • Tous les modèles • Support dédié + Accompagnement prise en main",
+    confirmTitle: "Pack Entreprise Premium — 200 Profils Activé !",
+    confirmDesc: "200 profils débloqués avec exports illimités. Support dédié et accompagnement personnalisé à la prise en main activés.",
+    confirmGradient: "from-amber-50 to-orange-50", confirmBorder: "border-amber-200", confirmTextColor: "text-amber-700",
+  },
+];
+
+// Icônes mappées par ID (les composants React ne peuvent pas être dans un const statique hors du render)
+const PLAN_ICONS: Record<string, React.ReactNode> = {
+  "1500": <FileText className="w-4 h-4" />,
+  "2500": <Sparkles className="w-4 h-4" />,
+  "5000": <Crown className="w-4 h-4" />,
+  "enterprise30": <Building className="w-4 h-4" />,
+  "enterprise75": <Users className="w-4 h-4" />,
+  "enterprise200": <Crown className="w-4 h-4" />,
+};
+
+// ─── Composant ───────────────────────────────────────────────────────────────
 
 interface MobileMoneyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  defaultPlan?: "1500" | "2500" | "5000" | "enterprise30" | "enterprise75" | "enterprise200";
+  defaultPlan?: PlanTier;
 }
 
 export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
@@ -19,87 +111,36 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   onSuccess,
   defaultPlan = "2500",
 }) => {
-  const [selectedPlan, setSelectedPlan] = useState<"1500" | "2500" | "5000" | "enterprise30" | "enterprise75" | "enterprise200">(defaultPlan);
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<"wave" | "orange" | "mtn" | "card">("wave");
   const [phoneNumber, setPhoneNumber] = useState("+225 07 ");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
-  const [planTab, setPlanTab] = useState<"particulier" | "entreprise">("particulier");
+  const [planTab, setPlanTab] = useState<PlanCategory>("particulier");
 
-  // Synchroniser l'offre sélectionnée lorsque la boîte de dialogue s'ouvre
   useEffect(() => {
     if (isOpen && defaultPlan) {
       setSelectedPlan(defaultPlan);
+      setPlanTab(ALL_PLANS.find((p) => p.id === defaultPlan)?.category || "particulier");
     }
   }, [isOpen, defaultPlan]);
 
   if (!isOpen) return null;
 
-  const plans = [
-    {
-      id: "1500" as const,
-      name: "Pack Essentiel (1 Profil)",
-      price: "1 500 FCFA",
-      badge: "Profil Unique",
-      desc: "Téléchargements PDF & Word illimités • 1 Candidat (retouches et modèles à volonté)",
-      icon: <FileText className="w-4 h-4 text-blue-600" />,
-      highlight: false,
-    },
-    {
-      id: "2500" as const,
-      name: "Pack Candidature Pro",
-      price: "2 500 FCFA",
-      badge: "Recommandé",
-      desc: "CV illimité + Lettre IA + Demande d'emploi • Jusqu'à 2 déclinaisons / profils",
-      icon: <Sparkles className="w-4 h-4 text-amber-500" />,
-      highlight: true,
-    },
-    {
-      id: "5000" as const,
-      name: "Pack VIP & Multi-Profils",
-      price: "5 000 FCFA",
-      badge: "Famille & Pro",
-      desc: "Tout inclus + 4 Candidats autorisés + Portfolio Web en ligne personnel",
-      icon: <Crown className="w-4 h-4 text-purple-500" />,
-      highlight: false,
-    },
-  ];
+  // ── Helpers ──
+  const currentPlan = ALL_PLANS.find((p) => p.id === selectedPlan) || ALL_PLANS[1];
+  const visiblePlans = ALL_PLANS.filter((p) => p.category === planTab);
 
-  const enterprisePlans = [
-    {
-      id: "enterprise30" as const,
-      name: "Pack Starter PME",
-      price: "20 000 FCFA",
-      badge: "30 Profils",
-      desc: "30 candidats • Téléchargements illimités • Tous les 6 modèles • PDF + Word",
-      icon: <Building className="w-4 h-4 text-teal-600" />,
-      highlight: false,
-    },
-    {
-      id: "enterprise75" as const,
-      name: "Pack Business Pro",
-      price: "45 000 FCFA",
-      badge: "Recommandé",
-      desc: "75 candidats • Tous les modèles • PDF + Word • Support prioritaire WhatsApp",
-      icon: <Users className="w-4 h-4 text-indigo-600" />,
-      highlight: true,
-    },
-    {
-      id: "enterprise200" as const,
-      name: "Pack Entreprise Premium",
-      price: "100 000 FCFA",
-      badge: "200 Profils",
-      desc: "200 candidats • Tous les modèles • Support dédié + Accompagnement prise en main",
-      icon: <Crown className="w-4 h-4 text-amber-600" />,
-      highlight: false,
-    },
-  ];
+  const handleTabSwitch = (tab: PlanCategory) => {
+    setPlanTab(tab);
+    const defaultForTab = ALL_PLANS.find((p) => p.category === tab && p.highlight) || ALL_PLANS.find((p) => p.category === tab);
+    if (defaultForTab) setSelectedPlan(defaultForTab.id);
+  };
 
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     setTimeout(() => {
-      // Marquer le CV actif avec son offre exacte et enregistrer la licence sécurisée
       const activeCv = StorageManager.getActiveResume();
       if (activeCv) {
         const updatedWithLicense = registerPaymentSuccess(
@@ -117,24 +158,17 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
       setIsProcessing(false);
       setIsDone(true);
-      confetti({
-        particleCount: 140,
-        spread: 90,
-        origin: { y: 0.6 },
-      });
+      confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
     }, 1200);
   };
 
-  const getSelectedPlanDetails = () => {
-    const allPlans = [...plans, ...enterprisePlans];
-    return allPlans.find((p) => p.id === selectedPlan) || plans[1];
-  };
+  // ─── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md fade-in overflow-hidden">
       <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden transform transition-all">
         
-        {/* En-tête Fixe (Sticky Header) */}
+        {/* ── En-tête ── */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl shadow-md shadow-blue-600/20">
@@ -163,7 +197,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
           </button>
         </div>
 
-        {/* Corps Défilant (Scrollable Body) */}
+        {/* ── Corps ── */}
         {isDone ? (
           <div className="p-6 sm:p-8 text-center space-y-5 overflow-y-auto">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
@@ -174,87 +208,25 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 Paiement Validé avec Succès ! 🎉
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto mt-1 leading-relaxed">
-                Votre formule <strong>{getSelectedPlanDetails().name}</strong> ({getSelectedPlanDetails().price}) est désormais active à 100%.
+                Votre formule <strong>{currentPlan.name}</strong> ({currentPlan.price}) est désormais active à 100%.
               </p>
             </div>
 
-            {/* Détails spécifiques selon l'offre */}
-            {selectedPlan === "1500" && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-left space-y-1.5">
-                <div className="flex items-center gap-2 text-blue-900 font-bold text-xs sm:text-sm">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-blue-600 shrink-0" />
-                  <span>CV HD Sans Filigrane Débloqué</span>
-                </div>
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  Le filigrane a été retiré. Vous pouvez désormais exporter votre CV au format A4 Vectoriel Haute Définition.
-                </p>
+            {/* Confirmation dynamique — piloté par les données du plan */}
+            <div className={`p-4 bg-gradient-to-r ${currentPlan.confirmGradient} border ${currentPlan.confirmBorder} rounded-2xl text-left space-y-1.5`}>
+              <div className={`flex items-center gap-2 font-bold text-xs sm:text-sm ${currentPlan.confirmTextColor.replace("700", "900")}`}>
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{currentPlan.confirmTitle}</span>
               </div>
-            )}
-
-            {selectedPlan === "2500" && (
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-left space-y-1.5">
-                <div className="flex items-center gap-2 text-blue-900 font-bold text-xs sm:text-sm">
-                  <Sparkles className="w-4.5 h-4.5 text-blue-600 shrink-0" />
-                  <span>Pack Candidature Pro Complet Débloqué</span>
-                </div>
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  Votre CV sans filigrane, votre Demande d'emploi officielle et votre Lettre de motivation IA sont tous prêts à l'emploi.
-                </p>
-              </div>
-            )}
-
-            {selectedPlan === "5000" && (
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl text-left space-y-2">
-                <div className="flex items-center gap-2 text-purple-900 font-bold text-xs sm:text-sm">
-                  <Crown className="w-4.5 h-4.5 text-amber-500 shrink-0" />
-                  <span>Pack VIP & Portfolio Web Personnel Activé !</span>
-                </div>
-                <p className="text-xs text-purple-700 leading-relaxed">
-                  Votre site web Portfolio complet est désormais en ligne avec lien public, exports illimités et Support VIP WhatsApp 7j/7.
-                </p>
-              </div>
-            )}
-
-            {selectedPlan === "enterprise30" && (
-              <div className="p-4 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-2xl text-left space-y-1.5">
-                <div className="flex items-center gap-2 text-teal-900 font-bold text-xs sm:text-sm">
-                  <Building className="w-4.5 h-4.5 text-teal-600 shrink-0" />
-                  <span>Pack Starter PME — 30 Profils Activé !</span>
-                </div>
-                <p className="text-xs text-teal-700 leading-relaxed">
-                  30 profils débloqués avec téléchargements illimités (PDF + Word). Tous les 6 modèles de CV sont accessibles pour vos candidats.
-                </p>
-              </div>
-            )}
-
-            {selectedPlan === "enterprise75" && (
-              <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-2xl text-left space-y-1.5">
-                <div className="flex items-center gap-2 text-indigo-900 font-bold text-xs sm:text-sm">
-                  <Users className="w-4.5 h-4.5 text-indigo-600 shrink-0" />
-                  <span>Pack Business Pro — 75 Profils Activé !</span>
-                </div>
-                <p className="text-xs text-indigo-700 leading-relaxed">
-                  75 profils débloqués avec exports illimités. Support prioritaire WhatsApp activé pour votre entreprise.
-                </p>
-              </div>
-            )}
-
-            {selectedPlan === "enterprise200" && (
-              <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl text-left space-y-1.5">
-                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
-                  <Crown className="w-4.5 h-4.5 text-amber-600 shrink-0" />
-                  <span>Pack Entreprise Premium — 200 Profils Activé !</span>
-                </div>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  200 profils débloqués avec exports illimités. Support dédié et accompagnement personnalisé à la prise en main activés.
-                </p>
-              </div>
-            )}
+              <p className={`text-xs leading-relaxed ${currentPlan.confirmTextColor}`}>
+                {currentPlan.confirmDesc}
+              </p>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {selectedPlan === "5000" ? (
                 <a
-                  href={`/c/${StorageManager.getActiveResume().slug}`}
+                  href={`/c/${StorageManager.getActiveResume()?.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all"
@@ -265,11 +237,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    onSuccess();
-                    onClose();
-                    setIsDone(false);
-                  }}
+                  onClick={() => { onSuccess(); onClose(); setIsDone(false); }}
                   className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
@@ -279,11 +247,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => {
-                  onSuccess();
-                  onClose();
-                  setIsDone(false);
-                }}
+                onClick={() => { onSuccess(); onClose(); setIsDone(false); }}
                 className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span>Fermer</span>
@@ -293,10 +257,9 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
         ) : (
           <form id="mobile-money-form" onSubmit={handlePay} className="flex flex-col flex-1 overflow-hidden">
             
-            {/* Zone de formulaire défilante */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
               
-              {/* Choix des offres avec onglets Particulier / Entreprise */}
+              {/* ── Étape 1 : Choix de la formule ── */}
               <div className="space-y-2.5">
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
                   1. Sélectionnez votre formule :
@@ -304,35 +267,29 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
                 {/* Onglets Particulier / Entreprise */}
                 <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
-                  <button
-                    type="button"
-                    onClick={() => { setPlanTab("particulier"); setSelectedPlan("2500"); }}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      planTab === "particulier"
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    Particulier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setPlanTab("entreprise"); setSelectedPlan("enterprise75"); }}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      planTab === "entreprise"
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <Building className="w-3.5 h-3.5" />
-                    Entreprise
-                  </button>
+                  {([
+                    { tab: "particulier" as PlanCategory, label: "Particulier", Icon: FileText },
+                    { tab: "entreprise" as PlanCategory, label: "Entreprise", Icon: Building },
+                  ]).map(({ tab, label, Icon }) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => handleTabSwitch(tab)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        planTab === tab
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Liste des plans selon l'onglet actif */}
+                {/* Cartes des offres */}
                 <div className="space-y-2.5">
-                  {(planTab === "particulier" ? plans : enterprisePlans).map((p) => {
+                  {visiblePlans.map((p) => {
                     const isSel = selectedPlan === p.id;
                     return (
                       <button
@@ -347,7 +304,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={`p-2.5 rounded-xl border shrink-0 ${isSel ? "bg-blue-600 text-white border-blue-600" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
-                            {p.icon}
+                            {PLAN_ICONS[p.id]}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -386,24 +343,24 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 </div>
               </div>
 
-              {/* Opérateur de règlement */}
+              {/* ── Étape 2 : Opérateur ── */}
               <div className="space-y-2.5 pt-1">
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
                   2. Opérateur de règlement :
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {[
+                  {([
                     { id: "wave", name: "Wave", bg: "bg-[#1dc4fe] text-white" },
                     { id: "orange", name: "Orange", bg: "bg-[#ff7900] text-white" },
                     { id: "mtn", name: "MTN MoMo", bg: "bg-[#ffcc00] text-slate-900" },
                     { id: "card", name: "Carte Visa", bg: "bg-slate-800 text-white" },
-                  ].map((pm) => {
+                  ] as const).map((pm) => {
                     const isSel = paymentMethod === pm.id;
                     return (
                       <button
                         key={pm.id}
                         type="button"
-                        onClick={() => setPaymentMethod(pm.id as any)}
+                        onClick={() => setPaymentMethod(pm.id)}
                         className={`py-2.5 px-3 rounded-2xl text-xs font-bold text-center border-2 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                           isSel
                             ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600/20 shadow-xs"
@@ -419,7 +376,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 </div>
               </div>
 
-              {/* Saisie numéro Mobile Money */}
+              {/* ── Étape 3 : Numéro ── */}
               <div className="space-y-1.5 pt-1">
                 {paymentMethod !== "card" ? (
                   <div>
@@ -462,7 +419,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
             </div>
 
-            {/* Pied de Page Fixe Toujours Visible (Sticky Submit Footer) */}
+            {/* ── Footer de validation ── */}
             <div className="p-4 sm:p-5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 space-y-2 shadow-lg">
               <button
                 type="submit"
@@ -476,7 +433,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 )}
                 {isProcessing
                   ? "Validation du paiement en cours..."
-                  : `Valider et payer ${getSelectedPlanDetails().price}`}
+                  : `Valider et payer ${currentPlan.price}`}
               </button>
 
               <p className="text-[10px] text-center text-slate-400 font-medium">

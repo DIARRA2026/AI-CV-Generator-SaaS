@@ -800,8 +800,8 @@ export default function DashboardPage() {
                 </div>
               )}
               {/* En-tête Dashboard avec profil */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm">
-                <div>
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
                     <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
@@ -830,36 +830,38 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenJobApplication()}
-                    className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold rounded-2xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Créer une Demande d'Emploi Officielle (Pack Pro & VIP)"
-                  >
-                    <Briefcase className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Demande d'Emploi</span>
-                    <span className="text-[9.5px] bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded-full font-extrabold">Pro</span>
-                  </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 w-full lg:w-auto">
+                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenJobApplication()}
+                      className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-[0.98]"
+                      title="Créer une Demande d'Emploi Officielle (Pack Pro & VIP)"
+                    >
+                      <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>Demande d'Emploi</span>
+                      <span className="text-[9px] bg-amber-200/90 text-amber-950 px-1.5 py-0.5 rounded-full font-black uppercase">Pro</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenCoverLetter()}
-                    className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 font-bold rounded-2xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Générer une Lettre de Motivation IA (Pack Pro & VIP)"
-                  >
-                    <Wand2 className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Lettre IA</span>
-                    <span className="text-[9.5px] bg-indigo-200/80 text-indigo-900 px-1.5 py-0.5 rounded-full font-extrabold">Pro</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCoverLetter()}
+                      className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/80 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-[0.98]"
+                      title="Générer une Lettre de Motivation IA (Pack Pro & VIP)"
+                    >
+                      <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span>Lettre IA</span>
+                      <span className="text-[9px] bg-indigo-200/90 text-indigo-950 px-1.5 py-0.5 rounded-full font-black uppercase">Pro</span>
+                    </button>
+                  </div>
 
                   <button
                     type="button"
                     onClick={() => setIsCreatingModal(true)}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md shadow-blue-600/20 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-md shadow-blue-600/20 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>+ Créer un CV</span>
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Créer un CV</span>
                   </button>
                 </div>
               </div>

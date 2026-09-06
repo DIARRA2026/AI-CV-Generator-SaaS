@@ -531,11 +531,20 @@ export class StorageManager {
     if (typeof window === "undefined") return false;
     try {
       const user = this.getUser();
-      if (user?.role === "admin" || user?.role === "superadmin") return true;
-      const email = user?.email?.toLowerCase().trim();
-      if (email === "admin@moncv.ai" || email === "innova.admin@moncv.ai" || email === "innovagroup225@gmail.com") return true;
-      const adminSession = localStorage.getItem("moncv_admin_session");
-      return Boolean(adminSession);
+      // Si un utilisateur est connecté, on vérifie strictement ses droits administratifs
+      if (user) {
+        if (user.role === "admin" || user.role === "superadmin") return true;
+        const email = user.email?.toLowerCase().trim();
+        const isAdminEmail =
+          email === "innovagroup225@gmail.com" ||
+          email === "admin@moncv.ai" ||
+          email === "innova.admin@moncv.ai" ||
+          email === "superadmin@moncv.ai";
+        // Si l'utilisateur est un client (candidat ou entreprise), il n'est JAMAIS administrateur
+        return Boolean(isAdminEmail);
+      }
+      // Pour les visiteurs et comptes non authentifiés comme admin : toujours false
+      return false;
     } catch {
       return false;
     }
@@ -611,6 +620,17 @@ export class StorageManager {
       // Synchronisation du cookie de session pour le middleware Next.js
       const tokenValue = encodeURIComponent(user.token || `auth_${user.email}`);
       document.cookie = `moncv_auth_token=${tokenValue}; path=/; max-age=2592000; SameSite=Lax`;
+
+      // Si le compte connecté est un compte client, purger formellement tout résidu de session admin
+      const isSuperAdmin =
+        user.role === "admin" ||
+        user.role === "superadmin" ||
+        user.email?.toLowerCase().trim() === "innovagroup225@gmail.com" ||
+        user.email?.toLowerCase().trim() === "admin@moncv.ai";
+      if (!isSuperAdmin) {
+        localStorage.removeItem("moncv_admin_session");
+        document.cookie = "moncv_admin_token=; path=/; max-age=0; SameSite=Lax";
+      }
     } catch (e) {
       console.error("Erreur sauvegarde session", e);
     }
@@ -623,8 +643,10 @@ export class StorageManager {
   static logout(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(USER_KEY);
-    // Suppression du cookie de session
+    localStorage.removeItem("moncv_admin_session");
+    // Suppression des cookies de session
     document.cookie = "moncv_auth_token=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "moncv_admin_token=; path=/; max-age=0; SameSite=Lax";
   }
 
   // === NIVEAU D'OFFRE & PERMISSIONS (RESPECT DES OFFRES) ===

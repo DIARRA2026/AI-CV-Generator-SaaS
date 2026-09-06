@@ -85,7 +85,7 @@ export interface ResumeDesign {
   spacing: "compact" | "normal" | "spacious";
 }
 
-export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15";
+export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15" | "enterprise30" | "enterprise75" | "enterprise200";
 
 export interface LicenseAccess {
   planTier: PlanTier;

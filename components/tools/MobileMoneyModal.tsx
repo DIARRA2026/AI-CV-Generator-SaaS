@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
-import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock } from "lucide-react";
+import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { registerPaymentSuccess } from "@/lib/license-manager";
 
@@ -10,7 +10,7 @@ interface MobileMoneyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  defaultPlan?: "1500" | "2500" | "5000";
+  defaultPlan?: "1500" | "2500" | "5000" | "enterprise30" | "enterprise75" | "enterprise200";
 }
 
 export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
@@ -19,11 +19,12 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   onSuccess,
   defaultPlan = "2500",
 }) => {
-  const [selectedPlan, setSelectedPlan] = useState<"1500" | "2500" | "5000">(defaultPlan);
+  const [selectedPlan, setSelectedPlan] = useState<"1500" | "2500" | "5000" | "enterprise30" | "enterprise75" | "enterprise200">(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<"wave" | "orange" | "mtn" | "card">("wave");
   const [phoneNumber, setPhoneNumber] = useState("+225 07 ");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [planTab, setPlanTab] = useState<"particulier" | "entreprise">("particulier");
 
   // Synchroniser l'offre sélectionnée lorsque la boîte de dialogue s'ouvre
   useEffect(() => {
@@ -64,6 +65,36 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     },
   ];
 
+  const enterprisePlans = [
+    {
+      id: "enterprise30" as const,
+      name: "Pack Starter PME",
+      price: "20 000 FCFA",
+      badge: "30 Profils",
+      desc: "30 candidats • Téléchargements illimités • Tous les 6 modèles • PDF + Word",
+      icon: <Building className="w-4 h-4 text-teal-600" />,
+      highlight: false,
+    },
+    {
+      id: "enterprise75" as const,
+      name: "Pack Business Pro",
+      price: "45 000 FCFA",
+      badge: "Recommandé",
+      desc: "75 candidats • Tous les modèles • PDF + Word • Support prioritaire WhatsApp",
+      icon: <Users className="w-4 h-4 text-indigo-600" />,
+      highlight: true,
+    },
+    {
+      id: "enterprise200" as const,
+      name: "Pack Entreprise Premium",
+      price: "100 000 FCFA",
+      badge: "200 Profils",
+      desc: "200 candidats • Tous les modèles • Support dédié + Accompagnement prise en main",
+      icon: <Crown className="w-4 h-4 text-amber-600" />,
+      highlight: false,
+    },
+  ];
+
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -95,7 +126,8 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   };
 
   const getSelectedPlanDetails = () => {
-    return plans.find((p) => p.id === selectedPlan) || plans[1];
+    const allPlans = [...plans, ...enterprisePlans];
+    return allPlans.find((p) => p.id === selectedPlan) || plans[1];
   };
 
   return (
@@ -183,6 +215,42 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               </div>
             )}
 
+            {selectedPlan === "enterprise30" && (
+              <div className="p-4 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-2xl text-left space-y-1.5">
+                <div className="flex items-center gap-2 text-teal-900 font-bold text-xs sm:text-sm">
+                  <Building className="w-4.5 h-4.5 text-teal-600 shrink-0" />
+                  <span>Pack Starter PME — 30 Profils Activé !</span>
+                </div>
+                <p className="text-xs text-teal-700 leading-relaxed">
+                  30 profils débloqués avec téléchargements illimités (PDF + Word). Tous les 6 modèles de CV sont accessibles pour vos candidats.
+                </p>
+              </div>
+            )}
+
+            {selectedPlan === "enterprise75" && (
+              <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-2xl text-left space-y-1.5">
+                <div className="flex items-center gap-2 text-indigo-900 font-bold text-xs sm:text-sm">
+                  <Users className="w-4.5 h-4.5 text-indigo-600 shrink-0" />
+                  <span>Pack Business Pro — 75 Profils Activé !</span>
+                </div>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  75 profils débloqués avec exports illimités. Support prioritaire WhatsApp activé pour votre entreprise.
+                </p>
+              </div>
+            )}
+
+            {selectedPlan === "enterprise200" && (
+              <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl text-left space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
+                  <Crown className="w-4.5 h-4.5 text-amber-600 shrink-0" />
+                  <span>Pack Entreprise Premium — 200 Profils Activé !</span>
+                </div>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  200 profils débloqués avec exports illimités. Support dédié et accompagnement personnalisé à la prise en main activés.
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {selectedPlan === "5000" ? (
                 <a
@@ -228,13 +296,43 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
             {/* Zone de formulaire défilante */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
               
-              {/* Choix des 3 offres payantes */}
+              {/* Choix des offres avec onglets Particulier / Entreprise */}
               <div className="space-y-2.5">
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
                   1. Sélectionnez votre formule :
                 </label>
+
+                {/* Onglets Particulier / Entreprise */}
+                <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => { setPlanTab("particulier"); setSelectedPlan("2500"); }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      planTab === "particulier"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Particulier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPlanTab("entreprise"); setSelectedPlan("enterprise75"); }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      planTab === "entreprise"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <Building className="w-3.5 h-3.5" />
+                    Entreprise
+                  </button>
+                </div>
+
+                {/* Liste des plans selon l'onglet actif */}
                 <div className="space-y-2.5">
-                  {plans.map((p) => {
+                  {(planTab === "particulier" ? plans : enterprisePlans).map((p) => {
                     const isSel = selectedPlan === p.id;
                     return (
                       <button

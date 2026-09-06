@@ -50,6 +50,12 @@ export function getAllowedProfilesCount(plan?: PlanTier): number {
       return 4; // 4 Candidats (Pack Famille / Amis / VIP)
     case "cyber15":
       return 15; // 15 Candidats (Pack Distributeur Cybercafé)
+    case "enterprise30":
+      return 30; // 30 Candidats (Pack Starter PME)
+    case "enterprise75":
+      return 75; // 75 Candidats (Pack Business Pro)
+    case "enterprise200":
+      return 200; // 200 Candidats (Pack Entreprise Premium)
     case "free":
     default:
       return 0;

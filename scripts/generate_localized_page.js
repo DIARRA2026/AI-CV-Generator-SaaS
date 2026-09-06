@@ -1,4 +1,7 @@
-"use client";
+const fs = require('fs');
+const path = require('path');
+
+const pageContent = `"use client";
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -163,7 +166,7 @@ export default function HomePage() {
     const active = StorageManager.getActiveResume();
     if (active && (active.slug || active.id)) {
       if (!landingExplicit && viewMode === "client") {
-        router.replace(`/c/${active.slug || active.id}`);
+        router.replace(\`/c/\${active.slug || active.id}\`);
         return;
       }
     }
@@ -695,13 +698,13 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setIsAutoPlay(!isAutoPlay)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer ${
+                className={\`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer \${
                   isAutoPlay
                     ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
                     : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
-                }`}
+                }\`}
               >
-                <span className={`w-2 h-2 rounded-full ${isAutoPlay ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
+                <span className={\`w-2 h-2 rounded-full \${isAutoPlay ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}\`} />
                 <span>{isAutoPlay ? dict.liveDemo.autoPlayOn : dict.liveDemo.autoPlayOff}</span>
               </button>
             </div>
@@ -714,13 +717,13 @@ export default function HomePage() {
                     setActiveTemplate(tpl.id);
                     setIsAutoPlay(false);
                   }}
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                  className={\`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer \${
                     activeTemplate === tpl.id
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-105 border border-blue-400"
                       : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80"
-                  }`}
+                  }\`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${activeTemplate === tpl.id ? "bg-white animate-pulse" : "bg-slate-500"}`} />
+                  <span className={\`w-2 h-2 rounded-full \${activeTemplate === tpl.id ? "bg-white animate-pulse" : "bg-slate-500"}\`} />
                   <span>{tpl.name}</span>
                 </button>
               ))}
@@ -753,11 +756,11 @@ export default function HomePage() {
                           setIsAutoPlay(false);
                         }}
                         style={{ backgroundColor: c }}
-                        className={`w-9 h-9 rounded-2xl transition-all shadow-md cursor-pointer ${
+                        className={\`w-9 h-9 rounded-2xl transition-all shadow-md cursor-pointer \${
                           activeColor === c
                             ? "ring-4 ring-white/50 scale-110 shadow-lg"
                             : "hover:scale-105 opacity-75 hover:opacity-100"
-                        }`}
+                        }\`}
                       />
                     ))}
                   </div>
@@ -849,8 +852,8 @@ export default function HomePage() {
                             key={skill}
                             className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors"
                             style={{
-                              backgroundColor: `${activeColor}12`,
-                              borderColor: `${activeColor}35`,
+                              backgroundColor: \`\${activeColor}12\`,
+                              borderColor: \`\${activeColor}35\`,
                               color: activeColor,
                             }}
                           >
@@ -1017,9 +1020,9 @@ export default function HomePage() {
                 {dict.comparison.rows.map((row, idx) => (
                   <div
                     key={idx}
-                    className={`grid grid-cols-12 p-3.5 sm:p-4 items-center text-xs border-b border-slate-100 transition-colors hover:bg-blue-50/40 ${
+                    className={\`grid grid-cols-12 p-3.5 sm:p-4 items-center text-xs border-b border-slate-100 transition-colors hover:bg-blue-50/40 \${
                       idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
-                    }`}
+                    }\`}
                   >
                     <div className="col-span-4 pl-2">
                       <p className="font-extrabold text-slate-900">{row.critere}</p>
@@ -1405,9 +1408,9 @@ export default function HomePage() {
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                      className={\`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 \${
                         activeFaq === idx ? "rotate-180 text-blue-600" : ""
-                      }`}
+                      }\`}
                     />
                   </button>
                   {activeFaq === idx && (
@@ -2035,3 +2038,7 @@ export default function HomePage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync(path.join(__dirname, '../app/page.tsx'), pageContent, 'utf-8');
+console.log('Successfully generated localized app/page.tsx');

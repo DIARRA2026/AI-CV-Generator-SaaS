@@ -328,7 +328,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                       >
                         <Building className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>Vivier Entreprise (Candidats)</span>
+                        <span>{dict.nav.candidatePool}</span>
                       </Link>
                     )}
 
@@ -366,7 +366,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-amber-600 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                       >
                         <Crown className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>Formule & Facturation</span>
+                        <span>{dict.nav.billing}</span>
                       </button>
                     )}
 
@@ -401,7 +401,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Formule Entreprise active : toutes les offres personnelles sont incluses"
               >
                 <Crown className="w-3.5 h-3.5 text-amber-300" />
-                <span>Formule Entreprise</span>
+                <span>{dict.nav.enterprise}</span>
               </button>
             ) : currentUser?.planTier === "5000" ? (
               <button
@@ -440,7 +440,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer btn-press"
               >
                 <Crown className="w-3.5 h-3.5" />
-                <span>Passer Premium</span>
+                <span>{dict.nav.upgradePremium}</span>
               </button>
             ) : null}
           </div>
@@ -573,7 +573,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] font-bold text-slate-500">Formule actuelle :</span>
+                    <span className="text-[10px] font-bold text-slate-500">{dict.nav.currentPlanLabel}</span>
                     <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
                       {currentUser.planTier === "5000"
                         ? "VIP Illimité"
@@ -587,7 +587,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-xs text-slate-600 font-medium">Connectez-vous pour retrouver tous vos CVs :</p>
+                  <p className="text-xs text-slate-600 font-medium">{dict.dashboard.signInPrompt}</p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => {
@@ -713,7 +713,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <Building className="w-4 h-4 text-slate-950" />
-                        <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
+                        <span>{dict.nav.backToEnterprise}</span>
                       </div>
                       <span className="px-2 py-0.5 rounded-full bg-slate-950 text-white text-[9px] font-black uppercase">
                         RH
@@ -745,7 +745,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
               >
                 <Compass className="w-4 h-4 text-slate-500" />
-                <span>Galerie des Modèles</span>
+                <span>{dict.nav.templateGallery}</span>
               </Link>
 
               <Link
@@ -754,7 +754,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
               >
                 <Compass className="w-4 h-4 text-slate-500" />
-                <span>Nous Contacter</span>
+                <span>{dict.nav.contactUs}</span>
               </Link>
 
               <Link
@@ -763,7 +763,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
               >
                 <FileText className="w-4 h-4 text-slate-500" />
-                <span>Conditions d'Utilisation</span>
+                <span>{dict.nav.termsOfUse}</span>
               </Link>
 
               {currentUser && (
@@ -788,7 +788,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs cursor-pointer btn-press shadow-xs mt-2"
                 >
                   <Crown className="w-4 h-4" />
-                  <span>Passer Premium (Pack Pro)</span>
+                  <span>{dict.nav.upgradePremium}</span>
                 </button>
               )}
             </div>

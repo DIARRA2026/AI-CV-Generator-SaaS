@@ -12,6 +12,7 @@ import { StepLanguages } from "./StepLanguages";
 import { StepAdditional } from "./StepAdditional";
 import { StepDesignCustomizer } from "./StepDesignCustomizer";
 import { Check, Sparkles } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface QuestionnaireWizardProps {
   resumeData: ResumeData;
@@ -35,17 +36,18 @@ export const QuestionnaireWizard: React.FC<QuestionnaireWizardProps> = ({
   onOpenPayment,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const { dict, isRTL } = useTranslation();
 
   const steps = [
-    { title: "Profil", desc: "Type de CV" },
-    { title: "Contact", desc: "Identité & Photo" },
-    { title: "Présentation", desc: "Synthèse IA" },
-    { title: "Expériences", desc: "Parcours & Puces" },
-    { title: "Formations", desc: "Diplômes & Études" },
-    { title: "Compétences", desc: "Outils & Savoir-faire" },
-    { title: "Langues", desc: "Niveaux & Maîtrise" },
-    { title: "Atouts", desc: "Certifications & Projets" },
-    { title: "Design", desc: "Modèles & Export" },
+    { title: dict.wizard?.step1Title || "Profil", desc: dict.wizard?.step1Desc || "Type de CV" },
+    { title: dict.wizard?.step2Title || "Contact", desc: dict.wizard?.step2Desc || "Identité & Photo" },
+    { title: dict.wizard?.step3Title || "Présentation", desc: dict.wizard?.step3Desc || "Synthèse IA" },
+    { title: dict.wizard?.step4Title || "Expériences", desc: dict.wizard?.step4Desc || "Parcours & Puces" },
+    { title: dict.wizard?.step5Title || "Formations", desc: dict.wizard?.step5Desc || "Diplômes & Études" },
+    { title: dict.wizard?.step6Title || "Compétences", desc: dict.wizard?.step6Desc || "Outils & Savoir-faire" },
+    { title: dict.wizard?.step7Title || "Langues", desc: dict.wizard?.step7Desc || "Niveaux & Maîtrise" },
+    { title: dict.wizard?.step8Title || "Atouts", desc: dict.wizard?.step8Desc || "Certifications & Projets" },
+    { title: dict.wizard?.step9Title || "Design", desc: dict.wizard?.step9Desc || "Modèles & Export" },
   ];
 
   const handleNext = () => {

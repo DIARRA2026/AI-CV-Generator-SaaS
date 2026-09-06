@@ -1,4 +1,7 @@
-"use client";
+const fs = require('fs');
+const path = require('path');
+
+const content = `"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -245,17 +248,17 @@ export default function ContactPage() {
                   {dict.contact?.successTitle || "Message envoyé avec succès !"}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  {dict.contact?.successMessage || "Merci de nous avoir contactés. L'équipe support d'INNOVA GROUP a bien reçu votre demande et vous répondra sous quelques instants."}
+                  {dict.contact?.successDesc || "Merci de nous avoir contactés. L'équipe support d'INNOVA GROUP a bien reçu votre demande et vous répondra sous quelques instants."}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                    {dict.contact?.formTitle || "Envoyer un message à l'équipe INNOVA GROUP"}
+                    Envoyer un message à l'équipe INNOVA GROUP
                   </h3>
                   <p className="text-xs text-slate-500">
-                    {dict.contact?.formSubtitle || "Remplissez le formulaire ci-dessous pour une prise en charge rapide."}
+                    Remplissez le formulaire ci-dessous pour une prise en charge rapide.
                   </p>
                 </div>
 
@@ -269,7 +272,7 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      {dict.contact?.nameLabel || "Votre Nom Complet"} <span className="text-red-500">*</span>
+                      {dict.contact?.fullName || "Votre Nom Complet"} <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -283,7 +286,7 @@ export default function ContactPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      {dict.contact?.emailLabel || "Votre Adresse Email"} <span className="text-red-500">*</span>
+                      {dict.contact?.email || "Votre Adresse Email"} <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -299,7 +302,7 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      {dict.contact?.phoneLabel || "Numéro Téléphone / WhatsApp"}
+                      {dict.contact?.phone || "Numéro Téléphone / WhatsApp"}
                     </label>
                     <input
                       type="tel"
@@ -330,7 +333,7 @@ export default function ContactPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {dict.contact?.messageLabel || "Votre Message détaillé"} <span className="text-red-500">*</span>
+                    {dict.contact?.message || "Votre Message détaillé"} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     required
@@ -348,7 +351,7 @@ export default function ContactPage() {
                   className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{isSubmitting ? (dict.contact?.sendingButton || "Transmission en cours...") : (dict.contact?.sendButton || "Envoyer mon message")}</span>
+                  <span>{isSubmitting ? (dict.contact?.sending || "Transmission en cours...") : (dict.contact?.send || "Envoyer mon message")}</span>
                 </button>
               </form>
             )}
@@ -378,3 +381,7 @@ export default function ContactPage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync(path.join(__dirname, '../app/contact/page.tsx'), content, 'utf8');
+console.log('Successfully generated localized app/contact/page.tsx');

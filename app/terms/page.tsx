@@ -15,8 +15,12 @@ import {
   Mail,
   Printer,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 export default function TermsPage() {
+  const { dict, isRTL } = useTranslation();
+
   const handlePrint = () => {
     if (typeof window !== "undefined") {
       window.print();
@@ -24,7 +28,7 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header Sticky */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 no-print">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
@@ -38,6 +42,8 @@ export default function TermsPage() {
           </Link>
 
           <div className="flex items-center gap-2.5">
+            <LanguageSelector variant="navbar" />
+
             <button
               type="button"
               onClick={handlePrint}
@@ -52,7 +58,7 @@ export default function TermsPage() {
               className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Retour au site</span>
+              <span>{dict.common?.back || "Retour au site"}</span>
             </Link>
           </div>
         </div>

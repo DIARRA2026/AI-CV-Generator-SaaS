@@ -1,4 +1,7 @@
-"use client";
+const fs = require('fs');
+const path = require('path');
+
+const dashboardContent = `"use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
@@ -139,7 +142,7 @@ export default function DashboardPage() {
     if (!candidateSearchQuery.trim()) return resumes;
     const q = candidateSearchQuery.toLowerCase();
     return resumes.filter((r) => {
-      const name = `${r.personal?.firstName || ""} ${r.personal?.lastName || ""}`.toLowerCase();
+      const name = \`\${r.personal?.firstName || ""} \${r.personal?.lastName || ""}\`.toLowerCase();
       const title = (r.personal?.title || "").toLowerCase();
       const email = (r.personal?.email || "").toLowerCase();
       const city = (r.personal?.city || "").toLowerCase();
@@ -212,7 +215,7 @@ export default function DashboardPage() {
     if (isBusinessAccount && businessQuota && businessQuota.allowedCount > 0) {
       if (businessQuota.isExhausted) {
         alert(
-          `Votre quota entreprise de ${businessQuota.allowedCount} profils est entièrement utilisé.\n\nVeuillez recharger vos crédits candidats pour ajouter un nouveau profil au vivier.`
+          \`Votre quota entreprise de \${businessQuota.allowedCount} profils est entièrement utilisé.\\n\\nVeuillez recharger vos crédits candidats pour ajouter un nouveau profil au vivier.\`
         );
         setPaymentDefaultPlan("enterprise75");
         setIsPaymentOpen(true);
@@ -220,7 +223,7 @@ export default function DashboardPage() {
       }
     }
 
-    const title = customTitle || `Candidat ${resumes.length + 1}`;
+    const title = customTitle || \`Candidat \${resumes.length + 1}\`;
     const newCv = StorageManager.createNewResume(title);
     StorageManager.saveActiveResume(newCv);
     SupabaseService.syncResumeToCloud(newCv).catch(() => {});
@@ -247,7 +250,7 @@ export default function DashboardPage() {
   };
 
   const handleDuplicate = async (resume: ResumeData) => {
-    const dup = StorageManager.createNewResume(`${resume.title} (${dict.dashboard.duplicateCv})`, resume);
+    const dup = StorageManager.createNewResume(\`\${resume.title} (\${dict.dashboard.duplicateCv})\`, resume);
     await SupabaseService.syncResumeToCloud(dup).catch(() => {});
     setResumes(StorageManager.getResumes());
     setBusinessQuota(StorageManager.getBusinessQuotaInfo());
@@ -315,11 +318,11 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("business")}
-                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={\`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer \${
                     activeTab === "business"
                       ? "bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-md shadow-indigo-950/20"
                       : "text-slate-700 hover:bg-slate-300/70"
-                  }`}
+                  }\`}
                 >
                   <Building className="w-4 h-4 text-amber-400" />
                   <span>{dict.dashboard.recruiterTab}</span>
@@ -331,11 +334,11 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("candidate")}
-                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={\`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer \${
                     activeTab === "candidate"
                       ? "bg-white text-blue-900 shadow-sm border border-slate-200"
                       : "text-slate-700 hover:bg-slate-300/70"
-                  }`}
+                  }\`}
                 >
                   <User className="w-4 h-4 text-blue-600" />
                   <span>{dict.dashboard.personalTab}</span>
@@ -365,7 +368,7 @@ export default function DashboardPage() {
                         <span className="text-slate-400 text-xs">•</span>
                         <span className="text-xs text-slate-300 font-semibold flex items-center gap-1">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                          {currentUser?.business?.rccm ? `RCCM : ${currentUser.business.rccm}` : "RCCM Certifié OHADA"}
+                          {currentUser?.business?.rccm ? \`RCCM : \${currentUser.business.rccm}\` : "RCCM Certifié OHADA"}
                         </span>
                       </div>
                       <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -455,14 +458,14 @@ export default function DashboardPage() {
                   <div className="space-y-1.5">
                     <div className="w-full h-3 rounded-full bg-slate-800/90 overflow-hidden p-0.5 border border-slate-700">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
+                        className={\`h-full rounded-full transition-all duration-500 \${
                           (businessQuota?.usagePercent || 0) >= 90
                             ? "bg-rose-500"
                             : (businessQuota?.usagePercent || 0) >= 70
                             ? "bg-amber-500"
                             : "bg-gradient-to-r from-emerald-500 to-teal-400"
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(4, businessQuota?.usagePercent || 0))}%` }}
+                        }\`}
+                        style={{ width: \`\${Math.min(100, Math.max(4, businessQuota?.usagePercent || 0))}%\` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-[10.5px] text-slate-400">
@@ -570,8 +573,8 @@ export default function DashboardPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {filteredResumes.map((cv) => {
-                      const fullName = `${cv.personal?.firstName || ""} ${cv.personal?.lastName || ""}`.trim() || cv.title;
-                      const initials = `${(cv.personal?.firstName?.[0] || cv.title?.[0] || "C").toUpperCase()}${(cv.personal?.lastName?.[0] || "").toUpperCase()}`;
+                      const fullName = \`\${cv.personal?.firstName || ""} \${cv.personal?.lastName || ""}\`.trim() || cv.title;
+                      const initials = \`\${(cv.personal?.firstName?.[0] || cv.title?.[0] || "C").toUpperCase()}\${(cv.personal?.lastName?.[0] || "").toUpperCase()}\`;
                       const isUnlockingDocx = isExportingDocxId === cv.id;
                       const hasDocxExported = exportSuccessId === cv.id;
 
@@ -625,7 +628,7 @@ export default function DashboardPage() {
                                   {dict.dashboard.portfolioBadge}
                                 </span>
                                 <a
-                                  href={`/c/${cv.slug}?from=enterprise`}
+                                  href={\`/c/\${cv.slug}?from=enterprise\`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-0.5 text-[10.5px]"
@@ -675,11 +678,11 @@ export default function DashboardPage() {
                                 type="button"
                                 onClick={() => handleExportDocx(cv)}
                                 disabled={isUnlockingDocx}
-                                className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                                className={\`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer \${
                                   hasDocxExported
                                     ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                                     : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                                }`}
+                                }\`}
                               >
                                 {isUnlockingDocx ? (
                                   <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
@@ -944,7 +947,7 @@ export default function DashboardPage() {
 
                           <div className="pt-0.5">
                             <a
-                              href={`/c/${cv.slug}`}
+                              href={\`/c/\${cv.slug}\`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-xs"
@@ -991,11 +994,11 @@ export default function DashboardPage() {
                             type="button"
                             onClick={() => handleExportDocx(cv)}
                             disabled={isExportingDocxId === cv.id}
-                            className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                            className={\`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer \${
                               exportSuccessId === cv.id
                                 ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                                 : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                            }`}
+                            }\`}
                           >
                             {isExportingDocxId === cv.id ? (
                               <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
@@ -1109,20 +1112,20 @@ export default function DashboardPage() {
         <ShareModal
           isOpen={!!selectedForShare}
           onClose={() => setSelectedForShare(null)}
-          resumeData={selectedForShare}
+          resume={selectedForShare}
         />
       )}
 
       <CoverLetterModal
         isOpen={isCoverLetterOpen}
         onClose={() => setIsCoverLetterOpen(false)}
-        resumeData={selectedForCoverLetter || resumes[0] || StorageManager.getActiveResume()}
+        resume={selectedForCoverLetter || resumes[0] || StorageManager.getActiveResume()}
       />
 
       <JobApplicationModal
         isOpen={isJobAppOpen}
         onClose={() => setIsJobAppOpen(false)}
-        resumeData={selectedForJobApp || resumes[0] || StorageManager.getActiveResume()}
+        resume={selectedForJobApp || resumes[0] || StorageManager.getActiveResume()}
       />
 
       <AccountSettingsModal
@@ -1169,3 +1172,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync(path.join(__dirname, '../app/dashboard/page.tsx'), dashboardContent, 'utf-8');
+console.log('Successfully generated localized app/dashboard/page.tsx');

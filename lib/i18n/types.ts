@@ -17,6 +17,7 @@ export interface TranslationDictionary {
     close: string;
     back: string;
     next: string;
+    previous: string;
     edit: string;
     delete: string;
     download: string;
@@ -68,24 +69,145 @@ export interface TranslationDictionary {
     menu: string;
     closeMenu: string;
     switchLanguage: string;
+    templateGallery: string;
+    contactUs: string;
+    termsOfUse: string;
+    upgradePremium: string;
+    currentPlanLabel: string;
+    billing: string;
   };
 
   hero: {
     badge: string;
+    statsCvs: string;
     titlePart1: string;
     titleHighlight: string;
     titlePart2: string;
     subtitle: string;
     ctaCreateCv: string;
     ctaViewPortfolio: string;
-    badgeAts: string;
-    badgeAtsDesc: string;
-    badgeAi: string;
-    badgeAiDesc: string;
-    badgeExport: string;
-    badgeExportDesc: string;
-    badgeMobileMoney: string;
-    badgeMobileMoneyDesc: string;
+    modelsButton: string;
+    portfolioButton: string;
+    verifiedReviews: string;
+    checkNoSignup: string;
+    checkAtsScore: string;
+    checkMobileMoney: string;
+    cardScoreAts: string;
+    cardScoreDesc: string;
+    cardReadyTime: string;
+    cardReadyDesc: string;
+    badgePdfHd: string;
+    badgePdfHdDesc: string;
+    badgeJobApp: string;
+    badgeJobAppDesc: string;
+    badgeCoverLetter: string;
+    badgeCoverLetterDesc: string;
+    metricDownloads: string;
+    metricDownloadsLabel: string;
+    metricAtsRate: string;
+    metricAtsLabel: string;
+    metricCalls: string;
+    metricCallsLabel: string;
+    metricTime: string;
+    metricTimeLabel: string;
+    companiesTitle: string;
+  };
+
+  gallery: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    testThisModel: string;
+    recommendedFor: string;
+    customizeThisModel: string;
+    templates: {
+      modern: { name: string; tag: string; desc: string; idealFor: string };
+      elegant: { name: string; tag: string; desc: string; idealFor: string };
+      corporate: { name: string; tag: string; desc: string; idealFor: string };
+      minimal: { name: string; tag: string; desc: string; idealFor: string };
+      creative: { name: string; tag: string; desc: string; idealFor: string };
+      ats: { name: string; tag: string; desc: string; idealFor: string };
+    };
+  };
+
+  liveDemo: {
+    badge: string;
+    title: string;
+    autoPlayOn: string;
+    autoPlayOff: string;
+    selectedModel: string;
+    templatePrefix: string;
+    accentColor: string;
+    featureA4: string;
+    featureSkills: string;
+    featureExport: string;
+    ctaUseModel: string;
+    demoProfileTitle: string;
+    demoProfileName: string;
+    demoProfileRole: string;
+    demoStarSection: string;
+    demoStarDesc: string;
+    demoExperienceSection: string;
+    demoExperienceRole: string;
+    demoExperienceDesc: string;
+    demoSkillsSection: string;
+  };
+
+  avantApres: {
+    badge: string;
+    title: string;
+    classicBadge: string;
+    classicTitle: string;
+    classicPoint1: string;
+    classicPoint2: string;
+    classicPoint3: string;
+    classicResult: string;
+    moncvBadge: string;
+    moncvTitle: string;
+    moncvPoint1: string;
+    moncvPoint2: string;
+    moncvPoint3: string;
+    moncvResult: string;
+    moncvCta: string;
+  };
+
+  comparison: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    colCriteria: string;
+    colMoncv: string;
+    colWord: string;
+    colCanva: string;
+    colFreelance: string;
+    ctaTitle: string;
+    ctaSubtitle: string;
+    ctaButton: string;
+    rows: Array<{
+      critere: string;
+      sub: string;
+      moncv: string;
+      word: string;
+      canva: string;
+      free: string;
+    }>;
+  };
+
+  atsDemo: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    scoreTitle: string;
+    scoreDesc: string;
+    filterLabel: string;
+    filterPass: string;
+    checkTypography: string;
+    checkTypographyDesc: string;
+    checkKeywords: string;
+    checkKeywordsDesc: string;
+    checkMargins: string;
+    checkMarginsDesc: string;
+    ctaTest: string;
   };
 
   features: {
@@ -112,42 +234,178 @@ export interface TranslationDictionary {
     subtitle: string;
     candidatesTab: string;
     enterprisesTab: string;
-    // Candidats
+    candidateFreeBadge: string;
     candidateFreeTitle: string;
     candidateFreePrice: string;
     candidateFreePeriod: string;
     candidateFreeDesc: string;
+    candidateFreeWarning: string;
+    candidateFreeF1: string;
+    candidateFreeF2: string;
+    candidateFreeF3: string;
+    candidateFreeF4: string;
+    candidateFreeF5: string;
     candidateFreeCta: string;
+    candidateEssentialBadge: string;
+    candidateEssentialTitle: string;
+    candidateEssentialPrice: string;
+    candidateEssentialPeriod: string;
+    candidateEssentialDesc: string;
+    candidateEssentialF1: string;
+    candidateEssentialF2: string;
+    candidateEssentialF3: string;
+    candidateEssentialF4: string;
+    candidateEssentialF5: string;
+    candidateEssentialCta: string;
+    candidateProBadge: string;
     candidateProTitle: string;
     candidateProPrice: string;
     candidateProPeriod: string;
     candidateProDesc: string;
+    candidateProF1: string;
+    candidateProF2: string;
+    candidateProF3: string;
+    candidateProF4: string;
+    candidateProF5: string;
     candidateProCta: string;
+    candidateVipBadge: string;
     candidateVipTitle: string;
     candidateVipPrice: string;
     candidateVipPeriod: string;
     candidateVipDesc: string;
+    candidateVipF1: string;
+    candidateVipF2: string;
+    candidateVipF2Link: string;
+    candidateVipF3: string;
+    candidateVipF4: string;
+    candidateVipF5: string;
     candidateVipCta: string;
-    // Entreprises
+    enterpriseStarterBadge: string;
     enterpriseStarterTitle: string;
     enterpriseStarterPrice: string;
     enterpriseStarterPeriod: string;
     enterpriseStarterRate: string;
     enterpriseStarterDesc: string;
+    enterpriseStarterF1: string;
+    enterpriseStarterF2: string;
+    enterpriseStarterF3: string;
+    enterpriseStarterF4: string;
+    enterpriseStarterF5: string;
     enterpriseStarterCta: string;
+    enterpriseProBadge: string;
     enterpriseProTitle: string;
     enterpriseProPrice: string;
     enterpriseProPeriod: string;
     enterpriseProRate: string;
     enterpriseProDesc: string;
+    enterpriseProF1: string;
+    enterpriseProF2: string;
+    enterpriseProF3: string;
+    enterpriseProF4: string;
+    enterpriseProF5: string;
+    enterpriseProF6: string;
     enterpriseProCta: string;
+    enterprisePremiumBadge: string;
     enterprisePremiumTitle: string;
     enterprisePremiumPrice: string;
     enterprisePremiumPeriod: string;
     enterprisePremiumRate: string;
     enterprisePremiumDesc: string;
+    enterprisePremiumF1: string;
+    enterprisePremiumF2: string;
+    enterprisePremiumF3: string;
+    enterprisePremiumF4: string;
+    enterprisePremiumF5: string;
+    enterprisePremiumF6: string;
     enterprisePremiumCta: string;
     recommendedBadge: string;
+  };
+
+  businessSection: {
+    badge: string;
+    title: string;
+    titleHighlight: string;
+    subtitle: string;
+    pillar1Title: string;
+    pillar1Desc: string;
+    pillar2Title: string;
+    pillar2Desc: string;
+    pillar3Title: string;
+    pillar3Desc: string;
+    pillar4Title: string;
+    pillar4Desc: string;
+    customVolumeBadge: string;
+    customVolumeTitle: string;
+    customVolumeDesc: string;
+    customVolumeCta: string;
+    recruiterBoxTitle: string;
+    recruiterBoxDesc: string;
+    recruiterBoxCta: string;
+    securityNote: string;
+    invoiceNote: string;
+  };
+
+  testimonials: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    items: Array<{
+      name: string;
+      role: string;
+      company: string;
+      country: string;
+      flag: string;
+      avatar: string;
+      quote: string;
+      score: string;
+    }>;
+  };
+
+  faq: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    items: Array<{
+      q: string;
+      a: string;
+    }>;
+  };
+
+  contact: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    devBadge: string;
+    devTitle: string;
+    devDesc: string;
+    devSupport247: string;
+    whatsappBadge: string;
+    whatsappNumber: string;
+    emailSupportLabel: string;
+    emailGeneralLabel: string;
+    phoneLabel: string;
+    formTitle: string;
+    formSubtitle: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    messageLabel: string;
+    messagePlaceholder: string;
+    sendButton: string;
+    sendingButton: string;
+    successTitle: string;
+    successMessage: string;
+    directWhatsApp: string;
+    directEmail: string;
+    directCall: string;
+  };
+
+  ctaBanner: {
+    title: string;
+    subtitle: string;
+    ctaCandidate: string;
+    ctaRecruiter: string;
   };
 
   auth: {
@@ -233,6 +491,61 @@ export interface TranslationDictionary {
     confirmDelete: string;
     enterpriseSpace: string;
     candidatePool: string;
+    protectedAreaTitle: string;
+    protectedAreaSubtitle: string;
+    signInPrompt: string;
+    personalTab: string;
+    recruiterTab: string;
+    companyLicenses: string;
+    searchCandidatePlaceholder: string;
+    activeSession: string;
+    recruiterSpaceBadge: string;
+    candidateSpaceBadge: string;
+    accessRecruiterBtn: string;
+    accessCandidateBtn: string;
+    invoiceOhadaBtn: string;
+    supportVipBtn: string;
+    reloadCreditsBtn: string;
+    quotaUsed: string;
+    quotaRemaining: string;
+    quotaConsumption: string;
+    unlimitedCreditsNote: string;
+    antiWasteRule: string;
+    addCandidateBtn: string;
+    displayCount: string;
+    searchReset: string;
+    portfolioBadge: string;
+    portfolioDemoBtn: string;
+    modalTitleCandidate: string;
+    modalTitleNewCv: string;
+    modalInputLabel: string;
+    modalInputPlaceholder: string;
+    modalCreateBtn: string;
+    modalCancelBtn: string;
+  };
+
+  wizard: {
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    step4Title: string;
+    step4Desc: string;
+    step5Title: string;
+    step5Desc: string;
+    step6Title: string;
+    step6Desc: string;
+    step7Title: string;
+    step7Desc: string;
+    step8Title: string;
+    step8Desc: string;
+    step9Title: string;
+    step9Desc: string;
+    nextButton: string;
+    previousButton: string;
+    downloadButton: string;
   };
 
   creator: {
@@ -254,6 +567,33 @@ export interface TranslationDictionary {
     exportPdf: string;
     exportDocx: string;
     viewLivePortfolio: string;
+    inputView: string;
+    previewView: string;
+    resetTooltip: string;
+    renameTooltip: string;
+    syncing: string;
+    savedStatus: string;
+    localStatus: string;
+    coverLetterBtn: string;
+    jobAppBtn: string;
+    portfolioBtn: string;
+    backToEnterpriseBtn: string;
+    previewA4Title: string;
+    unlockedBadge: string;
+    removeWatermarkBtn: string;
+    adjustBtn: string;
+    newIdentityTitle: string;
+    newIdentityDesc: string;
+  };
+
+  socialProof: {
+    activities: Array<{
+      countryFlag: string;
+      name: string;
+      city: string;
+      action: string;
+      timeAgo: string;
+    }>;
   };
 
   footer: {

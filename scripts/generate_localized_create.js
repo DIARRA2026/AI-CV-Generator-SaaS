@@ -1,4 +1,7 @@
-"use client";
+const fs = require('fs');
+const path = require('path');
+
+const content = `"use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
@@ -131,7 +134,7 @@ export default function CreateCVPage() {
               StorageManager.saveActiveResume(match);
               setCloudSyncStatus("saved");
               const d = new Date();
-              setLastSyncTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+              setLastSyncTime(\`\${String(d.getHours()).padStart(2, "0")}:\${String(d.getMinutes()).padStart(2, "0")}\`);
             }
           } else if (active) {
             // Premier envoi du CV vers Supabase
@@ -192,7 +195,7 @@ export default function CreateCVPage() {
         if (res.success) {
           setCloudSyncStatus("saved");
           const d = new Date();
-          setLastSyncTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+          setLastSyncTime(\`\${String(d.getHours()).padStart(2, "0")}:\${String(d.getMinutes()).padStart(2, "0")}\`);
         } else {
           setCloudSyncStatus(user?.email ? "error" : "local");
         }
@@ -313,7 +316,7 @@ export default function CreateCVPage() {
             className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold"
             title={
               cloudSyncStatus === "saved"
-                ? `${dict.creator?.savedStatus || "Sauvegardé"} (${lastSyncTime})`
+                ? \`\${dict.creator?.savedStatus || "Sauvegardé"} (\${lastSyncTime})\`
                 : cloudSyncStatus === "saving"
                 ? dict.creator?.syncing || "Synchronisation..."
                 : dict.creator?.localStatus || "Enregistré en local"
@@ -371,7 +374,7 @@ export default function CreateCVPage() {
           </button>
 
           <Link
-            href={`/c/${resumeData.slug || "demo"}`}
+            href={\`/c/\${resumeData.slug || "demo"}\`}
             target="_blank"
             className="px-2.5 py-1.5 bg-white hover:bg-purple-50 text-slate-800 hover:text-purple-900 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             title="Consulter le Portfolio Web interactif"
@@ -388,9 +391,9 @@ export default function CreateCVPage() {
             <button
               type="button"
               onClick={() => setViewTab("editor")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+              className={\`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all \${
                 viewTab === "editor" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600"
-              }`}
+              }\`}
             >
               <Edit3 className="w-3 h-3" />
               <span>{dict.creator?.inputView || "Saisie"}</span>
@@ -398,9 +401,9 @@ export default function CreateCVPage() {
             <button
               type="button"
               onClick={() => setViewTab("preview")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+              className={\`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all \${
                 viewTab === "preview" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600"
-              }`}
+              }\`}
             >
               <Eye className="w-3 h-3" />
               <span>{dict.creator?.previewView || "Aperçu"}</span>
@@ -434,11 +437,11 @@ export default function CreateCVPage() {
             type="button"
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className={`px-4 py-1.5 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer ${
+            className={\`px-4 py-1.5 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer \${
               downloadSuccess
                 ? "bg-emerald-600 hover:bg-emerald-500"
                 : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
-            }`}
+            }\`}
             title="Télécharger le CV au format PDF Haute Définition"
           >
             {isDownloading ? (
@@ -463,9 +466,9 @@ export default function CreateCVPage() {
       <div className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Colonne Éditeur & Questionnaire (7/12 sur grand écran) */}
         <div
-          className={`xl:col-span-7 space-y-6 ${
+          className={\`xl:col-span-7 space-y-6 \${
             viewTab === "editor" ? "block" : "hidden xl:block"
-          }`}
+          }\`}
         >
           <QuestionnaireWizard
             resumeData={resumeData}
@@ -481,9 +484,9 @@ export default function CreateCVPage() {
 
         {/* Colonne Aperçu A4 en Direct (5/12 sur grand écran) */}
         <div
-          className={`xl:col-span-5 sticky top-20 ${
+          className={\`xl:col-span-5 sticky top-20 \${
             viewTab === "preview" ? "block" : "hidden xl:block"
-          }`}
+          }\`}
         >
           {/* Zoom controls & Banner */}
           <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 mb-3 flex flex-wrap items-center justify-between gap-2 no-print shadow-xs">
@@ -536,9 +539,9 @@ export default function CreateCVPage() {
               <button
                 type="button"
                 onClick={() => setScale(0.46)}
-                className={`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all ${
+                className={\`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all \${
                   Math.abs(scale - 0.46) < 0.03 ? "bg-blue-600 text-white shadow-xs" : "text-slate-500 hover:bg-slate-100"
-                }`}
+                }\`}
                 title="Zoom Mobile"
               >
                 Mobile
@@ -546,9 +549,9 @@ export default function CreateCVPage() {
               <button
                 type="button"
                 onClick={() => setScale(0.75)}
-                className={`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all ${
+                className={\`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all \${
                   Math.abs(scale - 0.75) < 0.03 ? "bg-blue-600 text-white shadow-xs" : "text-slate-500 hover:bg-slate-100"
-                }`}
+                }\`}
                 title="Zoom 75%"
               >
                 75%
@@ -556,9 +559,9 @@ export default function CreateCVPage() {
               <button
                 type="button"
                 onClick={() => setScale(1)}
-                className={`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all ${
+                className={\`px-1.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-all \${
                   Math.abs(scale - 1) < 0.03 ? "bg-blue-600 text-white shadow-xs" : "text-slate-500 hover:bg-slate-100"
-                }`}
+                }\`}
                 title="Taille Réelle 100%"
               >
                 100%
@@ -735,3 +738,7 @@ export default function CreateCVPage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync(path.join(__dirname, '../app/create/page.tsx'), content, 'utf8');
+console.log('Successfully generated localized app/create/page.tsx');

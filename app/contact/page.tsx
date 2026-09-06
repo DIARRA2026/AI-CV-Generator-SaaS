@@ -64,7 +64,7 @@ export default function ContactPage() {
   };
 
   const whatsappSupportUrl =
-    "https://wa.me/2250700000000?text=Bonjour%20l'%C3%A9quipe%20INNOVA%20GROUP%20%2F%20MonCV.ai,%20j'aimerais%20avoir%20une%20assistance%20concernant%20mon%20CV.";
+    "https://wa.me/2250700510524?text=Bonjour%20l'%C3%A9quipe%20INNOVA%20GROUP%20%2F%20MonCV.ai,%20j'aimerais%20avoir%20une%20assistance%20concernant%20mon%20CV.";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
@@ -167,7 +167,9 @@ export default function ContactPage() {
                   <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                 </div>
                 <h2 className="font-black text-base">Chat WhatsApp Direct</h2>
-                <p className="text-xs text-emerald-100">Échangez directement avec un conseiller INNOVA GROUP</p>
+                <p className="text-xs text-emerald-100">
+                  +225 07 00 51 05 24 • Conseiller INNOVA GROUP en direct
+                </p>
               </div>
               <ChevronRight className="w-5 h-5 text-emerald-200" />
             </a>
@@ -188,15 +190,28 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="mailto:contact@innovagroup.io"
+                href="mailto:innovagroup225@gmail.com"
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors border-t border-slate-100 pt-3"
               >
                 <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
                   <Building className="w-4 h-4" />
                 </div>
                 <div className="truncate">
-                  <span className="text-[10.5px] font-bold text-slate-400 block">Partenariats & Siège INNOVA GROUP</span>
-                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">contact@innovagroup.io</span>
+                  <span className="text-[10.5px] font-bold text-slate-400 block">Direction Générale & Siège INNOVA GROUP</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">innovagroup225@gmail.com</span>
+                </div>
+              </a>
+
+              <a
+                href="tel:+2250700510524"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors border-t border-slate-100 pt-3"
+              >
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <span className="text-[10.5px] font-bold text-slate-400 block">Ligne Téléphonique & WhatsApp Officiel</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">+225 07 00 51 05 24</span>
                 </div>
               </a>
 
@@ -283,7 +298,7 @@ export default function ContactPage() {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+225 07 00 00 00 00"
+                      placeholder="+225 07 00 51 05 24"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50"
                     />
                   </div>

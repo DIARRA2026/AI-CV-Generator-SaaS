@@ -39,6 +39,7 @@ import {
   ThumbsUp,
   XCircle,
   HelpCircle,
+  Phone,
   PhoneCall,
   Download,
   Lock,
@@ -1945,7 +1946,7 @@ export default function HomePage() {
                 </p>
               </div>
               <a
-                href="https://wa.me/2250700000000?text=Bonjour%20INNOVA%20GROUP,%20notre%20organisation%20souhaite%20un%20devis%20B2B%20sur-mesure%20pour%20plus%20de%20200%20profils%20sur%20MonCV.ai."
+                href="https://wa.me/2250700510524?text=Bonjour%20INNOVA%20GROUP,%20notre%20organisation%20souhaite%20un%20devis%20B2B%20sur-mesure%20pour%20plus%20de%20200%20profils%20sur%20MonCV.ai."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer group"
@@ -2037,7 +2038,7 @@ export default function HomePage() {
 
                 {/* Bouton WhatsApp Direct */}
                 <a
-                  href="https://wa.me/2250700000000?text=Bonjour%20l'%C3%A9quipe%20INNOVA%20GROUP%20%2F%20MonCV.ai,%20j'ai%20besoin%20d'assistance."
+                  href="https://wa.me/2250700510524?text=Bonjour%20l'%C3%A9quipe%20INNOVA%20GROUP%20%2F%20MonCV.ai,%20j'ai%20besoin%20d'assistance."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-md shadow-emerald-500/20 group"
@@ -2049,7 +2050,7 @@ export default function HomePage() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-100 block">
                       WhatsApp Officiel Direct
                     </span>
-                    <span className="text-xs sm:text-sm font-black">Discuter avec l'équipe INNOVA GROUP</span>
+                    <span className="text-xs sm:text-sm font-black">+225 07 00 51 05 24</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-emerald-200" />
                 </a>
@@ -2061,7 +2062,11 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-2 text-slate-700">
                     <Building className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                    <span>Direction Générale : <strong>contact@innovagroup.io</strong></span>
+                    <span>Direction Générale : <strong>innovagroup225@gmail.com</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>WhatsApp / Tél : <strong>+225 07 00 51 05 24</strong></span>
                   </div>
                 </div>
               </div>

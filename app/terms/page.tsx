@@ -119,8 +119,8 @@ export default function TermsPage() {
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
               <li><strong>Éditeur et Développeur :</strong> INNOVA GROUP</li>
               <li><strong>Activité :</strong> Ingénierie logicielle, intelligence artificielle et solutions numériques pour l'emploi</li>
-              <li><strong>Contact Support :</strong> contact@innovagroup.io / support@moncv.ai</li>
-              <li><strong>Assistance Directe :</strong> WhatsApp Service Client INNOVA GROUP 7j/7</li>
+              <li><strong>Contact Support :</strong> innovagroup225@gmail.com / support@moncv.ai</li>
+              <li><strong>Assistance Directe :</strong> WhatsApp Service Client INNOVA GROUP (+225 07 00 51 05 24) 7j/7</li>
             </ul>
           </section>
 
@@ -267,11 +267,11 @@ export default function TermsPage() {
               <p className="font-bold text-slate-900">Support Client INNOVA GROUP :</p>
               <p className="flex items-center gap-2 text-slate-700">
                 <Mail className="w-4 h-4 text-blue-600" />
-                <span>Email officiel : <strong>support@moncv.ai</strong> / <strong>contact@innovagroup.io</strong></span>
+                <span>Email officiel : <strong>support@moncv.ai</strong> / <strong>innovagroup225@gmail.com</strong></span>
               </p>
               <p className="flex items-center gap-2 text-slate-700">
                 <Smartphone className="w-4 h-4 text-emerald-600" />
-                <span>Assistance WhatsApp Directe : <strong>Disponible 7j/7</strong></span>
+                <span>Assistance WhatsApp Directe : <strong>+225 07 00 51 05 24 (Disponible 7j/7)</strong></span>
               </p>
             </div>
           </section>

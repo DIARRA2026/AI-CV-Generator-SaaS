@@ -348,7 +348,7 @@ export class StorageManager {
       // Connexion réussie : activer la session
       this.setUser({
         accountType: restoredAccountType,
-        role: user.role || (normalizedEmail === "admin@moncv.ai" || normalizedEmail === "innova.admin@moncv.ai" ? "superadmin" : undefined),
+        role: user.role || (normalizedEmail === "admin@moncv.ai" || normalizedEmail === "innova.admin@moncv.ai" || normalizedEmail === "innovagroup225@gmail.com" ? "superadmin" : undefined),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -533,7 +533,7 @@ export class StorageManager {
       const user = this.getUser();
       if (user?.role === "admin" || user?.role === "superadmin") return true;
       const email = user?.email?.toLowerCase().trim();
-      if (email === "admin@moncv.ai" || email === "innova.admin@moncv.ai") return true;
+      if (email === "admin@moncv.ai" || email === "innova.admin@moncv.ai" || email === "innovagroup225@gmail.com") return true;
       const adminSession = localStorage.getItem("moncv_admin_session");
       return Boolean(adminSession);
     } catch {

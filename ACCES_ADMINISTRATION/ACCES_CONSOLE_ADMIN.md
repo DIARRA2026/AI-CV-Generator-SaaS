@@ -1,7 +1,13 @@
 # 🔐 ACCÈS ET GUIDE DE LA CONSOLE D'ADMINISTRATION MONCV.AI
-**CONFIDENTIEL — RÉSERVÉ STRICTEMENT AU SUPER ADMINISTRATEUR / DIRECTION**
+**CONFIDENTIEL — RÉSERVÉ STRICTEMENT AU SUPER ADMINISTRATEUR / DIRECTION INNOVA GROUP**
 
-Ce dossier contient les identifiants d'accès maîtres, les clés de sécurité et les instructions d'exploitation de la console d'administration centrale de la plateforme MonCV.ai.
+Ce dossier contient les identifiants d'accès maîtres, les clés de sécurité et les instructions d'exploitation de la console d'administration centrale de la plateforme MonCV.ai éditée par **INNOVA GROUP**.
+
+---
+
+## 📞 Coordonnées Officielles de l'Éditeur (INNOVA GROUP)
+- **WhatsApp Officiel Support & Direction** : `+225 07 00 51 05 24` (`0700510524`)
+- **Email Officiel Direction** : `innovagroup225@gmail.com`
 
 ---
 
@@ -32,11 +38,11 @@ Pour déverrouiller la console d'administration, vous disposez de **deux méthod
   ```
 
 ### Option B : Connexion par Identifiant & Mot de Passe Administrateur
-- **Adresse Email Administrateur** :
+- **Adresses Email Administrateur Autorisées** :
   ```
+  innovagroup225@gmail.com
   admin@moncv.ai
   ```
-  *(ou `innova.admin@moncv.ai`)*
 - **Mot de Passe Administrateur** :
   ```
   INNOVA#2026@MonCV-SuperVault$Secure987!
@@ -101,4 +107,4 @@ Pour déverrouiller la console d'administration, vous disposez de **deux méthod
    - **"Générer des Données Démo"** : crée 1 profil VIP et 1 entreprise pour vos présentations.
 
 ---
-*MonCV.ai — Direction Technique & Administration Système*
+*MonCV.ai — Direction Technique & Administration Système • INNOVA GROUP*

@@ -402,7 +402,7 @@ export default function PublicCandidateCVPage() {
   const cleanPhone = p.phone?.replace(/\s+/g, "") || "";
   const whatsappUrl = cleanPhone
     ? `https://wa.me/${cleanPhone.replace("+", "")}?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20j'ai%20consulté%20votre%20portfolio%20sur%20MonCV.ai%20et%20souhaite%20échanger%20avec%20vous.`
-    : `https://wa.me/2250700000000?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20je%20souhaite%20échanger%20avec%20vous.`;
+    : `https://wa.me/2250700510524?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20je%20souhaite%20échanger%20avec%20vous.`;
 
   return (
     <div

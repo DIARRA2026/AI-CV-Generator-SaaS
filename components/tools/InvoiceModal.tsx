@@ -89,7 +89,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 RCCM : CI-ABJ-03-2024-B12-04892<br />
                 Régime d'Imposition : Réel Simplifié<br />
                 Plateau, Boulevard de la République, Abidjan<br />
-                Email : facturation@moncv.ai | Tél : +225 07 00 00 00
+                Email : innovagroup225@gmail.com | Tél / WhatsApp : +225 07 00 51 05 24
               </p>
             </div>
 

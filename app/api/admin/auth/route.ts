@@ -16,6 +16,7 @@ const AUTHORIZED_SUPERADMIN_KEYS = [
 
 // Emails autorisés pour le rôle SuperAdmin
 const AUTHORIZED_SUPERADMIN_EMAILS = [
+  "innovagroup225@gmail.com",
   "admin@moncv.ai",
   "innova.admin@moncv.ai",
   "superadmin@moncv.ai",

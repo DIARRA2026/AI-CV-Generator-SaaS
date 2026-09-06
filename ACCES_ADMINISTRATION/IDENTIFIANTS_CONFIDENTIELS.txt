@@ -1,11 +1,16 @@
 ================================================================================
                     CONSOLE D'ADMINISTRATION MONCV.AI
                    IDENTIFIANTS ET ACCES CONFIDENTIELS
+                             INNOVA GROUP
 ================================================================================
 
 [+] ADRESSE DIRECTE DE CONNEXION :
     Local : http://localhost:3000/admin
     Web   : https://votre-domaine.com/admin
+
+[+] COORDONNEES OFFICIELLES INNOVA GROUP :
+    WhatsApp Officiel : +225 07 00 51 05 24 (0700510524)
+    Email Officiel    : innovagroup225@gmail.com
 
 --------------------------------------------------------------------------------
 METHODE 1 : DEVERROUILLAGE ULTRA-RAPIDE (CLÉ MASTER)
@@ -20,7 +25,8 @@ MonCV2026Admin!
 --------------------------------------------------------------------------------
 METHODE 2 : CONNEXION PAR EMAIL ET MOT DE PASSE
 --------------------------------------------------------------------------------
-Identifiant / Email :
+Identifiants / Emails Autorisés :
+innovagroup225@gmail.com
 admin@moncv.ai
 (ou innova.admin@moncv.ai)
 
@@ -37,5 +43,5 @@ SECURITE ACTIVE
 * Sessions : HMAC signées côté serveur
 
 ================================================================================
-Ce fichier est strictement confidentiel et reserve a l'administrateur du systeme.
+Ce fichier est strictement confidentiel et réservé à l'administrateur INNOVA GROUP.
 ================================================================================

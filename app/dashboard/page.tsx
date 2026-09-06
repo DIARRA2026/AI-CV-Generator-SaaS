@@ -423,7 +423,7 @@ export default function DashboardPage() {
                     </button>
 
                     <a
-                      href="https://wa.me/2250700000000?text=Bonjour%20INNOVA%20GROUP,%20je%20suis%20client%20Entreprise%20sur%20MonCV.ai%20et%20j'ai%20besoin%20d'assistance%20prioritaire."
+                      href="https://wa.me/2250700510524?text=Bonjour%20INNOVA%20GROUP,%20je%20suis%20client%20Entreprise%20sur%20MonCV.ai%20et%20j'ai%20besoin%20d'assistance%20prioritaire."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"

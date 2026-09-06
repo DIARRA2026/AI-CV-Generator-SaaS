@@ -123,8 +123,8 @@ const PORTFOLIO_CONFIG = {
     satisfactionRate: "99.8%",
     onTimeDelivery: "100%",
     email: "alexandre.koffi@atelierdigital.io",
-    phone: "+225 07 00 00 00 00",
-    whatsapp: "https://wa.me/2250700000000?text=Bonjour%20Alexandre,%20je%20souhaite%20discuter%20d'un%20projet",
+    phone: "+225 07 00 51 05 24",
+    whatsapp: "https://wa.me/2250700510524?text=Bonjour%20Alexandre,%20je%20souhaite%20discuter%20d'un%20projet",
     linkedin: "https://linkedin.com",
     github: "https://github.com",
     avatarUrl:

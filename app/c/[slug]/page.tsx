@@ -435,44 +435,6 @@ export default function PublicCandidateCVPage() {
               )}
             </button>
 
-            {/* Télécharger Word (.docx) */}
-            <button
-              type="button"
-              onClick={handleDownloadWord}
-              disabled={isDownloading}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 ${
-                isDark
-                  ? "bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50"
-                  : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200"
-              }`}
-              title="Télécharger au format Word (.docx)"
-            >
-              <FileText className="w-3.5 h-3.5 text-indigo-500" />
-              <span className="hidden md:inline whitespace-nowrap">Word (.docx)</span>
-            </button>
-
-            {/* Télécharger CV PDF */}
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className={`px-3 py-1.5 rounded-xl text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 ${
-                downloadSuccess
-                  ? "bg-emerald-600"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
-              }`}
-            >
-              {isDownloading ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : downloadSuccess ? (
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-              ) : (
-                <Download className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline whitespace-nowrap">
-                {isDownloading ? "Génération..." : downloadSuccess ? "Téléchargé" : "CV PDF"}
-              </span>
-            </button>
 
             {/* Bouton Retour Accueil MonCV.ai */}
             <Link

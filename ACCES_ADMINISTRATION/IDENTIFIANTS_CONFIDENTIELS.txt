@@ -1,0 +1,41 @@
+================================================================================
+                    CONSOLE D'ADMINISTRATION MONCV.AI
+                   IDENTIFIANTS ET ACCES CONFIDENTIELS
+================================================================================
+
+[+] ADRESSE DIRECTE DE CONNEXION :
+    Local : http://localhost:3000/admin
+    Web   : https://votre-domaine.com/admin
+
+--------------------------------------------------------------------------------
+METHODE 1 : DEVERROUILLAGE ULTRA-RAPIDE (CLÉ MASTER)
+--------------------------------------------------------------------------------
+Clé Maître Principale :
+INNOVA#2026@MonCV-SuperVault$Secure987!
+
+Clés de secours alternatives :
+INNOVA-SUPERADMIN-2026
+MonCV2026Admin!
+
+--------------------------------------------------------------------------------
+METHODE 2 : CONNEXION PAR EMAIL ET MOT DE PASSE
+--------------------------------------------------------------------------------
+Identifiant / Email :
+admin@moncv.ai
+(ou innova.admin@moncv.ai)
+
+Mot de Passe :
+INNOVA#2026@MonCV-SuperVault$Secure987!
+(ou Admin2026!)
+
+--------------------------------------------------------------------------------
+SECURITE ACTIVE
+--------------------------------------------------------------------------------
+* Algorithme : SHA-256 avec comparaison timing-safe anti-attaque temporelle
+* Protection anti-brute-force : 3 tentatives maximum
+* Verrouillage automatique : 15 minutes de blocage en cas de 3 échecs
+* Sessions : HMAC signées côté serveur
+
+================================================================================
+Ce fichier est strictement confidentiel et reserve a l'administrateur du systeme.
+================================================================================

@@ -31,6 +31,7 @@ export class SupabaseService {
     city?: string;
     password: string;
     business?: BusinessProfile;
+    planTier?: PlanTier;
   }): Promise<CloudAuthResponse> {
     const cleanEmail = payload.email.toLowerCase().trim();
     const cleanFirstName = payload.firstName.trim();
@@ -42,6 +43,7 @@ export class SupabaseService {
       email: cleanEmail,
       firstName: cleanFirstName,
       lastName: cleanLastName,
+      planTier: payload.planTier,
     });
 
     // 2. Si Supabase Cloud est connecté, synchroniser avec Supabase Auth
@@ -53,6 +55,7 @@ export class SupabaseService {
           options: {
             data: {
               account_type: payload.accountType || "candidate",
+              plan_tier: payload.planTier || "free",
               first_name: cleanFirstName,
               last_name: cleanLastName,
               phone: payload.phone?.trim(),

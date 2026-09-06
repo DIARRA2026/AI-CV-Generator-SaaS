@@ -4,27 +4,111 @@ import React, { useState, useEffect } from "react";
 import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
-  KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info, Building, Building2, Briefcase, FileText
+  KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info, Building, Building2, Briefcase, FileText,
+  Crown, Check, Globe, Users, Zap
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
-import { AccountType } from "@/lib/types";
+import { AccountType, PlanTier } from "@/lib/types";
+
+export interface PlanOption {
+  id: PlanTier;
+  name: string;
+  price: string;
+  badge: string;
+  desc: string;
+  highlight: boolean;
+}
+
+export const CANDIDATE_PLANS: PlanOption[] = [
+  {
+    id: "free",
+    name: "Formule Découverte",
+    price: "0 FCFA",
+    badge: "Accès Libre",
+    desc: "Assistant IA inclus, prévisualisation en direct avec filigrane, sans carte bancaire.",
+    highlight: false,
+  },
+  {
+    id: "1500",
+    name: "Pack Essentiel",
+    price: "1 500 FCFA",
+    badge: "1 Candidat",
+    desc: "Export PDF HD vectoriel sans filigrane + Téléchargements PDF & Word illimités.",
+    highlight: false,
+  },
+  {
+    id: "2500",
+    name: "Pack Candidature Pro",
+    price: "2 500 FCFA",
+    badge: "Recommandé ★",
+    desc: "CV sans filigrane + Lettre de motivation IA + Demande d'emploi officielle (jusqu'à 2 profils).",
+    highlight: true,
+  },
+  {
+    id: "5000",
+    name: "Pack VIP & Portfolio",
+    price: "5 000 FCFA",
+    badge: "Prestige VIP",
+    desc: "Tous les outils débloqués + Site Web Portfolio en ligne avec QR Code HD (4 profils).",
+    highlight: false,
+  },
+];
+
+export const BUSINESS_PLANS: PlanOption[] = [
+  {
+    id: "cyber15",
+    name: "Pass Cybercafé & Services",
+    price: "15 000 FCFA",
+    badge: "15 Candidats",
+    desc: "15 profils complets débloqués (1 000 F/CV) • Exports Word (.docx) & PDF illimités.",
+    highlight: false,
+  },
+  {
+    id: "enterprise30",
+    name: "Pack Starter PME",
+    price: "45 000 FCFA",
+    badge: "30 Candidats",
+    desc: "30 profils candidats complets • Vivier RH centralisé • Facture normalisée OHADA.",
+    highlight: false,
+  },
+  {
+    id: "enterprise75",
+    name: "Pack Business Pro RH",
+    price: "95 000 FCFA",
+    badge: "Le Plus Choisi ★",
+    desc: "75 profils candidats complets • Vivier collaboratif • Facture OHADA • Support 7j/7.",
+    highlight: true,
+  },
+  {
+    id: "enterprise200",
+    name: "Pack Entreprise & Cabinet",
+    price: "195 000 FCFA",
+    badge: "200 Candidats",
+    desc: "200 profils candidats complets • Gestionnaire de compte dédié • Intégration sur mesure.",
+    highlight: false,
+  },
+];
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (selectedPlan?: PlanTier) => void;
   defaultMode?: "login" | "register";
   defaultAccountType?: AccountType;
+  defaultPlan?: PlanTier;
 }
 
 export const AuthModal: React.FC<Props> = ({
-  isOpen, onClose, onSuccess, defaultMode = "register", defaultAccountType = "candidate",
+  isOpen, onClose, onSuccess, defaultMode = "register", defaultAccountType = "candidate", defaultPlan = "free",
 }) => {
   const [mode, setMode] = useState<"login" | "register" | "forgot">(defaultMode);
   const [accountType, setAccountType] = useState<AccountType>(defaultAccountType);
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(
+    defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free")
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,6 +186,7 @@ export const AuthModal: React.FC<Props> = ({
       setCountry("Côte d'Ivoire");
       setCity("");
       setAccountType(defaultAccountType || "candidate");
+      setSelectedPlan(defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free"));
       setCompanyName("");
       setCompanyType("Cabinet de Recrutement");
       setManagerRole("Responsable RH / Recrutement");
@@ -109,7 +194,7 @@ export const AuthModal: React.FC<Props> = ({
       setRememberMe(false);
       StorageManager.clearRememberedCreds();
     }
-  }, [isOpen, defaultMode, defaultAccountType]);
+  }, [isOpen, defaultMode, defaultAccountType, defaultPlan]);
 
   const switchMode = (m: "login" | "register" | "forgot", preserveEmail?: string) => {
     setMode(m);
@@ -277,12 +362,17 @@ export const AuthModal: React.FC<Props> = ({
         city,
         password,
         business: businessPayload,
+        planTier: selectedPlan,
       });
 
       if (!regResult.success) {
         setIsLoading(false);
         setErrors({ general: regResult.message || "Erreur lors de la création du compte." });
         return;
+      }
+
+      if (selectedPlan !== "free") {
+        StorageManager.setPlanTier(selectedPlan);
       }
 
       if (rememberMe) {
@@ -305,7 +395,7 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setDone(true);
       await new Promise((r) => setTimeout(r, 500));
-      onSuccess();
+      onSuccess(selectedPlan);
       onClose();
       return;
     }
@@ -382,7 +472,7 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setDone(true);
       await new Promise((r) => setTimeout(r, 500));
-      onSuccess();
+      onSuccess(StorageManager.getPlanTier());
       onClose();
       return;
     }
@@ -481,6 +571,9 @@ export const AuthModal: React.FC<Props> = ({
       </div>
     );
   }
+
+  const activePlans = accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS;
+  const currentPlan = activePlans.find((p) => p.id === selectedPlan) || activePlans[0];
 
   return (
     <div
@@ -691,6 +784,9 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("candidate");
+                      if (selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15") {
+                        setSelectedPlan("free");
+                      }
                       setErrors({});
                     }}
                     className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -707,6 +803,9 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("business");
+                      if (!selectedPlan.startsWith("enterprise") && selectedPlan !== "cyber15") {
+                        setSelectedPlan("enterprise75");
+                      }
                       setErrors({});
                     }}
                     className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -723,6 +822,82 @@ export const AuthModal: React.FC<Props> = ({
                   </button>
                 </div>
 
+                {/* Sélecteur des Différentes Formules pour Choix Immédiat */}
+                <div className="p-2.5 bg-slate-50/90 rounded-2xl border border-slate-200/90 space-y-1.5 mb-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-black text-slate-900 flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Choisissez votre formule d'accès :</span>
+                    </label>
+                    <span className="text-[10px] text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                      {accountType === "business" ? "Tarif B2B • Vivier RH" : "Tarifs Clairs en FCFA"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {(accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS).map((p) => {
+                      const isSelected = selectedPlan === p.id;
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => setSelectedPlan(p.id)}
+                          className={`p-2 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between select-none ${
+                            isSelected
+                              ? accountType === "business"
+                                ? "bg-amber-50/90 border-amber-500 ring-2 ring-amber-400/30 shadow-xs"
+                                : "bg-blue-50/90 border-blue-600 ring-2 ring-blue-500/25 shadow-xs"
+                              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <div
+                                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected
+                                    ? accountType === "business"
+                                      ? "border-amber-600 bg-amber-600 text-white"
+                                      : "border-blue-600 bg-blue-600 text-white"
+                                    : "border-slate-300 bg-white"
+                                }`}
+                              >
+                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-900 truncate">
+                                {p.name}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md shrink-0 ${
+                                p.highlight
+                                  ? "bg-amber-100 text-amber-900 border border-amber-200"
+                                  : isSelected
+                                  ? "bg-blue-100 text-blue-900"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {p.badge}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline justify-between gap-1">
+                            <span
+                              className={`text-xs sm:text-sm font-black ${
+                                accountType === "business" ? "text-amber-700" : "text-blue-700"
+                              }`}
+                            >
+                              {p.price}
+                            </span>
+                          </div>
+
+                          <p className="text-[9.5px] text-slate-500 leading-tight mt-0.5 line-clamp-2">
+                            {p.desc}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Bandeau d'information pour le compte Entreprise */}
                 {accountType === "business" && (
                   <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/70 rounded-xl flex items-start gap-2 text-blue-900 text-[11px] mb-1">
@@ -732,7 +907,7 @@ export const AuthModal: React.FC<Props> = ({
                         Espace Recruteur & Gestion Multi-Candidats
                       </span>
                       <p className="text-blue-700/90 leading-tight mt-0.5">
-                        Idéal pour cabinets de recrutement, DRH et PME (30, 75 ou 200 profils, facturation normalisée OHADA et exports illimités).
+                        Idéal pour cabinets de recrutement, DRH et PME (facturation normalisée OHADA et exports illimités).
                       </p>
                     </div>
                   </div>
@@ -1312,7 +1487,9 @@ export const AuthModal: React.FC<Props> = ({
                       {mode === "login"
                         ? "Se connecter"
                         : mode === "register"
-                        ? "Créer mon Compte Gratuit"
+                        ? selectedPlan === "free"
+                          ? "Créer mon Compte Gratuit"
+                          : `Créer mon Compte & Activer (${currentPlan?.price || ""})`
                         : "Valider le mot de passe"}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5" />

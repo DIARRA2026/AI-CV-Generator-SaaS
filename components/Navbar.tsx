@@ -719,14 +719,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onSuccess={() => {
+        onSuccess={(chosenPlan) => {
           setIsAuthOpen(false);
           const u = StorageManager.getUser();
           setCurrentUser(u);
-          if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
-            router.push("/dashboard?tab=business");
+          if (chosenPlan && chosenPlan !== "free" && onOpenPayment) {
+            onOpenPayment(chosenPlan);
           } else {
-            router.push(targetRedirect || "/dashboard");
+            if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
+              router.push("/dashboard?tab=business");
+            } else {
+              router.push(targetRedirect || "/dashboard");
+            }
           }
         }}
         defaultMode={authMode}

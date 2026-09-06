@@ -206,6 +206,7 @@ export default function HomePage() {
   const [selectedPlanPrice, setSelectedPlanPrice] = useState<PlanTier>("2500");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
+  const [authDefaultPlan, setAuthDefaultPlan] = useState<PlanTier>("free");
   const [activeTemplate, setActiveTemplate] = useState("modern");
   const [activeColor, setActiveColor] = useState("#2563eb");
   const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -286,7 +287,10 @@ export default function HomePage() {
         return;
       }
     }
-    router.push("/create");
+    // Ouverture exclusive du formulaire d'inscription avec sélection de la formule
+    setAuthAccountType("candidate");
+    setAuthDefaultPlan("free");
+    setIsAuthOpen(true);
   };
 
   const handleOpenBusinessAuth = () => {
@@ -297,10 +301,18 @@ export default function HomePage() {
       }
     }
     setAuthAccountType("business");
+    setAuthDefaultPlan("enterprise75");
     setIsAuthOpen(true);
   };
 
   const handleOpenPlanPayment = (plan: PlanTier) => {
+    if (typeof window !== "undefined" && !StorageManager.isLoggedIn()) {
+      const isBiz = plan.startsWith("enterprise") || plan === "cyber15";
+      setAuthAccountType(isBiz ? "business" : "candidate");
+      setAuthDefaultPlan(plan);
+      setIsAuthOpen(true);
+      return;
+    }
     setSelectedPlanPrice(plan);
     setIsPaymentOpen(true);
   };
@@ -2251,17 +2263,25 @@ export default function HomePage() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onSuccess={() => {
+        onSuccess={(chosenPlan) => {
           setIsAuthOpen(false);
           const u = StorageManager.getUser();
-          if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
-            router.push("/dashboard?tab=business");
+          const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
+
+          if (chosenPlan && chosenPlan !== "free") {
+            setSelectedPlanPrice(chosenPlan);
+            setIsPaymentOpen(true);
           } else {
-            router.push("/dashboard");
+            if (isBiz) {
+              router.push("/dashboard?tab=business");
+            } else {
+              router.push("/dashboard");
+            }
           }
         }}
         defaultMode="register"
         defaultAccountType={authAccountType}
+        defaultPlan={authDefaultPlan}
       />
 
       {/* Preuve Sociale & Réassurance Live */}

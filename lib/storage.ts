@@ -215,6 +215,7 @@ export class StorageManager {
     city?: string;
     password: string;
     business?: BusinessProfile;
+    planTier?: PlanTier;
   }): { success: boolean; user?: RegisteredUser; message?: string } {
     if (typeof window === "undefined") return { success: false, message: "Environnement non disponible" };
     try {
@@ -231,7 +232,7 @@ export class StorageManager {
       const existingSub = this.getUserSubscription(normalizedEmail);
       const appliedSub = pendingSub || existingSub;
 
-      let resolvedPlan: PlanTier = appliedSub?.planTier || "free";
+      let resolvedPlan: PlanTier = payload.planTier || appliedSub?.planTier || "free";
       let resolvedAccountType: AccountType =
         payload.accountType ||
         (appliedSub?.accountType === "business" ||

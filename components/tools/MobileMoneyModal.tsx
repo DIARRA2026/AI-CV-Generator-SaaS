@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
+import { registerPaymentSuccess } from "@/lib/license-manager";
 
 interface MobileMoneyModalProps {
   isOpen: boolean;
@@ -36,10 +37,10 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   const plans = [
     {
       id: "1500" as const,
-      name: "Pack Essentiel",
+      name: "Pack Essentiel (1 Profil)",
       price: "1 500 FCFA",
-      badge: "Standard",
-      desc: "Téléchargement PDF Haute Définition sans filigrane",
+      badge: "Profil Unique",
+      desc: "Téléchargements PDF & Word illimités • 1 Candidat (retouches et modèles à volonté)",
       icon: <FileText className="w-4 h-4 text-blue-600" />,
       highlight: false,
     },
@@ -48,16 +49,16 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
       name: "Pack Candidature Pro",
       price: "2 500 FCFA",
       badge: "Recommandé",
-      desc: "CV sans filigrane + Lettre IA + Demande d'emploi officielle",
+      desc: "CV illimité + Lettre IA + Demande d'emploi • Jusqu'à 2 déclinaisons / profils",
       icon: <Sparkles className="w-4 h-4 text-amber-500" />,
       highlight: true,
     },
     {
       id: "5000" as const,
-      name: "Pack VIP & Portfolio",
+      name: "Pack VIP & Multi-Profils",
       price: "5 000 FCFA",
-      badge: "Carrière Ultime",
-      desc: "Tout inclus + Génération de Portfolio Web personnel",
+      badge: "Famille & Pro",
+      desc: "Tout inclus + 4 Candidats autorisés + Portfolio Web en ligne personnel",
       icon: <Crown className="w-4 h-4 text-purple-500" />,
       highlight: false,
     },
@@ -67,14 +68,15 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     e.preventDefault();
     setIsProcessing(true);
     setTimeout(() => {
-      // Marquer le CV actif avec son offre exacte
+      // Marquer le CV actif avec son offre exacte et enregistrer la licence sécurisée
       const activeCv = StorageManager.getActiveResume();
       if (activeCv) {
-        StorageManager.saveActiveResume({
-          ...activeCv,
-          isPremium: true,
-          planTier: selectedPlan,
-        });
+        const updatedWithLicense = registerPaymentSuccess(
+          activeCv,
+          selectedPlan,
+          `MM_${paymentMethod.toUpperCase()}_${Date.now()}`
+        );
+        StorageManager.saveActiveResume(updatedWithLicense);
       }
       StorageManager.setPlanTier(selectedPlan);
 

@@ -19,6 +19,7 @@ import { SmartGenerateModal } from "@/components/tools/SmartGenerateModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { Navbar } from "@/components/Navbar";
 import { SupabaseService } from "@/lib/supabaseService";
+import { getLicenseStatus } from "@/lib/license-manager";
 import {
   Download,
   Share2,
@@ -39,6 +40,8 @@ import {
   Maximize2,
   Globe,
   Cloud,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function CreateCVPage() {
@@ -219,6 +222,7 @@ export default function CreateCVPage() {
   };
 
   const planTier = resumeData.planTier || (resumeData.isPremium ? "2500" : "free");
+  const licenseStatus = getLicenseStatus(resumeData);
 
   // Ouverture Lettre IA (Inclus à partir du Pack Pro 2500 FCFA & VIP 5000 FCFA)
   const handleOpenCoverLetter = () => {
@@ -510,9 +514,25 @@ export default function CreateCVPage() {
                 <Eye className="w-4 h-4 text-blue-600" />
                 Aperçu Page A4
               </span>
-              <span className="hidden sm:inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                100% Fidèle
-              </span>
+              {licenseStatus.isUnlocked ? (
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  Profil Débloqué (Illimité)
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentDefaultPlan("1500");
+                    setIsPaymentOpen(true);
+                  }}
+                  className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200 cursor-pointer transition-all"
+                  title="Supprimer le filigrane pour ce profil"
+                >
+                  <Sparkles className="w-3 h-3 text-blue-600" />
+                  Retirer le filigrane (1 500 F)
+                </button>
+              )}
             </div>
 
             {/* Presets & Zoom Buttons */}
@@ -583,6 +603,31 @@ export default function CreateCVPage() {
               </button>
             </div>
           </div>
+
+          {/* Alerte Pédagogique si Changement d'Identité Détecté */}
+          {licenseStatus.isNameChangedFromPrimary && (
+            <div className="mb-3 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs no-print">
+              <div className="flex items-start gap-2.5 text-amber-900">
+                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block text-slate-900">Nouvelle identité détectée</span>
+                  <span className="text-slate-600 text-[11px] leading-relaxed">
+                    Votre formule a activé le CV de <strong>{licenseStatus.primaryDisplayName}</strong>. Pour exporter le CV de <strong>{licenseStatus.candidateDisplayName}</strong> sans filigrane, activez ce nouveau profil ou passez au Pack Multi-Profils.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentDefaultPlan("1500");
+                  setIsPaymentOpen(true);
+                }}
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shrink-0 cursor-pointer shadow-xs text-xs whitespace-nowrap"
+              >
+                Activer ce profil (1 500 F)
+              </button>
+            </div>
+          )}
 
           {/* Canvas A4 */}
           <div

@@ -9,6 +9,7 @@ import {
   convertMillimetersToTwip,
 } from "docx";
 import { ResumeData } from "./types";
+import { canDownloadWithoutWatermark } from "./license-manager";
 
 /**
  * Nettoie une chaîne de couleur hexadécimale (supprime le #)
@@ -563,6 +564,25 @@ export async function downloadResumeDocx(resumeData: ResumeData): Promise<boolea
               bold: true,
               size: 20,
               color: "374151",
+              font: "Calibri",
+            }),
+          ],
+        })
+      );
+    }
+
+    // Mention de découverte si le profil n'est pas encore débloqué
+    if (!canDownloadWithoutWatermark(resumeData)) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 240, after: 0 },
+          children: [
+            new TextRun({
+              text: "Document généré avec MonCV.ai • Version Découverte (0 FCFA)",
+              italics: true,
+              size: 16,
+              color: "9CA3AF",
               font: "Calibri",
             }),
           ],

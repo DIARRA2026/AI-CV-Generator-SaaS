@@ -85,7 +85,16 @@ export interface ResumeDesign {
   spacing: "compact" | "normal" | "spacious";
 }
 
-export type PlanTier = "free" | "1500" | "2500" | "5000";
+export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15";
+
+export interface LicenseAccess {
+  planTier: PlanTier;
+  paidAt?: string;
+  transactionRef?: string;
+  allowedProfilesCount: number;
+  unlockedIdentities: string[];
+  primaryIdentity?: string;
+}
 
 export interface ResumeData {
   id: string;
@@ -97,6 +106,7 @@ export interface ResumeData {
   slug: string;
   isPremium?: boolean;
   planTier?: PlanTier;
+  license?: LicenseAccess;
   personal: {
     firstName: string;
     lastName: string;

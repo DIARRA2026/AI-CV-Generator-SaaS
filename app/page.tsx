@@ -215,7 +215,15 @@ export default function HomePage() {
   const [contactMessage, setContactMessage] = useState("");
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [activeClientProfile, setActiveClientProfile] = useState<ResumeData | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isBusinessAccount, setIsBusinessAccount] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsLoggedIn(StorageManager.isLoggedIn());
+    setIsBusinessAccount(StorageManager.isBusinessAccount());
+  }, []);
 
   // Logique de profil client actif : si un client est sélectionné, sa page prime
   useEffect(() => {
@@ -251,11 +259,26 @@ export default function HomePage() {
   }, [isAutoPlay]);
 
   const handleStartCreation = () => {
-    setAuthAccountType("candidate");
-    setIsAuthOpen(true);
+    if (typeof window !== "undefined") {
+      if (StorageManager.isLoggedIn()) {
+        if (StorageManager.isBusinessAccount()) {
+          router.push("/dashboard?tab=business");
+        } else {
+          router.push("/dashboard");
+        }
+        return;
+      }
+    }
+    router.push("/create");
   };
 
   const handleOpenBusinessAuth = () => {
+    if (typeof window !== "undefined") {
+      if (StorageManager.isLoggedIn() && StorageManager.isBusinessAccount()) {
+        router.push("/dashboard?tab=business");
+        return;
+      }
+    }
     setAuthAccountType("business");
     setIsAuthOpen(true);
   };
@@ -351,7 +374,13 @@ export default function HomePage() {
                 className="group w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer animate-cta-loop shadow-xl shadow-blue-600/30 active:scale-98"
               >
                 <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow shrink-0" />
-                <span className="whitespace-nowrap font-black">Créer mon CV Gagnant Gratuitement</span>
+                <span className="whitespace-nowrap font-black">
+                  {isLoggedIn
+                    ? isBusinessAccount
+                      ? "Accéder à mon Espace Vivier RH"
+                      : "Accéder à mes CVs & Candidatures"
+                    : "Créer mon CV Gagnant Gratuitement"}
+                </span>
                 <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-1.5 transition-transform" />
               </button>
 
@@ -1574,7 +1603,13 @@ export default function HomePage() {
                 className="px-8 py-4 bg-white hover:bg-blue-50 text-blue-700 font-black rounded-2xl shadow-2xl text-sm sm:text-base flex items-center gap-2.5 transition-all cursor-pointer animate-cta-loop"
               >
                 <Sparkles className="w-5 h-5 text-blue-600" />
-                <span>Créer mon CV Gratuitement Maintenant</span>
+                <span>
+                  {isLoggedIn
+                    ? isBusinessAccount
+                      ? "Accéder à mon Espace Vivier RH"
+                      : "Accéder à mes CVs & Candidatures"
+                    : "Créer mon CV Gratuitement Maintenant"}
+                </span>
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>

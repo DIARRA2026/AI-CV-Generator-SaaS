@@ -258,10 +258,14 @@ export default function CreateCVPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
-      <Navbar onOpenPayment={() => { setPaymentDefaultPlan("2500"); setIsPaymentOpen(true); }} />
+      <Navbar
+        onOpenPayment={() => { setPaymentDefaultPlan("2500"); setIsPaymentOpen(true); }}
+        isEditorPage={true}
+      />
 
-      {/* Action Header Bar */}
+      {/* Action Header Bar — Organisée en 3 pôles logiques */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 no-print">
+        {/* Pôle Gauche : Titre du CV & Statut de Sauvegarde */}
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -270,180 +274,125 @@ export default function CreateCVPage() {
               handleUpdateData({ ...resumeData, title: e.target.value })
             }
             className="font-bold text-slate-900 text-sm bg-transparent border-b border-dashed border-slate-300 focus:border-blue-600 focus:outline-none px-1"
+            title="Cliquez pour renommer ce CV"
           />
           <button
             type="button"
             onClick={handleResetData}
-            title="Réinitialiser"
-            className="text-slate-400 hover:text-slate-600 text-xs p-1"
+            title="Réinitialiser les données"
+            className="text-slate-400 hover:text-slate-600 text-xs p-1 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
-        </div>
 
-        {/* Indicateur Full-Stack Cloud Auto-Save */}
-        <div
-          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all"
-          title={
-            cloudSyncStatus === "saved"
-              ? `Dernière synchronisation cloud à ${lastSyncTime}`
-              : cloudSyncStatus === "saving"
-              ? "Synchronisation vers la base de données cloud..."
-              : "Enregistrement en local"
-          }
-        >
-          {cloudSyncStatus === "saving" ? (
-            <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50/90 border border-blue-200 px-2 py-0.5 rounded-lg">
-              <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
-              <span className="text-[10.5px] font-black">Cloud Sync...</span>
-            </span>
-          ) : cloudSyncStatus === "saved" ? (
-            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50/90 border border-emerald-200 px-2 py-0.5 rounded-lg">
-              <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10.5px] font-black">Cloud Synced ✓</span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
-              <Cloud className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[10.5px] font-semibold">Local</span>
-            </span>
-          )}
-        </div>
-
-        {/* Badge Offre Active (Respect des Formules) */}
-        <div className="hidden md:flex items-center gap-2">
-          {planTier === "5000" ? (
-            <div className="px-2.5 py-1 bg-purple-100 border border-purple-200 text-purple-900 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-xs">
-              <Crown className="w-3.5 h-3.5 text-amber-500" />
-              <span>Pack VIP & Portfolio</span>
-              <a
-                href="https://wa.me/2250700000000?text=Bonjour%20Support%20VIP%20MonCV.ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-1.5 py-0.5 rounded cursor-pointer"
-                title="Support WhatsApp 7j/7 dédié"
-              >
-                WhatsApp VIP
-              </a>
-            </div>
-          ) : planTier === "2500" ? (
-            <div className="px-2.5 py-1 bg-blue-100 border border-blue-200 text-blue-900 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>Pack Candidature Pro</span>
-            </div>
-          ) : planTier === "1500" ? (
-            <div className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Pack Essentiel</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setPaymentDefaultPlan("2500");
-                setIsPaymentOpen(true);
-              }}
-              className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span>Offre Découverte</span>
-              <span className="text-blue-600 underline font-extrabold text-[11px]">Passer en Pro</span>
-            </button>
-          )}
-        </div>
-
-        {/* Mobile View Toggle */}
-        <div className="flex xl:hidden bg-slate-100 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setViewTab("editor")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-              viewTab === "editor"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-slate-600"
-            }`}
+          {/* Indicateur Cloud Sync */}
+          <div
+            className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold"
+            title={
+              cloudSyncStatus === "saved"
+                ? `Sauvegardé à ${lastSyncTime}`
+                : cloudSyncStatus === "saving"
+                ? "Synchronisation..."
+                : "Enregistré en local"
+            }
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Éditeur</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewTab("preview")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-              viewTab === "preview"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-slate-600"
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Aperçu CV</span>
-          </button>
+            {cloudSyncStatus === "saving" ? (
+              <span className="flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                <RefreshCw className="w-2.5 h-2.5 animate-spin text-blue-600" />
+                <span>Sync...</span>
+              </span>
+            ) : cloudSyncStatus === "saved" ? (
+              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                <Cloud className="w-2.5 h-2.5 text-emerald-600" />
+                <span>Sauvegardé ✓</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md text-[10px]">
+                <Cloud className="w-2.5 h-2.5 text-slate-400" />
+                <span>Local</span>
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        {/* Pôle Centre : Outils IA & Documents de Candidature */}
+        <div className="hidden md:flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80">
           <button
             type="button"
             onClick={() => setIsATSOpen(true)}
-            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-emerald-200 transition-all"
+            className="px-2.5 py-1.5 bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Analyser la compatibilité avec les logiciels recruteurs ATS"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden sm:inline">Scanner ATS</span>
+            <span>Score ATS</span>
           </button>
 
-          {/* Lettre IA (Vérifie Pack Pro 2500F ou VIP) */}
           <button
             type="button"
             onClick={handleOpenCoverLetter}
-            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all"
+            className="px-2.5 py-1.5 bg-white hover:bg-indigo-50 text-slate-800 hover:text-indigo-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Générer une Lettre de Motivation IA personnalisée"
           >
             <FileText className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Lettre IA</span>
+            <span>Lettre IA</span>
           </button>
 
-          {/* Demande d'emploi (Vérifie Pack Pro 2500F ou VIP) */}
           <button
             type="button"
             onClick={handleOpenJobApplication}
-            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-blue-200 transition-all cursor-pointer btn-press"
+            className="px-2.5 py-1.5 bg-white hover:bg-amber-50 text-slate-800 hover:text-amber-900 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Rédiger la Demande d'Emploi Officielle"
           >
-            <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-            <span className="hidden sm:inline">Demande d'emploi</span>
+            <Briefcase className="w-3.5 h-3.5 text-amber-600" />
+            <span>Demande d'Emploi</span>
           </button>
 
-          {/* Portfolio Web VIP */}
           <Link
             href={`/c/${resumeData.slug || "demo"}`}
             target="_blank"
-            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-purple-200 transition-all cursor-pointer btn-press"
-            title="Ouvrir le Portfolio Web Moderne"
+            className="px-2.5 py-1.5 bg-white hover:bg-purple-50 text-slate-800 hover:text-purple-900 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Consulter le Portfolio Web interactif"
           >
             <Globe className="w-3.5 h-3.5 text-purple-600" />
-            <span className="hidden sm:inline">Portfolio Web</span>
-            <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.2 rounded-full font-black">VIP</span>
+            <span>Portfolio Web</span>
           </Link>
+        </div>
 
-          {/* Scanner / Convertir */}
+        {/* Pôle Droite : Actions d'Export & Partage */}
+        <div className="flex items-center gap-2">
+          {/* Mobile View Toggle */}
+          <div className="flex xl:hidden bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setViewTab("editor")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                viewTab === "editor" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600"
+              }`}
+            >
+              <Edit3 className="w-3 h-3" />
+              <span>Saisie</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewTab("preview")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                viewTab === "preview" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600"
+              }`}
+            >
+              <Eye className="w-3 h-3" />
+              <span>Aperçu</span>
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => setIsScanConvertOpen(true)}
-            className="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-violet-200 transition-all"
+            onClick={() => setIsShareOpen(true)}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
+            title="Partager le lien public ou QR Code"
           >
-            <ScanLine className="w-3.5 h-3.5 text-violet-600" />
-            <span className="hidden sm:inline">Scanner / Convertir</span>
+            <Share2 className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Partager</span>
           </button>
-
-          {/* Générer un CV → auth requise */}
-          <button
-            type="button"
-            onClick={() => requireAuth("smartGenerate", () => setIsSmartGenerateOpen(true))}
-            className="px-3.5 py-1.5 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all"
-          >
-            <Wand2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Générer un CV</span>
-          </button>
-
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
 
           {/* Téléchargement Word (.docx) */}
           <button
@@ -451,13 +400,13 @@ export default function CreateCVPage() {
             onClick={handleDownloadWord}
             disabled={isDownloading}
             className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all cursor-pointer shadow-xs"
-            title="Télécharger immédiatement en Word (.docx)"
+            title="Télécharger en fichier Microsoft Word (.docx)"
           >
             <FileText className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden md:inline">Word (.docx)</span>
+            <span>Word (.docx)</span>
           </button>
 
-          {/* Télécharger PDF */}
+          {/* Télécharger PDF (Action Principale) */}
           <button
             type="button"
             onClick={handleDownloadPDF}
@@ -467,7 +416,7 @@ export default function CreateCVPage() {
                 ? "bg-emerald-600 hover:bg-emerald-500"
                 : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
             }`}
-            title="Télécharger immédiatement le CV en PDF"
+            title="Télécharger le CV au format PDF Haute Définition"
           >
             {isDownloading ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -643,43 +592,17 @@ export default function CreateCVPage() {
             <CVPreviewCanvas ref={previewRef} data={resumeData} scale={scale} />
           </div>
 
-          {/* Barre d'action rapide sous le canvas */}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-2xl border border-slate-200 no-print shadow-xs">
-            <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>Format A4 professionnel (1,5 cm de marges calibrées)</span>
+          {/* Barre d'information & conformité sous le canvas */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-2xl border border-slate-200 no-print shadow-xs text-xs">
+            <div className="text-slate-600 flex items-center gap-2 font-medium">
+              <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>Format A4 officiel calibré • Marges 1,5 cm • 100% conforme aux filtres ATS</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleDownloadWord}
-                disabled={isDownloading}
-                className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all cursor-pointer"
-                title="Télécharger en Word (.docx)"
-              >
-                <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Word (.docx)</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                className={`px-4 py-1.5 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer ${
-                  downloadSuccess
-                    ? "bg-emerald-600"
-                    : "bg-blue-600 hover:bg-blue-500"
-                }`}
-                title="Télécharger en PDF"
-              >
-                {isDownloading ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : downloadSuccess ? (
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-                <span>{isDownloading ? "Génération..." : downloadSuccess ? "Téléchargé !" : "Télécharger le PDF"}</span>
-              </button>
+            <div className="flex items-center gap-3 text-slate-500 text-[11px] font-medium">
+              <span className="flex items-center gap-1 text-emerald-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Synchronisation Cloud temps réel</span>
+              </span>
             </div>
           </div>
         </div>

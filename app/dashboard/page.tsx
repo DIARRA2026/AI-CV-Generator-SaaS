@@ -699,13 +699,36 @@ export default function DashboardPage() {
                               <span>Modifier dans l'Éditeur</span>
                             </button>
 
-                            {/* Export Direct Word (.docx) & Demande d'Emploi */}
+                            {/* Documents de Candidature Officiels (Demande d'Emploi & Lettre IA) */}
                             <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenJobApplication(cv)}
+                                className="py-2 px-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                title="Créer la Demande d'Emploi Officielle"
+                              >
+                                <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="truncate">Demande d'emploi</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenCoverLetter(cv)}
+                                className="py-2 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                title="Rédiger une Lettre de Motivation IA"
+                              >
+                                <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                <span className="truncate">Lettre IA</span>
+                              </button>
+                            </div>
+
+                            {/* Export Word & Actions de Gestion */}
+                            <div className="flex items-center gap-1.5 pt-0.5">
                               <button
                                 type="button"
                                 onClick={() => handleExportDocx(cv)}
                                 disabled={isUnlockingDocx}
-                                className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all border cursor-pointer ${
+                                className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
                                   hasDocxExported
                                     ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                                     : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
@@ -726,45 +749,20 @@ export default function DashboardPage() {
 
                               <button
                                 type="button"
-                                onClick={() => handleOpenJobApplication(cv)}
-                                className="py-2 px-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs"
-                                title="Créer la Demande d'Emploi Officielle"
-                              >
-                                <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                <span className="truncate">Demande d'emploi</span>
-                              </button>
-                            </div>
-
-                            {/* Lettre IA & Actions Secondaires */}
-                            <div className="grid grid-cols-3 gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => handleOpenCoverLetter(cv)}
-                                className="py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border border-indigo-200 cursor-pointer"
-                                title="Rédiger une Lettre de Motivation IA"
-                              >
-                                <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                                <span className="truncate">Lettre IA</span>
-                              </button>
-
-                              <button
-                                type="button"
                                 onClick={() => handleDuplicate(cv)}
-                                className="py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
-                                title="Dupliquer pour un autre poste"
+                                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
+                                title="Dupliquer ce profil"
                               >
                                 <Copy className="w-3.5 h-3.5 text-slate-500" />
-                                <span>Copier</span>
                               </button>
 
                               <button
                                 type="button"
                                 onClick={() => handleDelete(cv.id)}
-                                className="py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-rose-100 cursor-pointer"
+                                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-100 cursor-pointer"
                                 title="Supprimer ce profil du vivier"
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                                <span>Supprimer</span>
                               </button>
                             </div>
                           </div>
@@ -1058,35 +1056,23 @@ export default function DashboardPage() {
                             moncv.ai/c/{cv.slug}
                           </p>
 
-                          <div className="flex items-center gap-1.5 pt-0.5">
+                          <div className="pt-0.5">
                             <a
                               href={`/c/${cv.slug}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 transition-all"
+                              className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-xs"
                             >
-                              <ExternalLink className="w-3 h-3" />
-                              <span>{cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv) ? "Voir le Portfolio VIP" : "Voir le CV"}</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>{cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv) ? "Consulter le Portfolio Web VIP" : "Voir le CV en Ligne"}</span>
                             </a>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (typeof window !== "undefined") {
-                                  navigator.clipboard.writeText(`${window.location.origin}/c/${cv.slug}`);
-                                  alert("Lien copié dans le presse-papier !");
-                                }
-                              }}
-                              className="px-2.5 py-1.5 bg-white border border-purple-200 hover:bg-purple-100 text-purple-800 font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer"
-                            >
-                              <Copy className="w-3 h-3" />
-                              <span>Copier</span>
-                            </button>
                           </div>
                         </div>
                       </div>
 
                       {/* Actions CV Individuel */}
                       <div className="space-y-2 pt-4 border-t border-slate-100">
+                        {/* Bouton Éditeur Principal */}
                         <button
                           type="button"
                           onClick={() => handleOpenResume(cv)}
@@ -1101,7 +1087,7 @@ export default function DashboardPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenJobApplication(cv)}
-                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all border cursor-pointer ${
+                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
                               cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
                                 ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 shadow-xs"
                                 : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
@@ -1122,7 +1108,7 @@ export default function DashboardPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenCoverLetter(cv)}
-                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all border cursor-pointer ${
+                            className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
                               cv.planTier === "2500" || cv.planTier === "5000" || isBusinessAccount || isEnterpriseFormulaActive(cv)
                                 ? "bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-200 shadow-xs"
                                 : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
@@ -1141,32 +1127,57 @@ export default function DashboardPage() {
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-1.5">
+                        {/* Export Word & Actions Complémentaires */}
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleExportDocx(cv)}
+                            disabled={isExportingDocxId === cv.id}
+                            className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                              exportSuccessId === cv.id
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                            }`}
+                            title="Télécharger directement le CV au format Microsoft Word (.docx)"
+                          >
+                            {isExportingDocxId === cv.id ? (
+                              <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                            ) : exportSuccessId === cv.id ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            )}
+                            <span className="truncate">
+                              {exportSuccessId === cv.id ? "Téléchargé !" : "Export Word"}
+                            </span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => setSelectedForShare(cv)}
-                            className="py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
+                            className="py-2 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
+                            title="Partager le CV ou générer le QR Code"
                           >
-                            <Share2 className="w-3 h-3 text-slate-500" />
+                            <Share2 className="w-3.5 h-3.5 text-slate-500" />
                             <span>Partager</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleDuplicate(cv)}
-                            className="py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
+                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
+                            title="Dupliquer ce CV"
                           >
-                            <Copy className="w-3 h-3 text-slate-500" />
-                            <span>Dupliquer</span>
+                            <Copy className="w-3.5 h-3.5 text-slate-500" />
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleDelete(cv.id)}
-                            className="py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-rose-100 cursor-pointer"
+                            className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-100 cursor-pointer"
+                            title="Supprimer ce CV"
                           >
-                            <Trash2 className="w-3 h-3 text-rose-500" />
-                            <span>Supprimer</span>
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                           </button>
                         </div>
                       </div>

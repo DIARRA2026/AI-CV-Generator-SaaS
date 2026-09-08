@@ -803,6 +803,10 @@ export class StorageManager {
           current.business?.whatsappPhone ||
           current.phone ||
           "",
+        logoUrl:
+          businessData.logoUrl !== undefined
+            ? businessData.logoUrl
+            : current.business?.logoUrl,
       };
 
       const updatedUser: UserSession = {

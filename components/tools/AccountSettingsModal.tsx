@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   User,
@@ -25,10 +25,14 @@ import {
   Building,
   Building2,
   FileText,
+  Upload,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import { StorageManager, UserSession } from "@/lib/storage";
 import { PlanTier } from "@/lib/types";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
+import { compressImage } from "@/lib/image-utils";
 
 interface Props {
   isOpen: boolean;
@@ -64,6 +68,9 @@ export const AccountSettingsModal: React.FC<Props> = ({
   const [taxId, setTaxId] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Profile Save Feedback
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -106,6 +113,9 @@ export const AccountSettingsModal: React.FC<Props> = ({
           setTaxId(user.business.taxId || "");
           setBillingAddress(user.business.billingAddress || "");
           setWhatsappPhone(user.business.whatsappPhone || user.phone || "");
+          setLogoUrl(user.business.logoUrl || "");
+        } else {
+          setLogoUrl("");
         }
       }
       setProfileSuccess(false);
@@ -119,6 +129,22 @@ export const AccountSettingsModal: React.FC<Props> = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Handle Logo Upload
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingLogo(true);
+      const compressed = await compressImage(file, 400, 400);
+      setLogoUrl(compressed);
+    } catch (err) {
+      console.error("Erreur compression logo:", err);
+    } finally {
+      setIsUploadingLogo(false);
+      if (e.target) e.target.value = "";
+    }
+  };
 
   // Handle Profile Update
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -147,6 +173,7 @@ export const AccountSettingsModal: React.FC<Props> = ({
         taxId: taxId.trim(),
         billingAddress: billingAddress.trim(),
         whatsappPhone: whatsappPhone.trim() || phone.trim(),
+        logoUrl: logoUrl,
       });
     }
 
@@ -514,6 +541,64 @@ export const AccountSettingsModal: React.FC<Props> = ({
                   <p className="text-[11.5px] text-amber-800 leading-relaxed">
                     Ces coordonnées figurent automatiquement sur vos Factures Normalisées OHADA, reçus fiscaux et certificats de conformité de dossiers candidats.
                   </p>
+                </div>
+              </div>
+
+              {/* Logo Officiel de l'Entreprise */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative group w-20 h-20 rounded-2xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt="Logo Entreprise"
+                      className="w-full h-full object-contain p-1.5"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <Building2 className="w-8 h-8 text-slate-300" />
+                      <span className="text-[9px] font-bold mt-1 text-slate-400">Sans logo</span>
+                    </div>
+                  )}
+                  {isUploadingLogo && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 text-center sm:text-left space-y-1">
+                  <h4 className="text-xs font-bold text-slate-900">Logo Officiel de l'Entreprise</h4>
+                  <p className="text-[11px] text-slate-500">
+                    Formats acceptés : PNG, JPG, SVG ou WebP (max 2 Mo). Figure sur vos factures normalisées et dans votre espace vivier RH.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{logoUrl ? "Remplacer le logo" : "Choisir un logo"}</span>
+                    </button>
+
+                    {logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl("")}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-rose-200 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Supprimer</span>
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                    onChange={handleLogoChange}
+                  />
                 </div>
               </div>
 

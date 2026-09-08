@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ResumeData, PlanTier } from "@/lib/types";
@@ -17,6 +17,7 @@ import { InvoiceModal } from "@/components/tools/InvoiceModal";
 import { exportResumeToDocx } from "@/lib/docx-export";
 import { isEnterpriseFormulaActive } from "@/lib/license-manager";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { compressImage } from "@/lib/image-utils";
 import {
   Plus,
   Edit3,
@@ -45,6 +46,9 @@ import {
   Crown,
   Briefcase,
   Wand2,
+  Camera,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -81,6 +85,10 @@ export default function DashboardPage() {
     distinctIdentities: string[];
     planTier: PlanTier;
   } | null>(null);
+
+  const enterpriseLogoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoFeedback, setLogoFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     const syncState = () => {
@@ -200,6 +208,50 @@ export default function DashboardPage() {
     } catch {
       setIsExportingDocxId(null);
       alert("Erreur technique lors de la génération du fichier Word.");
+    }
+  };
+
+  const handleEnterpriseLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Le fichier sélectionné est trop volumineux. Veuillez choisir une image de moins de 3 Mo.");
+      return;
+    }
+
+    try {
+      setIsUploadingLogo(true);
+      setLogoFeedback(null);
+      const compressedDataUrl = await compressImage(file, 400, 400);
+
+      const res = StorageManager.updateBusinessProfile({
+        logoUrl: compressedDataUrl,
+      });
+
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        setLogoFeedback(dict.dashboard.logoUpdatedSuccess);
+        setTimeout(() => setLogoFeedback(null), 3500);
+      }
+    } catch (err) {
+      console.error("Erreur lors du téléversement du logo:", err);
+      alert("Impossible de charger cette image. Veuillez utiliser un format PNG, JPG ou WebP valide.");
+    } finally {
+      setIsUploadingLogo(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  const handleRemoveEnterpriseLogo = () => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer le logo de l'entreprise ?")) return;
+    const res = StorageManager.updateBusinessProfile({
+      logoUrl: "",
+    });
+    if (res.success && res.user) {
+      setCurrentUser(res.user);
+      setLogoFeedback(dict.dashboard.logoRemovedSuccess);
+      setTimeout(() => setLogoFeedback(null), 3000);
     }
   };
 
@@ -352,11 +404,62 @@ export default function DashboardPage() {
           {isBusinessAccount && activeTab === "business" ? (
             <div className="space-y-6 fade-in">
               <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white border border-slate-800 shadow-xl space-y-5">
+                {logoFeedback && (
+                  <div className="p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-2xl flex items-center gap-2 text-emerald-200 text-xs font-semibold animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{logoFeedback}</span>
+                  </div>
+                )}
+
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-600/30 shrink-0 border border-indigo-400/30">
-                      <Building2 className="w-7 h-7 text-amber-300" />
+                    {/* Logo de l'Entreprise avec interaction de téléversement */}
+                    <div className="relative group shrink-0">
+                      <div
+                        onClick={() => enterpriseLogoInputRef.current?.click()}
+                        title={currentUser?.business?.logoUrl ? dict.dashboard.changeLogoBtn : dict.dashboard.addLogoBtn}
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 border-2 border-indigo-400/30 flex items-center justify-center overflow-hidden cursor-pointer shadow-lg hover:border-amber-400/80 transition-all hover:scale-105"
+                      >
+                        {currentUser?.business?.logoUrl ? (
+                          <img
+                            src={currentUser.business.logoUrl}
+                            alt={currentUser.business.companyName || "Logo Entreprise"}
+                            className="w-full h-full object-contain p-2 bg-white"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex flex-col items-center justify-center text-white">
+                            <Building2 className="w-8 h-8 text-amber-300" />
+                            <span className="text-[9px] font-bold text-amber-200 mt-0.5 tracking-tight">+ Logo</span>
+                          </div>
+                        )}
+
+                        {isUploadingLogo && (
+                          <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Badge flottant pour changer le logo */}
+                      <button
+                        type="button"
+                        onClick={() => enterpriseLogoInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        title={currentUser?.business?.logoUrl ? dict.dashboard.changeLogoBtn : dict.dashboard.addLogoBtn}
+                        className="absolute -bottom-1.5 -right-1.5 p-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl shadow-md transition-all hover:scale-110 cursor-pointer border border-slate-900"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+
+                      <input
+                        ref={enterpriseLogoInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={handleEnterpriseLogoUpload}
+                      />
                     </div>
+
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black uppercase tracking-wider">
@@ -380,6 +483,33 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2.5">
+                    {/* Bouton Ajouter / Modifier le logo */}
+                    <button
+                      type="button"
+                      onClick={() => enterpriseLogoInputRef.current?.click()}
+                      disabled={isUploadingLogo}
+                      className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-md shadow-xs"
+                      title={currentUser?.business?.logoUrl ? dict.dashboard.changeLogoBtn : dict.dashboard.addLogoBtn}
+                    >
+                      {isUploadingLogo ? (
+                        <Loader2 className="w-4 h-4 text-amber-300 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 text-amber-300" />
+                      )}
+                      <span>{currentUser?.business?.logoUrl ? dict.dashboard.changeLogoBtn : dict.dashboard.addLogoBtn}</span>
+                    </button>
+
+                    {currentUser?.business?.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveEnterpriseLogo}
+                        className="p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 transition-all cursor-pointer"
+                        title={dict.dashboard.removeLogoBtn}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => setIsInvoiceOpen(true)}

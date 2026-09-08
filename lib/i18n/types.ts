@@ -505,6 +505,11 @@ export interface TranslationDictionary {
     accessCandidateBtn: string;
     invoiceOhadaBtn: string;
     supportVipBtn: string;
+    addLogoBtn: string;
+    changeLogoBtn: string;
+    removeLogoBtn: string;
+    logoUpdatedSuccess: string;
+    logoRemovedSuccess: string;
     reloadCreditsBtn: string;
     quotaUsed: string;
     quotaRemaining: string;

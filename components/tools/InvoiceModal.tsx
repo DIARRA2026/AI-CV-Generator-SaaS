@@ -95,10 +95,21 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
             {/* Informations Client */}
             <div className="sm:text-right bg-slate-50 sm:bg-transparent p-4 sm:p-0 rounded-2xl w-full sm:w-auto border sm:border-0 border-slate-200">
-              <span className="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-900 font-extrabold text-[10px] uppercase tracking-wider">
-                Client Professionnel
-              </span>
-              <h4 className="text-base font-black text-slate-900 mt-2">{companyName}</h4>
+              <div className="flex items-center sm:justify-end gap-3 mb-1.5">
+                {user?.business?.logoUrl && (
+                  <img
+                    src={user.business.logoUrl}
+                    alt={companyName}
+                    className="w-12 h-12 object-contain bg-white rounded-xl border border-slate-200 p-1 shadow-xs shrink-0"
+                  />
+                )}
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-900 font-extrabold text-[10px] uppercase tracking-wider">
+                    Client Professionnel
+                  </span>
+                  <h4 className="text-base font-black text-slate-900 mt-0.5">{companyName}</h4>
+                </div>
+              </div>
               <p className="text-xs text-slate-600 font-medium">{managerName}</p>
               <p className="text-[11px] text-slate-500 mt-1">
                 N° RCCM / IFU : <strong className="text-slate-800">{rccm}</strong><br />

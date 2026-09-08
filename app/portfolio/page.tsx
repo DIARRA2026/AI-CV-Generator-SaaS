@@ -530,6 +530,8 @@ export default function PortfolioLandingPage() {
 
   return (
     <div
+      suppressHydrationWarning
+      dir={isRTL ? "rtl" : "ltr"}
       className={`min-h-screen w-full overflow-x-hidden font-sans selection:bg-blue-600 selection:text-white transition-colors duration-300 ${
         isDark ? "bg-[#0c0d12] text-slate-100" : "bg-slate-50 text-slate-900"
       }`}

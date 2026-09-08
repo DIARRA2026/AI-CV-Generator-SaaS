@@ -407,24 +407,28 @@ export default function PublicCandidateCVPage() {
     ? `https://wa.me/${cleanPhone.replace("+", "")}?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20j'ai%20consulté%20votre%20portfolio%20sur%20MonCV.ai%20et%20souhaite%20échanger%20avec%20vous.`
     : `https://wa.me/2250700510524?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20je%20souhaite%20échanger%20avec%20vous.`;
 
+  // Synchronisation dynamique du titre du document et de la méta-description (évite l'utilisation d'une balise <head> dans le DOM qui brise l'hydratation)
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = `${candidateFullName} — Portfolio Professionnel & CV en Ligne`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute(
+          "content",
+          resumeData.summary || `${p.title || "Portfolio"} — CV professionnel de ${candidateFullName}`
+        );
+      }
+    }
+  }, [candidateFullName, resumeData.summary, p.title]);
+
   return (
     <div
+      suppressHydrationWarning
       dir={isRTL ? "rtl" : "ltr"}
       className={`min-h-screen w-full overflow-x-hidden font-sans selection:bg-blue-600 selection:text-white transition-colors duration-300 ${
         isDark ? "bg-[#0b0c10] text-slate-100" : "bg-slate-50 text-slate-900"
       }`}
     >
-      <head>
-        <title>{`${candidateFullName} — Portfolio Professionnel & CV en Ligne`}</title>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#121318" />
-        <meta
-          name="description"
-          content={resumeData.summary || `${p.title || "Portfolio"} — CV professionnel de ${candidateFullName}`}
-        />
-      </head>
 
       {/* ========================================================================= */}
       {/* 1. NAVBAR STICKY AVEC GLASSMORPHISM                                        */}

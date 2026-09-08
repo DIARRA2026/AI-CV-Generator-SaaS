@@ -143,6 +143,14 @@ export const AuthModal: React.FC<Props> = ({
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [resendEmailMessage, setResendEmailMessage] = useState<string | null>(null);
 
+  // Validation par code OTP à 6 chiffres
+  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const otpInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -161,6 +169,29 @@ export const AuthModal: React.FC<Props> = ({
     }, 1000);
     return () => clearInterval(interval);
   }, [lockoutUntil]);
+
+  // Compte à rebours de renvoi du code OTP (60s)
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // Réinitialisation et focus automatique lors de l'activation de l'écran OTP
+  useEffect(() => {
+    if (emailVerificationPending) {
+      setOtpDigits(["", "", "", "", "", ""]);
+      setOtpError(null);
+      setOtpSuccessMessage(null);
+      setResendCooldown(60);
+      const t = setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 250);
+      return () => clearTimeout(t);
+    }
+  }, [emailVerificationPending]);
 
   // Réinitialisation stricte : formulaires 100% vierges et vides sans aucune pré-remplissage
   useEffect(() => {
@@ -266,14 +297,129 @@ export const AuthModal: React.FC<Props> = ({
     setCountry(newCountry);
   };
 
-  const handleResendEmail = async () => {
+  // GESTION DU CODE OTP À 6 CHIFFRES
+  const handleOtpChange = (index: number, val: string) => {
+    setOtpError(null);
+    const cleaned = val.replace(/\D/g, "");
+
+    // Si l'utilisateur colle plusieurs chiffres d'un coup dans la case
+    if (cleaned.length > 1) {
+      handleOtpPasteString(cleaned);
+      return;
+    }
+
+    const nextDigits = [...otpDigits];
+    nextDigits[index] = cleaned.slice(-1);
+    setOtpDigits(nextDigits);
+
+    // Auto-focus vers la case suivante
+    if (cleaned && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+
+    // Déclenchement automatique de la validation dès que les 6 chiffres sont renseignés
+    if (cleaned && nextDigits.every((d) => d.trim() !== "")) {
+      executeVerifyOtp(nextDigits.join(""));
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        const nextDigits = [...otpDigits];
+        nextDigits[index - 1] = "";
+        setOtpDigits(nextDigits);
+        otpInputRefs.current[index - 1]?.focus();
+      } else {
+        const nextDigits = [...otpDigits];
+        nextDigits[index] = "";
+        setOtpDigits(nextDigits);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPasteString = (rawText: string) => {
+    const digits = rawText.replace(/\D/g, "").slice(0, 6);
+    if (!digits) return;
+    const newDigits = ["", "", "", "", "", ""];
+    for (let i = 0; i < digits.length; i++) {
+      newDigits[i] = digits[i];
+    }
+    setOtpDigits(newDigits);
+    const targetIdx = Math.min(digits.length, 5);
+    otpInputRefs.current[targetIdx]?.focus();
+
+    if (digits.length === 6) {
+      executeVerifyOtp(digits);
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text");
+    handleOtpPasteString(text);
+  };
+
+  const executeVerifyOtp = async (codeToVerify?: string) => {
     const targetEmail = emailVerificationPending || email;
-    if (!targetEmail) return;
+    const finalCode = (codeToVerify || otpDigits.join("")).trim();
+
+    if (!targetEmail) {
+      setOtpError("Adresse email manquante.");
+      return;
+    }
+
+    if (finalCode.length !== 6) {
+      setOtpError("Veuillez saisir l'intégralité du code à 6 chiffres.");
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setOtpError(null);
+
+    const res = await SupabaseService.verifyEmailOtp(targetEmail, finalCode);
+    setIsVerifyingOtp(false);
+
+    if (!res.success) {
+      setOtpError(res.message || "Code incorrect ou expiré. Veuillez vérifier votre boîte de réception ou vos courriers indésirables.");
+      return;
+    }
+
+    // Succès : compte validé
+    setOtpSuccessMessage("Compte validé avec succès ! Connexion en cours...");
+    setDone(true);
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
+
+    await new Promise((r) => setTimeout(r, 600));
+    setEmailVerificationPending(null);
+    onSuccess(res.planTier || StorageManager.getPlanTier());
+    onClose();
+  };
+
+  const handleResendOtp = async () => {
+    const targetEmail = emailVerificationPending || email;
+    if (!targetEmail || resendCooldown > 0 || isResendingEmail) return;
+
     setIsResendingEmail(true);
+    setOtpError(null);
     setResendEmailMessage(null);
+
     const res = await SupabaseService.resendConfirmationEmail(targetEmail);
     setIsResendingEmail(false);
-    setResendEmailMessage(res.message);
+
+    if (res.success) {
+      setResendCooldown(60);
+      setResendEmailMessage("Un nouveau code à 6 chiffres vient d'être envoyé dans votre boîte email !");
+    } else {
+      setOtpError(res.message || "Impossible de renvoyer le code pour le moment.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -386,7 +532,7 @@ export const AuthModal: React.FC<Props> = ({
       // Cas de vérification d'email requise par Supabase Cloud
       if (regResult.emailVerificationRequired) {
         setIsLoading(false);
-        setEmailVerificationPending(email);
+        setEmailVerificationPending(regResult.email || email);
         return;
       }
 
@@ -407,7 +553,7 @@ export const AuthModal: React.FC<Props> = ({
 
         // Cas 1 : L'email n'a pas encore été confirmé
         if (authResult.emailVerificationRequired) {
-          setEmailVerificationPending(email);
+          setEmailVerificationPending(authResult.email || email);
           return;
         }
 
@@ -500,7 +646,7 @@ export const AuthModal: React.FC<Props> = ({
 
 
 
-  // ÉCRAN SPÉCIFIQUE : CONFIRMATION D'EMAIL REQUISE (Supabase Cloud Auth)
+  // ÉCRAN SPÉCIFIQUE : VALIDATION PAR CODE OTP À 6 CHIFFRES (Supabase Cloud Auth)
   if (emailVerificationPending) {
     return (
       <div
@@ -508,63 +654,146 @@ export const AuthModal: React.FC<Props> = ({
         onMouseDown={onClose}
       >
         <div
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6 text-center border border-slate-100 relative my-auto"
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-6 sm:p-8 text-center border border-slate-100 relative my-auto"
           onMouseDown={(e) => e.stopPropagation()}
         >
+          {/* Bouton Fermer */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
             aria-label="Fermer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
 
-          <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-blue-600 shadow-sm">
-            <Mail className="w-7 h-7 animate-bounce" />
+          {/* Badge icône de sécurité */}
+          <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-blue-500/25">
+            <ShieldCheck className="w-9 h-9" />
           </div>
 
-          <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-            Vérifiez votre boîte de réception
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Code de confirmation
           </h3>
-          <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-            Un email de confirmation d'activation vient d'être envoyé à :
-          </p>
-          <div className="my-2.5 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-blue-600 break-all inline-block border border-slate-200">
-            {emailVerificationPending}
-          </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
-            Veuillez cliquer sur le lien dans le message pour activer votre compte. Vérifiez également votre dossier <strong>Spam / Courriers indésirables</strong>.
+          <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+            Saisissez le code à <strong>6 chiffres</strong> envoyé par email pour valider votre compte :
           </p>
 
-          {/* Bouton Renvoyer le mail de confirmation */}
-          <div className="space-y-2 mb-4">
+          {/* Email badge */}
+          <div className="my-3 px-3.5 py-1.5 bg-blue-50 border border-blue-200/80 rounded-full text-xs font-bold text-blue-700 break-all inline-flex items-center gap-1.5 shadow-sm max-w-full truncate">
+            <Mail className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+            <span className="truncate">{emailVerificationPending}</span>
+          </div>
+
+          {/* Champ de saisie des 6 chiffres */}
+          <div className="my-5">
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+              {otpDigits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => {
+                    otpInputRefs.current[idx] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  autoComplete="one-time-code"
+                  value={digit}
+                  onChange={(e) => handleOtpChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  onPaste={handleOtpPaste}
+                  aria-label={`Chiffre ${idx + 1}`}
+                  disabled={isVerifyingOtp}
+                  className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-2xl sm:text-3xl font-black rounded-xl border-2 transition-all select-all outline-none ${
+                    digit
+                      ? "border-blue-600 bg-blue-50/40 text-blue-900 shadow-sm"
+                      : "border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300"
+                  } focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-50`}
+                />
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-2.5">
+              Astuce : vous pouvez copier/coller directement le code à 6 chiffres.
+            </p>
+          </div>
+
+          {/* Alerte d'erreur */}
+          {otpError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-medium text-red-700 flex items-start gap-2 text-left">
+              <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <span>{otpError}</span>
+            </div>
+          )}
+
+          {/* Alerte de succès */}
+          {otpSuccessMessage && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-700 flex items-center gap-2 text-left">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>{otpSuccessMessage}</span>
+            </div>
+          )}
+
+          {/* Bouton de validation principal */}
+          <button
+            type="button"
+            disabled={isVerifyingOtp || otpDigits.some((d) => !d)}
+            onClick={() => executeVerifyOtp()}
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isVerifyingOtp ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Vérification du code...</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Valider et activer mon compte</span>
+              </>
+            )}
+          </button>
+
+          {/* Section renvoi de code OTP */}
+          <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
+            <p className="text-xs text-slate-500">
+              Vous n'avez pas reçu le code par email ?
+            </p>
             <button
               type="button"
-              disabled={isResendingEmail}
-              onClick={handleResendEmail}
-              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              disabled={isResendingEmail || resendCooldown > 0}
+              onClick={handleResendOtp}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isResendingEmail ? "animate-spin text-blue-600" : "text-slate-500"}`} />
-              <span>{isResendingEmail ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isResendingEmail ? "animate-spin text-blue-600" : ""}`} />
+              <span>
+                {resendCooldown > 0
+                  ? `Renvoyer un nouveau code (${resendCooldown}s)`
+                  : isResendingEmail
+                  ? "Envoi en cours..."
+                  : "Renvoyer un nouveau code"}
+              </span>
             </button>
             {resendEmailMessage && (
-              <p className="text-[10.5px] font-semibold text-blue-700 bg-blue-50 py-1.5 px-2.5 rounded-lg border border-blue-200">
+              <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200">
                 {resendEmailMessage}
               </p>
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setEmailVerificationPending(null);
-              switchMode("login");
-            }}
-            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>J'ai vérifié mon email • Me connecter</span>
-          </button>
+          {/* Bouton retour login */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setEmailVerificationPending(null);
+                switchMode("login", emailVerificationPending);
+              }}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Retour à la connexion</span>
+            </button>
+          </div>
         </div>
       </div>
     );

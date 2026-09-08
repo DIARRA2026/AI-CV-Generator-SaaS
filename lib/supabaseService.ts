@@ -7,7 +7,9 @@ export interface CloudAuthResponse {
   user?: UserSession;
   message?: string;
   emailVerificationRequired?: boolean;
+  email?: string;
   userNotFound?: boolean;
+  planTier?: PlanTier;
 }
 
 export class SupabaseService {
@@ -65,6 +67,10 @@ export class SupabaseService {
               company_type: payload.business?.companyType,
               manager_role: payload.business?.managerRole,
               rccm: payload.business?.rccm,
+              tax_id: payload.business?.taxId,
+              billing_address: payload.business?.billingAddress,
+              whatsapp_phone: payload.business?.whatsappPhone,
+              logo_url: payload.business?.logoUrl,
             },
           },
         });
@@ -96,8 +102,9 @@ export class SupabaseService {
           return {
             success: true,
             emailVerificationRequired: true,
+            email: cleanEmail,
             user: userSession,
-            message: `Un email de confirmation a été envoyé à ${cleanEmail}. Veuillez vérifier votre boîte de réception ou vos spams.`,
+            message: `Un code de validation à 6 chiffres a été envoyé à ${cleanEmail}. Veuillez vérifier votre boîte de réception ou vos spams.`,
           };
         }
 
@@ -134,7 +141,200 @@ export class SupabaseService {
   }
 
   /**
+   * Validation d'un code OTP à 6 chiffres reçu par email (Supabase Cloud Auth)
+   * Permet d'activer le compte pour une utilisation immédiate sur tout appareil.
+   */
+  static async verifyEmailOtp(email: string, token: string): Promise<CloudAuthResponse> {
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanToken = token.trim();
+
+    if (!cleanEmail || !cleanToken) {
+      return { success: false, message: "Veuillez renseigner votre adresse email et le code à 6 chiffres." };
+    }
+
+    if (this.isAvailable() && supabase) {
+      try {
+        // 1. Tenter la vérification OTP avec le type 'signup' (par défaut pour inscription)
+        let verifyResult = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: cleanToken,
+          type: "signup",
+        });
+
+        // 2. Si échec, tenter avec le type 'email' (supporté selon la configuration GoTrue)
+        if (verifyResult.error) {
+          const secondAttempt = await supabase.auth.verifyOtp({
+            email: cleanEmail,
+            token: cleanToken,
+            type: "email",
+          });
+          if (!secondAttempt.error && secondAttempt.data?.user) {
+            verifyResult = secondAttempt;
+          }
+        }
+
+        if (verifyResult.error) {
+          const errMsg = verifyResult.error.message.toLowerCase();
+          if (errMsg.includes("expired")) {
+            return {
+              success: false,
+              message: "Ce code à 6 chiffres a expiré. Veuillez cliquer sur 'Renvoyer le code' pour en recevoir un nouveau.",
+            };
+          }
+          if (errMsg.includes("invalid") || errMsg.includes("token")) {
+            return {
+              success: false,
+              message: "Code de validation incorrect. Veuillez vérifier les 6 chiffres reçus dans votre boîte de réception ou spams.",
+            };
+          }
+          return { success: false, message: verifyResult.error.message };
+        }
+
+        const authUser = verifyResult.data?.user;
+        if (authUser) {
+          const meta = authUser.user_metadata || {};
+
+          // Récupération éventuelle du profil PostgreSQL
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", authUser.id)
+            .maybeSingle();
+
+          const localUsers = StorageManager.getRegisteredUsers();
+          const localMatch = localUsers.find((u) => u.email.toLowerCase().trim() === cleanEmail);
+
+          const resolvedPlan: PlanTier =
+            (meta.plan_tier as PlanTier) ||
+            (profile?.plan_tier as PlanTier) ||
+            localMatch?.planTier ||
+            "free";
+
+          const isEnterprise =
+            meta.account_type === "business" ||
+            profile?.account_type === "business" ||
+            resolvedPlan.startsWith("enterprise") ||
+            resolvedPlan === "cyber15" ||
+            Boolean(meta.company_name);
+
+          const resolvedAccountType: AccountType = isEnterprise ? "business" : "candidate";
+
+          const resolvedFirstName =
+            meta.first_name ||
+            profile?.first_name ||
+            localMatch?.firstName ||
+            cleanEmail.split("@")[0];
+
+          const resolvedLastName =
+            meta.last_name ||
+            profile?.last_name ||
+            localMatch?.lastName ||
+            "";
+
+          const resolvedBusiness: BusinessProfile | undefined = isEnterprise
+            ? {
+                companyName: meta.company_name || profile?.company_name || localMatch?.business?.companyName || "Mon Entreprise",
+                companyType: meta.company_type || localMatch?.business?.companyType || "PME / Entreprise",
+                managerRole: meta.manager_role || localMatch?.business?.managerRole || "Responsable RH",
+                rccm: meta.rccm || localMatch?.business?.rccm || "",
+                taxId: meta.tax_id || localMatch?.business?.taxId || "",
+                billingAddress: meta.billing_address || localMatch?.business?.billingAddress || `${meta.city || "Abidjan"}, ${meta.country || "Côte d'Ivoire"}`,
+                whatsappPhone: meta.whatsapp_phone || meta.phone || localMatch?.business?.whatsappPhone || "",
+                logoUrl: meta.logo_url || localMatch?.business?.logoUrl || "",
+              }
+            : undefined;
+
+          const userSession: UserSession = {
+            email: authUser.email || cleanEmail,
+            accountType: resolvedAccountType,
+            firstName: resolvedFirstName,
+            lastName: resolvedLastName,
+            phone: meta.phone || profile?.phone || localMatch?.phone,
+            country: meta.country || profile?.country || localMatch?.country || "Côte d'Ivoire",
+            city: meta.city || profile?.city || localMatch?.city || "Abidjan",
+            business: resolvedBusiness,
+            planTier: resolvedPlan,
+            token: verifyResult.data?.session?.access_token,
+            createdAt: authUser.created_at,
+          };
+
+          // Sauvegarde locale de la session activée
+          StorageManager.setUser(userSession);
+
+          // Synchronisation du registre d'utilisateurs local
+          const users = StorageManager.getRegisteredUsers();
+          const idx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+          if (idx !== -1) {
+            users[idx] = {
+              ...users[idx],
+              accountType: userSession.accountType,
+              planTier: userSession.planTier,
+              business: userSession.business,
+            };
+          } else {
+            users.push({
+              id: authUser.id,
+              email: userSession.email,
+              passwordHash: "",
+              accountType: userSession.accountType,
+              firstName: userSession.firstName || "",
+              lastName: userSession.lastName || "",
+              phone: userSession.phone,
+              country: userSession.country,
+              city: userSession.city,
+              business: userSession.business,
+              planTier: userSession.planTier,
+              createdAt: userSession.createdAt || new Date().toISOString(),
+            });
+          }
+          localStorage.setItem("moncv_registered_users", JSON.stringify(users));
+
+          // Mettre à jour public.profiles sur Supabase
+          try {
+            await supabase.from("profiles").upsert({
+              id: authUser.id,
+              email: cleanEmail,
+              first_name: userSession.firstName,
+              last_name: userSession.lastName,
+              phone: userSession.phone,
+              country: userSession.country,
+              city: userSession.city,
+              plan_tier: userSession.planTier,
+              account_type: userSession.accountType,
+              company_name: userSession.business?.companyName,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "id" });
+          } catch {
+            // Tolérance réseau
+          }
+
+          // Rapatrier automatiquement les CVs
+          this.getResumes(cleanEmail).catch(() => {});
+
+          return {
+            success: true,
+            user: userSession,
+            message: "Votre compte a été validé avec succès !",
+          };
+        }
+      } catch (err: any) {
+        console.error("Erreur verifyEmailOtp Supabase:", err);
+        return { success: false, message: err?.message || "Erreur de communication lors de la vérification du code." };
+      }
+    }
+
+    // Repli de secours hors-ligne / développement
+    const localUser = StorageManager.getUser();
+    if (localUser && localUser.email.toLowerCase().trim() === cleanEmail) {
+      return { success: true, user: localUser, message: "Compte activé avec succès !" };
+    }
+
+    return { success: false, message: "Impossible de valider le code pour le moment." };
+  }
+
+  /**
    * Connexion sécurisée avec repli automatique LocalStorage et tolérance déconnectée
+   * Restaure intégralement l'environnement utilisateur sur TOUT nouvel appareil
    */
   static async signIn(email: string, password: string): Promise<CloudAuthResponse> {
     const cleanEmail = email.toLowerCase().trim();
@@ -153,43 +353,68 @@ export class SupabaseService {
             .from("profiles")
             .select("*")
             .eq("id", data.user.id)
-            .single();
+            .maybeSingle();
 
+          const meta = data.user.user_metadata || {};
           const localUsers = StorageManager.getRegisteredUsers();
           const localMatch = localUsers.find((u) => u.email.toLowerCase().trim() === cleanEmail);
           const savedSub = StorageManager.getUserSubscription(cleanEmail);
 
+          // Résolution de la formule (priorité Cloud pour fonctionnement multi-appareils)
           const resolvedPlan: PlanTier =
+            (meta.plan_tier as PlanTier) ||
             (profile?.plan_tier as PlanTier) ||
             localMatch?.planTier ||
             savedSub?.planTier ||
             "free";
 
           const isEnterprise =
+            meta.account_type === "business" ||
+            profile?.account_type === "business" ||
             resolvedPlan.startsWith("enterprise") ||
             resolvedPlan === "cyber15" ||
-            profile?.account_type === "business" ||
+            Boolean(meta.company_name) ||
             localMatch?.accountType === "business";
 
           const resolvedAccountType: AccountType = isEnterprise
             ? "business"
-            : (profile?.account_type || localMatch?.accountType || "candidate");
+            : (meta.account_type || profile?.account_type || localMatch?.accountType || "candidate");
 
           const resolvedFirstName =
+            meta.first_name ||
             profile?.first_name ||
-            data.user.user_metadata?.first_name ||
             localMatch?.firstName ||
             (cleanEmail.split("@")[0].charAt(0).toUpperCase() + cleanEmail.split("@")[0].slice(1));
+
+          const resolvedLastName =
+            meta.last_name ||
+            profile?.last_name ||
+            localMatch?.lastName ||
+            "";
+
+          // Reconstitution des données Entreprise depuis le Cloud (garantie multi-appareils)
+          const resolvedBusiness: BusinessProfile | undefined = isEnterprise
+            ? {
+                companyName: meta.company_name || profile?.company_name || localMatch?.business?.companyName || "Mon Entreprise",
+                companyType: meta.company_type || localMatch?.business?.companyType || "PME / Entreprise",
+                managerRole: meta.manager_role || localMatch?.business?.managerRole || "Responsable RH",
+                rccm: meta.rccm || localMatch?.business?.rccm || "",
+                taxId: meta.tax_id || localMatch?.business?.taxId || "",
+                billingAddress: meta.billing_address || localMatch?.business?.billingAddress || `${meta.city || "Abidjan"}, ${meta.country || "Côte d'Ivoire"}`,
+                whatsappPhone: meta.whatsapp_phone || meta.phone || localMatch?.business?.whatsappPhone || "",
+                logoUrl: meta.logo_url || localMatch?.business?.logoUrl || "",
+              }
+            : undefined;
 
           const userSession: UserSession = {
             email: data.user.email || cleanEmail,
             accountType: resolvedAccountType,
             firstName: resolvedFirstName,
-            lastName: profile?.last_name || data.user.user_metadata?.last_name || localMatch?.lastName || "",
-            phone: profile?.phone || data.user.user_metadata?.phone || localMatch?.phone,
-            country: profile?.country || data.user.user_metadata?.country || localMatch?.country,
-            city: profile?.city || data.user.user_metadata?.city || localMatch?.city,
-            business: localMatch?.business,
+            lastName: resolvedLastName,
+            phone: meta.phone || profile?.phone || data.user.phone || localMatch?.phone,
+            country: meta.country || profile?.country || localMatch?.country || "Côte d'Ivoire",
+            city: meta.city || profile?.city || localMatch?.city || "Abidjan",
+            business: resolvedBusiness,
             planTier: resolvedPlan,
             subscription: savedSub || localMatch?.subscription,
             token: data.session?.access_token,
@@ -200,22 +425,43 @@ export class SupabaseService {
           if (savedSub) {
             StorageManager.saveUserSubscription(cleanEmail, savedSub);
           }
+
+          // Enregistrement sur ce nouvel appareil
+          const users = StorageManager.getRegisteredUsers();
+          const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+          if (uIdx !== -1) {
+            users[uIdx] = { ...users[uIdx], ...userSession };
+          } else {
+            users.push({
+              id: data.user.id,
+              email: userSession.email,
+              passwordHash: "",
+              accountType: userSession.accountType,
+              firstName: userSession.firstName || "",
+              lastName: userSession.lastName || "",
+              phone: userSession.phone,
+              country: userSession.country,
+              city: userSession.city,
+              business: userSession.business,
+              planTier: userSession.planTier,
+              createdAt: userSession.createdAt || new Date().toISOString(),
+            });
+          }
+          localStorage.setItem("moncv_registered_users", JSON.stringify(users));
+
+          // Rapatriement automatique des CVs depuis le Cloud
+          this.getResumes(cleanEmail).catch(() => {});
+
           return { success: true, user: userSession };
         }
 
         // Si l'email n'a pas encore été validé sur Supabase
         if (error && error.message.toLowerCase().includes("email not confirmed")) {
-          // Vérifier si le compte existe en local pour permettre l'accès direct sans blocage
-          const localCheck = StorageManager.verifyLogin(cleanEmail, password);
-          if (localCheck.success && localCheck.user) {
-            const activeUser = StorageManager.getUser();
-            return { success: true, user: activeUser || (localCheck.user as any) };
-          }
-
           return {
             success: false,
             emailVerificationRequired: true,
-            message: "Votre adresse email est en attente de confirmation. Veuillez cliquer sur le lien reçu par email.",
+            email: cleanEmail,
+            message: "Votre adresse email n'a pas encore été validée. Veuillez saisir le code à 6 chiffres reçu par email.",
           };
         }
 

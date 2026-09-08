@@ -290,24 +290,6 @@ export default function CreateCVPage() {
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
 
-          {/* Bouton RETOUR DANS L'ESPACE ENTREPRISE */}
-          {(isEnterpriseActive || StorageManager.isBusinessAccount()) && (
-            <Link
-              href="/dashboard?tab=business"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("moncv_view_mode", "enterprise");
-                  window.dispatchEvent(new Event("storage"));
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer whitespace-nowrap border border-amber-400/50"
-              title={dict.nav.backToEnterprise}
-            >
-              <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-              <span>{dict.creator?.backToEnterpriseBtn || dict.nav.backToEnterprise}</span>
-            </Link>
-          )}
-
           {/* Indicateur Cloud Sync */}
           <div
             className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold"

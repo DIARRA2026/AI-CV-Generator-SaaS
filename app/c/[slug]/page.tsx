@@ -281,9 +281,13 @@ export default function PublicCandidateCVPage() {
   const isDark = theme === "dark";
 
   // Contrôles de gestion d'entreprise et sélecteur de profil interne :
-  // Visibles UNIQUEMENT pour le gestionnaire d'entreprise en navigation interne depuis son espace (jamais sur un lien partagé public)
-  const showEnterpriseControls = isFromEnterprise && !isShared;
-  const showProfileSwitcher = !isShared && isFromEnterprise;
+  // Visibles UNIQUEMENT si :
+  // 1. Le compte connecté est effectivement un compte entreprise actif
+  // 2. La navigation provient activement de l'Espace Entreprise (?from=enterprise)
+  // 3. Il ne s'agit PAS d'un lien de partage public (isShared === false)
+  const isUserBusinessAccount = isBusiness || (typeof window !== "undefined" && (StorageManager.isBusinessAccount() || StorageManager.getUser()?.accountType === "business"));
+  const showEnterpriseControls = !isShared && isFromEnterprise && Boolean(isUserBusinessAccount);
+  const showProfileSwitcher = !isShared && isFromEnterprise && Boolean(isUserBusinessAccount);
 
   // Compétences dynamiques
   const skillsList = resumeData.skills && resumeData.skills.length > 0
@@ -1754,19 +1758,8 @@ export default function PublicCandidateCVPage() {
         }}
       />
 
-      {/* Boutons Flottants de retour Espace Entreprise & Accueil */}
-      <div className="fixed bottom-5 left-5 z-40 no-print flex flex-col sm:flex-row items-start gap-2">
-        {showEnterpriseControls && (
-          <Link
-            href="/dashboard?tab=business"
-            onClick={handleReturnToEnterprise}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-amber-400/60"
-            title="Retourner à l'Espace Entreprise & Vivier RH"
-          >
-            <Building className="w-4 h-4 text-slate-950 shrink-0" />
-            <span>{dict.creator.backToEnterpriseBtn}</span>
-          </Link>
-        )}
+      {/* Bouton Flottant discret Retour Accueil MonCV.ai */}
+      <div className="fixed bottom-5 left-5 z-40 no-print">
         <Link
           href="/?landing=true"
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border shadow-xl backdrop-blur-md text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer ${

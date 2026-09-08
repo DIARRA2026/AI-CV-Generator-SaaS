@@ -190,18 +190,6 @@ export const ProfileSwitcher: React.FC<ProfileSwitcherProps> = ({
             </span>
           </div>
 
-          {/* Bouton Direct RETOUR DANS L'ESPACE ENTREPRISE */}
-          {isBusiness && (
-            <button
-              type="button"
-              onClick={handleGoToEnterprise}
-              className="w-full mb-2 p-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer border border-amber-400/60"
-            >
-              <Building className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-              <span>RETOUR DANS L'ESPACE ENTREPRISE</span>
-            </button>
-          )}
-
           {/* Liste des Profils Clients */}
           <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
             <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">

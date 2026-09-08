@@ -17,6 +17,8 @@ interface NavbarProps {
   onOpenAuth?: () => void;
   isEnterprisePage?: boolean;
   isEditorPage?: boolean;
+  onCandidatePoolClick?: () => void;
+  candidateCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,6 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   isEnterprisePage = false,
   isEditorPage = false,
+  onCandidatePoolClick,
+  candidateCount,
 }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -52,6 +56,59 @@ export const Navbar: React.FC<NavbarProps> = ({
     window.addEventListener("storage", update);
     return () => window.removeEventListener("storage", update);
   }, []);
+
+  const [candidateCountState, setCandidateCountState] = useState<number>(0);
+
+  useEffect(() => {
+    const updateCount = () => {
+      try {
+        const resumes = StorageManager.getResumes();
+        setCandidateCountState(resumes.length);
+      } catch {}
+    };
+    updateCount();
+    window.addEventListener("storage", updateCount);
+    return () => window.removeEventListener("storage", updateCount);
+  }, []);
+
+  const effectiveCandidateCount = candidateCount ?? candidateCountState;
+
+  const handleCandidatePoolClick = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+    if (isMobileDrawerOpen) setIsMobileDrawerOpen(false);
+
+    // 1. Si utilisateur non connecté, ouverture de la modal d'authentification
+    if (!StorageManager.isLoggedIn()) {
+      setAuthMode("login");
+      setTargetRedirect("/dashboard?tab=business&section=candidate-pool");
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 2. Si un callback direct est passé (ex: depuis la page Dashboard)
+    if (onCandidatePoolClick) {
+      onCandidatePoolClick();
+      return;
+    }
+
+    // 3. Si l'utilisateur est déjà sur la page /dashboard
+    if (typeof window !== "undefined" && window.location.pathname === "/dashboard") {
+      window.dispatchEvent(new CustomEvent("moncv_navigate_to_vivier"));
+      const el = document.getElementById("candidate-pool-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("ring-4", "ring-amber-400/50");
+        setTimeout(() => el.classList.remove("ring-4", "ring-amber-400/50"), 1500);
+        const searchInput = el.querySelector("input");
+        if (searchInput) searchInput.focus();
+        return;
+      }
+    }
+
+    // 4. Redirection vers le dashboard avec l'onglet business et l'ancre vers le vivier
+    router.push("/dashboard?tab=business&section=candidate-pool");
+  };
 
   const handleMesCvsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -163,22 +220,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : isEnterprisePage ? (
               <button
                 type="button"
-                onClick={handleMesCvsClick}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-all cursor-pointer btn-press"
+                onClick={handleCandidatePoolClick}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-slate-800 bg-amber-50 hover:bg-amber-100/90 border border-amber-300/80 rounded-xl transition-all cursor-pointer btn-press shadow-xs hover:shadow-sm"
+                title="Accéder au Vivier de Candidats (Faire défiler)"
               >
-                <Building className="w-4 h-4 text-amber-600" />
+                <Building className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>{dict.nav.candidatePool}</span>
+                {effectiveCandidateCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/60 text-[10px] font-black">
+                    {effectiveCandidateCount}
+                  </span>
+                )}
               </button>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={handleMesCvsClick}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-slate-500" />
-                  <span>{dict.nav.myCvs}</span>
-                </button>
+                {StorageManager.isBusinessAccount() || currentUser?.accountType === "business" ? (
+                  <button
+                    type="button"
+                    onClick={handleCandidatePoolClick}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-800 bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 rounded-xl transition-all cursor-pointer btn-press shadow-xs hover:shadow-sm"
+                    title="Accéder à l'Espace Entreprise & Vivier RH"
+                  >
+                    <Building className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>{dict.nav.candidatePool}</span>
+                    {effectiveCandidateCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/60 text-[10px] font-black">
+                        {effectiveCandidateCount}
+                      </span>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleMesCvsClick}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                    <span>{dict.nav.myCvs}</span>
+                  </button>
+                )}
 
                 {currentUser && (
                   <button
@@ -321,15 +401,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </Link>
                     )}
 
-                    {currentUser.accountType === "business" && (
-                      <Link
-                        href="/dashboard?tab=business"
-                        onClick={() => setIsProfileMenuOpen(false)}
+                    {(currentUser.accountType === "business" || StorageManager.isBusinessAccount()) && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          setIsProfileMenuOpen(false);
+                          handleCandidatePoolClick(e);
+                        }}
                         className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                       >
                         <Building className="w-4 h-4 text-amber-600 shrink-0" />
                         <span>{dict.nav.candidatePool}</span>
-                      </Link>
+                        {effectiveCandidateCount > 0 && (
+                          <span className="ml-auto px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-300 text-[10px] font-black">
+                            {effectiveCandidateCount}
+                          </span>
+                        )}
+                      </button>
                     )}
 
                     <button
@@ -636,12 +724,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={(e) => {
                     setIsMobileDrawerOpen(false);
-                    handleMesCvsClick(e);
+                    handleCandidatePoolClick(e);
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-xs cursor-pointer btn-press border border-amber-200"
+                  className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-xs cursor-pointer btn-press border border-amber-200"
                 >
-                  <Building className="w-4 h-4 text-amber-600" />
-                  <span>{dict.nav.candidatePool}</span>
+                  <div className="flex items-center gap-3">
+                    <Building className="w-4 h-4 text-amber-600" />
+                    <span>{dict.nav.candidatePool}</span>
+                  </div>
+                  {effectiveCandidateCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black">
+                      {effectiveCandidateCount}
+                    </span>
+                  )}
                 </button>
               ) : (
                 <>

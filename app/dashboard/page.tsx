@@ -127,11 +127,24 @@ export default function DashboardPage() {
 
       if (typeof window !== "undefined") {
         const params = new URLSearchParams(window.location.search);
+        const hash = window.location.hash;
         if (params.get("new") === "true" || params.get("create") === "true") {
           setIsCreatingModal(true);
         }
-        if (params.get("tab") === "business") {
+        if (params.get("tab") === "business" || params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
           setActiveTab("business");
+          if (params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
+            setTimeout(() => {
+              const el = document.getElementById("candidate-pool-section");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                el.classList.add("ring-4", "ring-amber-400/50");
+                setTimeout(() => el.classList.remove("ring-4", "ring-amber-400/50"), 1500);
+                const searchInput = el.querySelector("input");
+                if (searchInput) searchInput.focus();
+              }
+            }, 300);
+          }
         } else if (params.get("tab") === "candidate") {
           setActiveTab("candidate");
         }
@@ -141,6 +154,28 @@ export default function DashboardPage() {
     syncState();
     window.addEventListener("storage", syncState);
     return () => window.removeEventListener("storage", syncState);
+  }, []);
+
+  const handleNavigateToVivier = () => {
+    setActiveTab("business");
+    setTimeout(() => {
+      const el = document.getElementById("candidate-pool-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("ring-4", "ring-amber-400/50");
+        setTimeout(() => el.classList.remove("ring-4", "ring-amber-400/50"), 1500);
+        const searchInput = el.querySelector("input");
+        if (searchInput) searchInput.focus();
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    const handleVivierNavEvent = () => {
+      handleNavigateToVivier();
+    };
+    window.addEventListener("moncv_navigate_to_vivier", handleVivierNavEvent);
+    return () => window.removeEventListener("moncv_navigate_to_vivier", handleVivierNavEvent);
   }, []);
 
   const filteredResumes = useMemo(() => {
@@ -319,6 +354,8 @@ export default function DashboardPage() {
         onOpenPayment={() => setIsPaymentOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         isEnterprisePage={isBusinessAccount && activeTab === "business"}
+        onCandidatePoolClick={handleNavigateToVivier}
+        candidateCount={resumes.length}
       />
 
       {!isLoggedIn ? (
@@ -608,7 +645,10 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+              <div
+                id="candidate-pool-section"
+                className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5 scroll-mt-24 transition-all duration-300"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">

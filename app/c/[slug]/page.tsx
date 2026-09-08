@@ -144,9 +144,10 @@ export default function PublicCandidateCVPage() {
   const [contactMessage, setContactMessage] = useState("");
   const [contactSent, setContactSent] = useState(false);
 
-  // État Espace Entreprise pour les profils créés
+  // État Espace Entreprise pour les profils créés et détection du mode de partage public
   const [isBusiness, setIsBusiness] = useState(false);
   const [isFromEnterprise, setIsFromEnterprise] = useState(false);
+  const [isShared, setIsShared] = useState(false);
 
   useEffect(() => {
     const checkBiz = () => {
@@ -156,7 +157,17 @@ export default function PublicCandidateCVPage() {
     checkBiz();
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("from") === "enterprise" || params.get("tab") === "business") {
+      const isExplicitShared =
+        params.get("shared") === "true" ||
+        params.get("view") === "shared" ||
+        params.get("view") === "public" ||
+        params.get("share") === "1" ||
+        params.get("mode") === "public";
+
+      setIsShared(isExplicitShared);
+
+      // Le mode entreprise n'est actif que si l'on vient de l'espace entreprise ET qu'il ne s'agit pas d'un lien partagé
+      if (!isExplicitShared && (params.get("from") === "enterprise" || params.get("tab") === "business")) {
         setIsFromEnterprise(true);
       }
     }
@@ -218,9 +229,37 @@ export default function PublicCandidateCVPage() {
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
+      const targetSlug = resumeData.slug || slug || resumeData.id;
+      // Génère l'URL publique de partage épurée des paramètres internes d'entreprise
+      const shareUrl = `${window.location.origin}/c/${targetSlug}?shared=true`;
+
+      const copyToClipboard = (text: string) => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text);
+        }
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand("copy");
+        } catch (e) {}
+        document.body.removeChild(textArea);
+        return Promise.resolve();
+      };
+
+      copyToClipboard(shareUrl)
+        .then(() => {
+          setCopiedLink(true);
+          setTimeout(() => setCopiedLink(false), 2500);
+        })
+        .catch(() => {
+          setCopiedLink(true);
+          setTimeout(() => setCopiedLink(false), 2500);
+        });
     }
   };
 
@@ -240,6 +279,11 @@ export default function PublicCandidateCVPage() {
   const p = resumeData.personal;
   const primaryColor = resumeData.design.primaryColor || "#2563eb";
   const isDark = theme === "dark";
+
+  // Contrôles de gestion d'entreprise et sélecteur de profil interne :
+  // Visibles UNIQUEMENT pour le gestionnaire d'entreprise en navigation interne depuis son espace (jamais sur un lien partagé public)
+  const showEnterpriseControls = isFromEnterprise && !isShared;
+  const showProfileSwitcher = !isShared && isFromEnterprise;
 
   // Compétences dynamiques
   const skillsList = resumeData.skills && resumeData.skills.length > 0
@@ -535,22 +579,26 @@ export default function PublicCandidateCVPage() {
             </button>
 
 
-            {/* Sélecteur de Changement de Profil Client & Espaces */}
-            <ProfileSwitcher currentSlug={slug} isDark={isDark} />
+            {/* Sélecteur de Changement de Profil Client & Espaces (uniquement en gestion interne entreprise) */}
+            {showProfileSwitcher && (
+              <ProfileSwitcher currentSlug={slug} isDark={isDark} />
+            )}
 
             {/* Sélecteur de Langue Multilingue i18n */}
             <LanguageSelector variant="navbar" />
 
-            {/* Bouton RETOUR DANS L'ESPACE ENTREPRISE */}
-            <Link
-              href="/dashboard?tab=business"
-              onClick={handleReturnToEnterprise}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0 border border-amber-400/50"
-              title={dict.creator.backToEnterpriseBtn}
-            >
-              <Building className="w-3.5 h-3.5 text-slate-950" />
-              <span>{dict.creator.backToEnterpriseBtn}</span>
-            </Link>
+            {/* Bouton RETOUR DANS L'ESPACE ENTREPRISE (uniquement en gestion interne entreprise) */}
+            {showEnterpriseControls && (
+              <Link
+                href="/dashboard?tab=business"
+                onClick={handleReturnToEnterprise}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0 border border-amber-400/50"
+                title={dict.creator.backToEnterpriseBtn}
+              >
+                <Building className="w-3.5 h-3.5 text-slate-950" />
+                <span>{dict.creator.backToEnterpriseBtn}</span>
+              </Link>
+            )}
 
             {/* Bouton Retour Accueil MonCV.ai */}
             <Link
@@ -587,28 +635,32 @@ export default function PublicCandidateCVPage() {
               isDark ? "bg-[#0b0c10] border-slate-800" : "bg-white border-slate-200"
             }`}
           >
-            {/* Raccourci Changement de Profil Mobile */}
-            <div className="pt-1 pb-1">
-              <ProfileSwitcher currentSlug={slug} isDark={isDark} className="w-full" />
-            </div>
+            {/* Raccourci Changement de Profil Mobile (uniquement en gestion interne entreprise) */}
+            {showProfileSwitcher && (
+              <div className="pt-1 pb-1">
+                <ProfileSwitcher currentSlug={slug} isDark={isDark} className="w-full" />
+              </div>
+            )}
 
             {/* Sélecteur de langue Mobile */}
             <div className="pt-1 pb-1">
               <LanguageSelector variant="mobile" />
             </div>
 
-            {/* Bouton Rapide Espace Entreprise Mobile */}
-            <Link
-              href="/dashboard?tab=business"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleReturnToEnterprise();
-              }}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 cursor-pointer"
-            >
-              <Building className="w-4 h-4 text-slate-950" />
-              <span>{dict.creator.backToEnterpriseBtn}</span>
-            </Link>
+            {/* Bouton Rapide Espace Entreprise Mobile (uniquement en gestion interne entreprise) */}
+            {showEnterpriseControls && (
+              <Link
+                href="/dashboard?tab=business"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleReturnToEnterprise();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 cursor-pointer"
+              >
+                <Building className="w-4 h-4 text-slate-950" />
+                <span>{dict.creator.backToEnterpriseBtn}</span>
+              </Link>
+            )}
 
             {/* Actions rapides Mobile */}
             <Link
@@ -1704,15 +1756,17 @@ export default function PublicCandidateCVPage() {
 
       {/* Boutons Flottants de retour Espace Entreprise & Accueil */}
       <div className="fixed bottom-5 left-5 z-40 no-print flex flex-col sm:flex-row items-start gap-2">
-        <Link
-          href="/dashboard?tab=business"
-          onClick={handleReturnToEnterprise}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-amber-400/60"
-          title="Retourner à l'Espace Entreprise & Vivier RH"
-        >
-          <Building className="w-4 h-4 text-slate-950 shrink-0" />
-          <span>{dict.creator.backToEnterpriseBtn}</span>
-        </Link>
+        {showEnterpriseControls && (
+          <Link
+            href="/dashboard?tab=business"
+            onClick={handleReturnToEnterprise}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-amber-400/60"
+            title="Retourner à l'Espace Entreprise & Vivier RH"
+          >
+            <Building className="w-4 h-4 text-slate-950 shrink-0" />
+            <span>{dict.creator.backToEnterpriseBtn}</span>
+          </Link>
+        )}
         <Link
           href="/?landing=true"
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border shadow-xl backdrop-blur-md text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer ${

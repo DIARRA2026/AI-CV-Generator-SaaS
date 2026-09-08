@@ -30,11 +30,16 @@ export class AdminService {
   static async verifyServerSession(): Promise<{ authenticated: boolean; email?: string }> {
     if (typeof window === "undefined") return { authenticated: false };
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
       const response = await fetch("/api/admin/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "verify" }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -54,7 +59,7 @@ export class AdminService {
       localStorage.removeItem(ADMIN_SESSION_KEY);
       return { authenticated: false };
     } catch (e) {
-      console.error("Erreur vérification session admin serveur :", e);
+      console.warn("Vérification session admin serveur indisponible :", e);
       return { authenticated: false };
     }
   }

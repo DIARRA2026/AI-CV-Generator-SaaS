@@ -56,7 +56,7 @@ export default function AdminConsolePage() {
 
   // État d'authentification
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const [authChecking, setAuthChecking] = useState<boolean>(false);
   const [passkeyInput, setPasskeyInput] = useState<string>("");
   const [emailInput, setEmailInput] = useState<string>("");
   const [authError, setAuthError] = useState<string>("");
@@ -132,6 +132,13 @@ export default function AdminConsolePage() {
 
   // Vérifier l'état d'authentification admin côté serveur
   const checkAuth = async () => {
+    // Si aucune session admin locale n'existe, afficher directement l'écran de connexion sans bloquer
+    if (!AdminService.isAdminAuthenticated()) {
+      setIsAuthenticated(false);
+      setAuthChecking(false);
+      return;
+    }
+
     setAuthChecking(true);
     try {
       const result = await AdminService.verifyServerSession();
@@ -397,8 +404,11 @@ export default function AdminConsolePage() {
   // =========================================================================
   if (authChecking) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="flex items-center gap-3 text-slate-400 font-medium">
+      <div
+        className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-slate-400"
+        style={{ backgroundColor: "#020617", color: "#94a3b8", minHeight: "100vh" }}
+      >
+        <div className="flex items-center gap-3 font-medium">
           <RefreshCw className="w-5 h-5 animate-spin text-blue-500" />
           <span>Initialisation de l'environnement sécurisé...</span>
         </div>

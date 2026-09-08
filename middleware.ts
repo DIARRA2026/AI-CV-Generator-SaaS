@@ -31,12 +31,26 @@ export function middleware(request: NextRequest) {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
 
+  // Content-Security-Policy (Protection contre les injections de scripts et détournements de frames)
+  const cspHeader = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
+    "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+  response.headers.set("Content-Security-Policy", cspHeader);
+
   // 2. VÉRIFICATION DU SAS DE PRÉVISUALISATION PRIVÉE (PREVIEW LOCK)
   const previewPassword = process.env.PREVIEW_PASSWORD?.trim();
   if (previewPassword) {
     const isPreviewExcluded =
       pathname.startsWith("/preview-access") ||
-      pathname.startsWith("/api/preview-auth");
+      pathname.startsWith("/api/");
 
     if (!isPreviewExcluded) {
       const previewCookie = request.cookies.get("moncv_preview_auth")?.value;

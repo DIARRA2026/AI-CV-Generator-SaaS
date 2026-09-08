@@ -16,11 +16,7 @@ const ADMIN_SESSION_KEY = "moncv_admin_session";
 const ADMIN_LOGS_KEY = "moncv_admin_logs_v1";
 const MAINTENANCE_MODE_KEY = "moncv_maintenance_mode";
 const ADMIN_COOKIE_NAME = "moncv_admin_token";
-
-// Clé Maître Haute Entropie & Passphrase SuperAdmin Direction (Protection Militaire)
-export const MASTER_PASSKEY = "INNOVA#2026@MonCV-SuperVault$Secure987!";
-export const DEFAULT_ADMIN_EMAIL = "admin@moncv.ai";
-export const DEFAULT_ADMIN_PASS = "Admin2026!";
+const SYSTEM_ADMIN_EMAIL = "admin@moncv.ai";
 
 export class AdminService {
   // =========================================================================
@@ -28,12 +24,47 @@ export class AdminService {
   // =========================================================================
 
   /**
-   * Vérifie si la session admin courante est valide
+   * Vérification de session côté serveur (Source de Vérité Sécurisée)
+   * Interroge l'API /api/admin/auth avec le cookie httpOnly.
+   */
+  static async verifyServerSession(): Promise<{ authenticated: boolean; email?: string }> {
+    if (typeof window === "undefined") return { authenticated: false };
+    try {
+      const response = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify" }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authenticated) {
+          const sessionData = {
+            authenticated: true,
+            email: data.email,
+            role: "superadmin" as UserRole,
+            loggedAt: new Date().toISOString(),
+          };
+          localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
+          return { authenticated: true, email: data.email };
+        }
+      }
+
+      // Si le serveur rejette la session, purger la valeur locale
+      localStorage.removeItem(ADMIN_SESSION_KEY);
+      return { authenticated: false };
+    } catch (e) {
+      console.error("Erreur vérification session admin serveur :", e);
+      return { authenticated: false };
+    }
+  }
+
+  /**
+   * Vérifie si la session admin locale est active (vérification rapide UI avant validation serveur)
    */
   static isAdminAuthenticated(): boolean {
     if (typeof window === "undefined") return false;
     try {
-      // 1. Session admin dédiée
       const adminSessionRaw = localStorage.getItem(ADMIN_SESSION_KEY);
       if (adminSessionRaw) {
         const session = JSON.parse(adminSessionRaw);
@@ -41,17 +72,6 @@ export class AdminService {
           return true;
         }
       }
-
-      // 2. Vérification par le compte utilisateur connecté
-      const user = StorageManager.getUser();
-      if (user) {
-        if (user.role === "admin" || user.role === "superadmin") return true;
-        const normEmail = user.email?.toLowerCase().trim();
-        if (normEmail === DEFAULT_ADMIN_EMAIL || normEmail === "innova.admin@moncv.ai") {
-          return true;
-        }
-      }
-
       return false;
     } catch {
       return false;
@@ -59,21 +79,13 @@ export class AdminService {
   }
 
   /**
-   * Récupère les données de la session administrateur
+   * Récupère les données de la session administrateur locale
    */
   static getAdminSession(): { email: string; role: UserRole; loggedAt: string } | null {
     if (typeof window === "undefined") return null;
     try {
       const raw = localStorage.getItem(ADMIN_SESSION_KEY);
       if (raw) return JSON.parse(raw);
-      const user = StorageManager.getUser();
-      if (this.isAdminAuthenticated() && user) {
-        return {
-          email: user.email,
-          role: user.role || "superadmin",
-          loggedAt: new Date().toISOString(),
-        };
-      }
       return null;
     } catch {
       return null;
@@ -81,7 +93,7 @@ export class AdminService {
   }
 
   /**
-   * Déverrouillage par Clé Maître (Master Passkey) avec validation serveur SHA-256 et Anti-Brute-Force
+   * Déverrouillage par Clé Maître validé STRICTEMENT par le serveur SHA-256 HMAC et Rate-Limiter
    */
   static async unlockWithMasterKey(
     keyOrPassword: string,
@@ -96,92 +108,71 @@ export class AdminService {
     if (typeof window === "undefined") return { success: false, message: "Environnement indisponible" };
     try {
       const trimmed = keyOrPassword.trim();
-      const targetEmail = (email || DEFAULT_ADMIN_EMAIL).toLowerCase().trim();
+      const targetEmail = (email || "").toLowerCase().trim();
 
-      // 1. Validation Serveur Haute Sécurité (Route /api/admin/auth avec Rate Limiting)
-      try {
-        const response = await fetch("/api/admin/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "login",
-            email: targetEmail,
-            passkey: trimmed,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          const sessionData = {
-            authenticated: true,
-            email: data.user?.email || targetEmail,
-            role: "superadmin" as UserRole,
-            loggedAt: new Date().toISOString(),
-          };
-
-          localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-
-          if (typeof document !== "undefined") {
-            document.cookie = `${ADMIN_COOKIE_NAME}=admin-verified-${Date.now()}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `moncv_auth_token=admin-active; path=/; max-age=86400; SameSite=Lax`;
-          }
-
-          this.logAction(
-            "CONNEXION_ADMIN_HAUTE_SECURITE",
-            targetEmail,
-            "Déverrouillage SuperAdmin validé via HMAC SHA-256 & Rate-Limiter",
-            "success"
-          );
-
-          window.dispatchEvent(new Event("storage"));
-          return { success: true, message: "Accès SuperAdmin validé avec succès." };
-        }
-
-        if (response.status === 429 || data.blocked) {
-          return {
-            success: false,
-            blocked: true,
-            remainingAttempts: 0,
-            resetInSeconds: data.resetInSeconds || 900,
-            message:
-              data.error ||
-              "Accès temporairement suspendu pour des raisons de sécurité suite à plusieurs tentatives infructueuses.",
-          };
-        }
-
+      if (!targetEmail || !trimmed) {
         return {
           success: false,
-          remainingAttempts: data.remainingAttempts,
-          message: data.error || "Identifiant ou clé maître SuperAdmin incorrects.",
+          message: "Veuillez renseigner votre email administrateur et la clé maître.",
         };
-      } catch (netErr) {
-        console.warn("API /api/admin/auth injoignable, repli de sécurité local :", netErr);
       }
 
-      // 2. Repli de sécurité local (uniquement si le réseau ou l'API serveur est hors ligne)
-      const isMasterKey =
-        trimmed === MASTER_PASSKEY ||
-        trimmed === "INNOVA-SUPERADMIN-2026" ||
-        trimmed === "MonCV2026Admin!";
+      // Validation Serveur Haute Sécurité (Route /api/admin/auth avec Rate Limiting)
+      const response = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "login",
+          email: targetEmail,
+          passkey: trimmed,
+        }),
+      });
 
-      if (isMasterKey) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         const sessionData = {
           authenticated: true,
-          email: targetEmail,
+          email: data.user?.email || targetEmail,
           role: "superadmin" as UserRole,
           loggedAt: new Date().toISOString(),
         };
 
         localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-        this.logAction("CONNEXION_ADMIN_LOCAL", targetEmail, "Déverrouillage de secours validé", "warning");
+
+        this.logAction(
+          "CONNEXION_ADMIN_HAUTE_SECURITE",
+          targetEmail,
+          "Déverrouillage SuperAdmin validé via HMAC SHA-256 & Rate-Limiter",
+          "success"
+        );
+
         window.dispatchEvent(new Event("storage"));
-        return { success: true, message: "Accès Administrateur validé." };
+        return { success: true, message: "Accès SuperAdmin validé avec succès." };
       }
 
-      return { success: false, message: "Clé Maître SuperAdmin incorrecte." };
+      if (response.status === 429 || data.blocked) {
+        return {
+          success: false,
+          blocked: true,
+          remainingAttempts: 0,
+          resetInSeconds: data.resetInSeconds || 900,
+          message:
+            data.error ||
+            "Accès temporairement suspendu pour des raisons de sécurité suite à plusieurs tentatives infructueuses.",
+        };
+      }
+
+      return {
+        success: false,
+        remainingAttempts: data.remainingAttempts,
+        message: data.error || "Identifiant ou clé maître SuperAdmin incorrects.",
+      };
     } catch (e: any) {
-      return { success: false, message: e.message || "Erreur de validation administrateur." };
+      return {
+        success: false,
+        message: "Erreur de communication avec le serveur d'authentification sécurisé.",
+      };
     }
   }
 
@@ -196,9 +187,6 @@ export class AdminService {
         this.logAction("DECONNEXION_ADMIN", current.email, "Fermeture de la session d'administration", "info");
       }
       localStorage.removeItem(ADMIN_SESSION_KEY);
-      if (typeof document !== "undefined") {
-        document.cookie = `${ADMIN_COOKIE_NAME}=; path=/; max-age=0`;
-      }
       try {
         await fetch("/api/admin/auth", {
           method: "POST",
@@ -223,7 +211,7 @@ export class AdminService {
           {
             id: `log-init-1`,
             timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-            adminEmail: DEFAULT_ADMIN_EMAIL,
+            adminEmail: SYSTEM_ADMIN_EMAIL,
             action: "SYSTEM_INITIALIZED",
             details: "Initialisation du moteur de surveillance MonCV.ai",
             severity: "info",
@@ -231,7 +219,7 @@ export class AdminService {
           {
             id: `log-init-2`,
             timestamp: new Date(Date.now() - 3600000).toISOString(),
-            adminEmail: DEFAULT_ADMIN_EMAIL,
+            adminEmail: SYSTEM_ADMIN_EMAIL,
             action: "SECURITY_AUDIT",
             details: "Audit des en-têtes OWASP et protection des routes validée",
             severity: "success",
@@ -255,7 +243,7 @@ export class AdminService {
     if (typeof window === "undefined") return;
     try {
       const logs = this.getAuditLogs();
-      const currentAdmin = this.getAdminSession()?.email || DEFAULT_ADMIN_EMAIL;
+      const currentAdmin = this.getAdminSession()?.email || SYSTEM_ADMIN_EMAIL;
 
       const newLog: AdminAuditLog = {
         id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -816,7 +804,7 @@ export class AdminService {
     if (typeof window === "undefined") return { success: false, fixedCount: 0, message: "Non disponible" };
     try {
       const activeUser = StorageManager.getUser();
-      const fallbackEmail = activeUser?.email || DEFAULT_ADMIN_EMAIL;
+      const fallbackEmail = activeUser?.email || SYSTEM_ADMIN_EMAIL;
       const resumes = StorageManager.getResumes();
       let fixedCount = 0;
 

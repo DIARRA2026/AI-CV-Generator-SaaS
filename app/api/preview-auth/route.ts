@@ -2,24 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { checkRateLimit, isRateLimited, resetRateLimit } from "@/lib/rateLimit";
 
-const PREVIEW_SECRET =
-  process.env.ADMIN_SECRET_KEY || "MONCV-PREVIEW-SALT-KEY-2026-XOF";
-
 /**
- * Mot de passe de prévisualisation autorisé :
- * Récupéré depuis la variable d'environnement PREVIEW_PASSWORD
- * ou mot de passe de prévisualisation par défaut.
+ * Récupère la configuration sécurisée du sas de prévisualisation.
+ * Échec sécurisé si la clé de hachage ou le mot de passe ne sont pas configurés.
  */
-function getAuthorizedPreviewPasswords(): string[] {
-  const envPassword = process.env.PREVIEW_PASSWORD?.trim();
-  const passwords: string[] = [];
-  if (envPassword) {
-    passwords.push(envPassword);
+function getPreviewAuthConfig(): {
+  secret: string;
+  password: string;
+} | null {
+  const secret = process.env.PREVIEW_SECRET_KEY?.trim();
+  const password = process.env.PREVIEW_PASSWORD?.trim();
+
+  if (!secret || !password) {
+    return null;
   }
-  // Mot de passe standard prêt à l'emploi si aucune variable n'est définie
-  passwords.push("MonCV-Preview2026!");
-  passwords.push("INNOVA#2026@MonCV-SuperVault$Secure987!");
-  return passwords;
+
+  return { secret, password };
 }
 
 /**
@@ -38,17 +36,17 @@ function safeCompare(a: string, b: string): boolean {
 /**
  * Génère un jeton signé HMAC pour la session de prévisualisation
  */
-function generatePreviewToken(): string {
+function generatePreviewToken(secret: string): string {
   const timestamp = Date.now();
   const payload = `preview-access:${timestamp}`;
-  const hmac = crypto.createHmac("sha256", PREVIEW_SECRET).update(payload).digest("hex");
+  const hmac = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return Buffer.from(`${payload}:${hmac}`).toString("base64url");
 }
 
 /**
  * Vérifie l'authenticité et la validité du jeton de prévisualisation
  */
-function verifyPreviewToken(token: string): boolean {
+function verifyPreviewToken(token: string, secret: string): boolean {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf-8");
     const parts = decoded.split(":");
@@ -64,7 +62,7 @@ function verifyPreviewToken(token: string): boolean {
     }
 
     const expectedHmac = crypto
-      .createHmac("sha256", PREVIEW_SECRET)
+      .createHmac("sha256", secret)
       .update(`${prefix}:${timestampStr}`)
       .digest("hex");
 
@@ -76,6 +74,18 @@ function verifyPreviewToken(token: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const config = getPreviewAuthConfig();
+    if (!config) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Le sas de prévisualisation n'est pas configuré sur le serveur (PREVIEW_SECRET_KEY ou PREVIEW_PASSWORD manquant).",
+        },
+        { status: 503 }
+      );
+    }
+
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
@@ -92,8 +102,18 @@ export async function POST(request: NextRequest) {
         path: "/",
         maxAge: 0,
         sameSite: "lax",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
       });
       return res;
+    }
+
+    if (action === "verify") {
+      const token = request.cookies.get("moncv_preview_auth")?.value;
+      if (token && verifyPreviewToken(token, config.secret)) {
+        return NextResponse.json({ authenticated: true });
+      }
+      return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
     // Vérification de blocage anti-brute-force
@@ -119,25 +139,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validPasswords = getAuthorizedPreviewPasswords();
-    let isValid = false;
-    for (const validPass of validPasswords) {
-      if (safeCompare(inputPassword, validPass)) {
-        isValid = true;
-        break;
-      }
-    }
+    // Comparaison stricte avec le mot de passe d'environnement
+    const isValid = safeCompare(inputPassword, config.password);
 
     if (isValid) {
       resetRateLimit(rateLimitKey);
-      const token = generatePreviewToken();
+      const token = generatePreviewToken(config.secret);
 
       const response = NextResponse.json({
         success: true,
         message: "Accès prévisualisation déverrouillé avec succès.",
       });
 
-      // Cookie de session valide pendant 7 jours
+      // Cookie de session valide pendant 7 jours, strictement protégé
       response.cookies.set("moncv_preview_auth", token, {
         path: "/",
         maxAge: 7 * 24 * 60 * 60,

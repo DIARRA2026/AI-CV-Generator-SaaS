@@ -11,7 +11,7 @@ export const env = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
 
   // Authentification & Chiffrement
-  authSecret: process.env.NEXTAUTH_SECRET || "moncv_default_dev_secret_replace_in_prod",
+  authSecret: process.env.NEXTAUTH_SECRET || "",
 
   // Moteurs d'Intelligence Artificielle
   ai: {

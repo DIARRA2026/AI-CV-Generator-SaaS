@@ -49,12 +49,7 @@ import {
   SystemDiagnosticCheck,
   SystemMetricSummary,
 } from "@/lib/types";
-import {
-  AdminService,
-  MASTER_PASSKEY,
-  DEFAULT_ADMIN_EMAIL,
-  DEFAULT_ADMIN_PASS,
-} from "@/lib/adminService";
+import { AdminService } from "@/lib/adminService";
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -63,7 +58,7 @@ export default function AdminConsolePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authChecking, setAuthChecking] = useState<boolean>(true);
   const [passkeyInput, setPasskeyInput] = useState<string>("");
-  const [emailInput, setEmailInput] = useState<string>(DEFAULT_ADMIN_EMAIL);
+  const [emailInput, setEmailInput] = useState<string>("");
   const [authError, setAuthError] = useState<string>("");
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -135,22 +130,26 @@ export default function AdminConsolePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Vérifier l'état d'authentification admin
-  const checkAuth = () => {
-    const authed = AdminService.isAdminAuthenticated();
-    setIsAuthenticated(authed);
-    setAuthChecking(false);
-    if (authed) {
-      loadAdminData();
+  // Vérifier l'état d'authentification admin côté serveur
+  const checkAuth = async () => {
+    setAuthChecking(true);
+    try {
+      const result = await AdminService.verifyServerSession();
+      setIsAuthenticated(result.authenticated);
+      if (result.authenticated) {
+        loadAdminData();
+      }
+    } catch {
+      setIsAuthenticated(false);
+    } finally {
+      setAuthChecking(false);
     }
   };
 
   useEffect(() => {
     checkAuth();
     const handleStorageChange = () => {
-      if (AdminService.isAdminAuthenticated()) {
-        loadAdminData();
-      }
+      checkAuth();
     };
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);

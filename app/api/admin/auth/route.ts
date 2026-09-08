@@ -2,26 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { checkRateLimit, isRateLimited, resetRateLimit } from "@/lib/rateLimit";
 
-// Clé secrète de signature HMAC côté serveur
-const SERVER_ADMIN_SECRET =
-  process.env.ADMIN_SECRET_KEY || "INNOVA-VAULT-SECRET-SALT-987654321-XOF-MONCV-AI";
+/**
+ * Récupère et valide la configuration d'authentification SuperAdmin.
+ * Échec sécurisé (Fail-Safe) si les variables indispensables ne sont pas définies.
+ */
+function getAdminAuthConfig(): {
+  secret: string;
+  authorizedKeys: string[];
+  allowedEmails: string[];
+} | null {
+  const secret = process.env.ADMIN_SECRET_KEY?.trim();
+  const masterKey = process.env.ADMIN_MASTER_PASSKEY?.trim();
 
-// Passphrases SuperAdmin de haute sécurité autorisées
-const AUTHORIZED_SUPERADMIN_KEYS = [
-  "INNOVA#2026@MonCV-SuperVault$Secure987!", // Passphrase Haute Entropie Principale
-  "INNOVA-SUPERADMIN-2026",                 // Passphrase Direction Générale
-  "MonCV2026Admin!",
-  "Admin2026!",
-];
+  if (!secret || !masterKey) {
+    return null;
+  }
 
-// Emails autorisés pour le rôle SuperAdmin
-const AUTHORIZED_SUPERADMIN_EMAILS = [
-  "innovagroup225@gmail.com",
-  "admin@moncv.ai",
-  "innova.admin@moncv.ai",
-  "superadmin@moncv.ai",
-  "direction@moncv.ai",
-];
+  const backupKeys = (process.env.ADMIN_BACKUP_KEYS || "")
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  const allowedEmails = (
+    process.env.ADMIN_ALLOWED_EMAILS ||
+    "innovagroup225@gmail.com,admin@moncv.ai,direction@moncv.ai"
+  )
+    .split(",")
+    .map((e) => e.toLowerCase().trim())
+    .filter(Boolean);
+
+  return {
+    secret,
+    authorizedKeys: [masterKey, ...backupKeys],
+    allowedEmails,
+  };
+}
 
 /**
  * Fonction de comparaison temporelle constante (Anti-Timing Attack)
@@ -39,17 +54,20 @@ function safeCompare(a: string, b: string): boolean {
 /**
  * Signature cryptographique HMAC pour le jeton de session
  */
-function generateAdminToken(email: string): string {
+function generateAdminToken(email: string, secret: string): string {
   const timestamp = Date.now();
   const payload = `${email}:${timestamp}`;
-  const hmac = crypto.createHmac("sha256", SERVER_ADMIN_SECRET).update(payload).digest("hex");
+  const hmac = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return Buffer.from(`${payload}:${hmac}`).toString("base64url");
 }
 
 /**
  * Validation de la signature du jeton administrateur
  */
-function verifyAdminToken(token: string): { valid: boolean; email?: string } {
+function verifyAdminToken(
+  token: string,
+  secret: string
+): { valid: boolean; email?: string } {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf-8");
     const parts = decoded.split(":");
@@ -64,7 +82,7 @@ function verifyAdminToken(token: string): { valid: boolean; email?: string } {
     }
 
     const expectedHmac = crypto
-      .createHmac("sha256", SERVER_ADMIN_SECRET)
+      .createHmac("sha256", secret)
       .update(`${email}:${timestampStr}`)
       .digest("hex");
 
@@ -83,6 +101,18 @@ function verifyAdminToken(token: string): { valid: boolean; email?: string } {
  */
 export async function POST(request: NextRequest) {
   try {
+    const config = getAdminAuthConfig();
+    if (!config) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Le service d'authentification administrateur n'est pas configuré sur le serveur (ADMIN_SECRET_KEY ou ADMIN_MASTER_PASSKEY manquant).",
+        },
+        { status: 503 }
+      );
+    }
+
     // 1. Détermination de l'adresse IP cliente pour la protection anti-brute-force
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -103,13 +133,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ authenticated: false }, { status: 401 });
       }
 
-      const tokenCheck = verifyAdminToken(cookieToken);
-      if (tokenCheck.valid) {
-        return NextResponse.json({
-          authenticated: true,
-          email: tokenCheck.email,
-          role: "superadmin",
-        });
+      const tokenCheck = verifyAdminToken(cookieToken, config.secret);
+      if (tokenCheck.valid && tokenCheck.email) {
+        // Vérification additionnelle que l'email appartient toujours aux emails autorisés
+        if (config.allowedEmails.includes(tokenCheck.email.toLowerCase().trim())) {
+          return NextResponse.json({
+            authenticated: true,
+            email: tokenCheck.email,
+            role: "superadmin",
+          });
+        }
       }
 
       return NextResponse.json({ authenticated: false }, { status: 401 });
@@ -125,6 +158,13 @@ export async function POST(request: NextRequest) {
         maxAge: 0,
         httpOnly: true,
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      res.cookies.set("moncv_auth_token", "", {
+        path: "/",
+        maxAge: 0,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
       });
       return res;
     }
@@ -158,49 +198,46 @@ export async function POST(request: NextRequest) {
       const rawEmail = (body?.email || "").toLowerCase().trim();
       const rawPasskey = (body?.passkey || "").trim();
 
-      if (!rawPasskey) {
+      if (!rawEmail || !rawPasskey) {
         return NextResponse.json(
-          { success: false, error: "Veuillez saisir la clé maître ou le mot de passe." },
+          { success: false, error: "Veuillez renseigner l'email administrateur et la clé maître." },
           { status: 400 }
         );
       }
 
-      // Vérification cryptographique par comparaison constante
+      // Vérification stricte de l'email administrateur autorisé (aucun contournement permis)
+      const isEmailValid = config.allowedEmails.includes(rawEmail);
+
+      // Vérification cryptographique par comparaison constante anti-timing attack
       let isKeyValid = false;
-      for (const authorizedKey of AUTHORIZED_SUPERADMIN_KEYS) {
+      for (const authorizedKey of config.authorizedKeys) {
         if (safeCompare(rawPasskey, authorizedKey)) {
           isKeyValid = true;
           break;
         }
       }
 
-      const isEmailValid =
-        !rawEmail ||
-        AUTHORIZED_SUPERADMIN_EMAILS.includes(rawEmail) ||
-        rawEmail.includes("admin");
-
       if (isKeyValid && isEmailValid) {
         // Authentification réussie : réinitialiser le compteur de tentatives
         resetRateLimit(rateLimitKey);
 
-        const adminEmail = rawEmail || "admin@moncv.ai";
-        const token = generateAdminToken(adminEmail);
+        const token = generateAdminToken(rawEmail, config.secret);
 
         const response = NextResponse.json({
           success: true,
           message: "Authentification SuperAdmin validée avec succès.",
           user: {
-            email: adminEmail,
+            email: rawEmail,
             role: "superadmin",
           },
           securityLevel: "HIGH_ENTROPY_SHA256",
         });
 
-        // Définir le cookie de session sécurisé
+        // Définir le cookie de session sécurisé (httpOnly obligatoire)
         response.cookies.set("moncv_admin_token", token, {
           path: "/",
           maxAge: 86400, // 24 heures
-          httpOnly: false, // Accessible au client pour synchronisation UI
+          httpOnly: true, // Protection absolue contre le vol de jeton par XSS / JS client
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
         });

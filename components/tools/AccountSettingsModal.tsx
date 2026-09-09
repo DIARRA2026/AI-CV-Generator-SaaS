@@ -33,6 +33,7 @@ import { StorageManager, UserSession } from "@/lib/storage";
 import { PlanTier } from "@/lib/types";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { compressImage } from "@/lib/image-utils";
+import { SupabaseService } from "@/lib/supabaseService";
 
 interface Props {
   isOpen: boolean;
@@ -164,8 +165,17 @@ export const AccountSettingsModal: React.FC<Props> = ({
       profession: profession.trim(),
     });
 
+    SupabaseService.updateUserProfile({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      phone: phone.trim(),
+      city: city.trim(),
+      country: country.trim(),
+      profession: profession.trim(),
+    }).catch(() => {});
+
     if (isBusiness || companyName.trim()) {
-      StorageManager.updateBusinessProfile({
+      const bizPayload = {
         companyName: companyName.trim() || "Mon Entreprise",
         companyType: companyType.trim(),
         managerRole: managerRole.trim(),
@@ -174,7 +184,9 @@ export const AccountSettingsModal: React.FC<Props> = ({
         billingAddress: billingAddress.trim(),
         whatsappPhone: whatsappPhone.trim() || phone.trim(),
         logoUrl: logoUrl,
-      });
+      };
+      StorageManager.updateBusinessProfile(bizPayload);
+      SupabaseService.updateBusinessProfile(bizPayload).catch(() => {});
     }
 
     setIsSavingProfile(false);

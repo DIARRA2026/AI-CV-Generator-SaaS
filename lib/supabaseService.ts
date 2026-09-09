@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import { StorageManager, UserSession, RegisteredUser } from "./storage";
-import { ResumeData, PlanTier, AccountType, BusinessProfile } from "./types";
+import { ResumeData, PlanTier, AccountType, BusinessProfile, UserSubscriptionInfo } from "./types";
 
 export interface CloudAuthResponse {
   success: boolean;
@@ -84,9 +84,22 @@ export class SupabaseService {
           }
         }
 
+        // Mise à jour de l'ID centralisé Supabase dans le registre local
+        const registeredId = data?.user?.id || localResult.user?.id;
+        if (data?.user?.id) {
+          const users = StorageManager.getRegisteredUsers();
+          const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+          if (uIdx !== -1) {
+            users[uIdx].id = data.user.id;
+            StorageManager.saveRegisteredUsers(users);
+          }
+        }
+
         // Si la vérification par email est exigée par Supabase
         if (!data?.session && data?.user) {
-          const userSession = StorageManager.getUser() || {
+          const userSession: UserSession = {
+            ...(StorageManager.getUser() || {}),
+            id: data.user.id,
             accountType: payload.accountType || "candidate",
             email: cleanEmail,
             firstName: cleanFirstName,
@@ -99,6 +112,8 @@ export class SupabaseService {
             subscription: localResult.user?.subscription,
             createdAt: new Date().toISOString(),
           };
+          StorageManager.setUser(userSession);
+
           return {
             success: true,
             emailVerificationRequired: true,
@@ -111,6 +126,7 @@ export class SupabaseService {
         if (data?.session) {
           const activeUser = StorageManager.getUser();
           const userSession: UserSession = {
+            id: data.user?.id || localResult.user?.id || undefined,
             accountType: activeUser?.accountType || payload.accountType || "candidate",
             email: cleanEmail,
             firstName: cleanFirstName,
@@ -244,7 +260,36 @@ export class SupabaseService {
               }
             : undefined;
 
+          let userSub = localMatch?.subscription || StorageManager.getUserSubscription(cleanEmail);
+          if (!userSub && resolvedPlan !== "free") {
+            let allowedCandidates = 0;
+            let defaultAmount = 0;
+            if (resolvedPlan === "enterprise200") { allowedCandidates = 200; defaultAmount = 100000; }
+            else if (resolvedPlan === "enterprise75") { allowedCandidates = 75; defaultAmount = 45000; }
+            else if (resolvedPlan === "enterprise30") { allowedCandidates = 30; defaultAmount = 20000; }
+            else if (resolvedPlan === "cyber15") { allowedCandidates = 15; defaultAmount = 15000; }
+            else if (resolvedPlan === "5000") { allowedCandidates = 4; defaultAmount = 5000; }
+            else if (resolvedPlan === "2500") { allowedCandidates = 2; defaultAmount = 2500; }
+            else if (resolvedPlan === "1500") { allowedCandidates = 1; defaultAmount = 1500; }
+
+            userSub = {
+              planTier: resolvedPlan,
+              amount: defaultAmount,
+              currency: "FCFA",
+              paymentMethod: "Mobile Money",
+              phoneNumber: meta.phone || profile?.phone || localMatch?.phone,
+              transactionRef: `OTP_VERIFIED_${authUser.id.slice(0, 8)}`,
+              subscribedAt: authUser.created_at || new Date().toISOString(),
+              expiresAt: null,
+              accountType: resolvedAccountType,
+              allowedCandidates,
+              companyName: resolvedBusiness?.companyName,
+            };
+            StorageManager.saveUserSubscription(cleanEmail, userSub);
+          }
+
           const userSession: UserSession = {
+            id: authUser.id,
             email: authUser.email || cleanEmail,
             accountType: resolvedAccountType,
             firstName: resolvedFirstName,
@@ -254,6 +299,7 @@ export class SupabaseService {
             city: meta.city || profile?.city || localMatch?.city || "Abidjan",
             business: resolvedBusiness,
             planTier: resolvedPlan,
+            subscription: userSub || undefined,
             token: verifyResult.data?.session?.access_token,
             createdAt: authUser.created_at,
           };
@@ -267,9 +313,11 @@ export class SupabaseService {
           if (idx !== -1) {
             users[idx] = {
               ...users[idx],
+              id: authUser.id,
               accountType: userSession.accountType,
               planTier: userSession.planTier,
               business: userSession.business,
+              subscription: userSub || users[idx].subscription,
             };
           } else {
             users.push({
@@ -284,10 +332,11 @@ export class SupabaseService {
               city: userSession.city,
               business: userSession.business,
               planTier: userSession.planTier,
+              subscription: userSub || undefined,
               createdAt: userSession.createdAt || new Date().toISOString(),
             });
           }
-          localStorage.setItem("moncv_registered_users", JSON.stringify(users));
+          StorageManager.saveRegisteredUsers(users);
 
           // Mettre à jour public.profiles sur Supabase
           try {
@@ -360,13 +409,19 @@ export class SupabaseService {
           const localMatch = localUsers.find((u) => u.email.toLowerCase().trim() === cleanEmail);
           const savedSub = StorageManager.getUserSubscription(cleanEmail);
 
-          // Résolution de la formule (priorité Cloud pour fonctionnement multi-appareils)
+          // Résolution de la formule (priorité Cloud inviolable pour fonctionnement multi-appareils)
+          const isPaidPlan = (p: any): boolean =>
+            typeof p === "string" && p !== "free" && p.trim().length > 0;
+
+          const candidatePlans = [
+            meta.plan_tier,
+            profile?.plan_tier,
+            localMatch?.planTier,
+            savedSub?.planTier,
+          ];
+          const foundPaid = candidatePlans.find(isPaidPlan) as PlanTier | undefined;
           const resolvedPlan: PlanTier =
-            (meta.plan_tier as PlanTier) ||
-            (profile?.plan_tier as PlanTier) ||
-            localMatch?.planTier ||
-            savedSub?.planTier ||
-            "free";
+            foundPaid || (meta.plan_tier as PlanTier) || (profile?.plan_tier as PlanTier) || "free";
 
           const isEnterprise =
             meta.account_type === "business" ||
@@ -374,6 +429,7 @@ export class SupabaseService {
             resolvedPlan.startsWith("enterprise") ||
             resolvedPlan === "cyber15" ||
             Boolean(meta.company_name) ||
+            Boolean(profile?.company_name) ||
             localMatch?.accountType === "business";
 
           const resolvedAccountType: AccountType = isEnterprise
@@ -406,7 +462,40 @@ export class SupabaseService {
               }
             : undefined;
 
+          // Restauration de l'abonnement permanent pour tout appareil distant
+          let cloudSub: UserSubscriptionInfo | null = savedSub || localMatch?.subscription || null;
+          if (!cloudSub && resolvedPlan !== "free") {
+            let allowedCandidates = 0;
+            let defaultAmount = 0;
+            if (resolvedPlan === "enterprise200") { allowedCandidates = 200; defaultAmount = 100000; }
+            else if (resolvedPlan === "enterprise75") { allowedCandidates = 75; defaultAmount = 45000; }
+            else if (resolvedPlan === "enterprise30") { allowedCandidates = 30; defaultAmount = 20000; }
+            else if (resolvedPlan === "cyber15") { allowedCandidates = 15; defaultAmount = 15000; }
+            else if (resolvedPlan === "5000") { allowedCandidates = 4; defaultAmount = 5000; }
+            else if (resolvedPlan === "2500") { allowedCandidates = 2; defaultAmount = 2500; }
+            else if (resolvedPlan === "1500") { allowedCandidates = 1; defaultAmount = 1500; }
+
+            cloudSub = {
+              planTier: resolvedPlan,
+              amount: defaultAmount,
+              currency: "FCFA",
+              paymentMethod: "Mobile Money",
+              phoneNumber: meta.phone || profile?.phone,
+              transactionRef: `CLOUD_RESTORED_${data.user.id.slice(0, 8)}`,
+              subscribedAt: data.user.created_at || new Date().toISOString(),
+              expiresAt: null,
+              accountType: resolvedAccountType,
+              allowedCandidates,
+              companyName: resolvedBusiness?.companyName,
+            };
+          }
+
+          if (cloudSub) {
+            StorageManager.saveUserSubscription(cleanEmail, cloudSub);
+          }
+
           const userSession: UserSession = {
+            id: data.user.id,
             email: data.user.email || cleanEmail,
             accountType: resolvedAccountType,
             firstName: resolvedFirstName,
@@ -416,26 +505,28 @@ export class SupabaseService {
             city: meta.city || profile?.city || localMatch?.city || "Abidjan",
             business: resolvedBusiness,
             planTier: resolvedPlan,
-            subscription: savedSub || localMatch?.subscription,
+            subscription: cloudSub || undefined,
             token: data.session?.access_token,
             createdAt: data.user.created_at,
           };
 
           StorageManager.setUser(userSession);
-          if (savedSub) {
-            StorageManager.saveUserSubscription(cleanEmail, savedSub);
-          }
 
-          // Enregistrement sur ce nouvel appareil
+          // Enregistrement unifié sur ce nouvel appareil
           const users = StorageManager.getRegisteredUsers();
           const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
           if (uIdx !== -1) {
-            users[uIdx] = { ...users[uIdx], ...userSession };
+            users[uIdx] = {
+              ...users[uIdx],
+              id: data.user.id,
+              passwordHash: password || users[uIdx].passwordHash,
+              ...userSession,
+            };
           } else {
             users.push({
               id: data.user.id,
               email: userSession.email,
-              passwordHash: "",
+              passwordHash: password,
               accountType: userSession.accountType,
               firstName: userSession.firstName || "",
               lastName: userSession.lastName || "",
@@ -444,10 +535,25 @@ export class SupabaseService {
               city: userSession.city,
               business: userSession.business,
               planTier: userSession.planTier,
+              subscription: cloudSub || undefined,
               createdAt: userSession.createdAt || new Date().toISOString(),
             });
           }
-          localStorage.setItem("moncv_registered_users", JSON.stringify(users));
+          StorageManager.saveRegisteredUsers(users);
+
+          // Mettre à jour public.profiles si désynchronisé
+          if (profile?.plan_tier !== resolvedPlan || profile?.account_type !== resolvedAccountType) {
+            supabase
+              .from("profiles")
+              .update({
+                plan_tier: resolvedPlan,
+                account_type: resolvedAccountType,
+                company_name: resolvedBusiness?.companyName,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", data.user.id)
+              .then(() => {}, () => {});
+          }
 
           // Rapatriement automatique des CVs depuis le Cloud
           this.getResumes(cleanEmail).catch(() => {});
@@ -672,21 +778,30 @@ export class SupabaseService {
 
   /**
    * Récupération des CVs depuis le cloud Supabase avec fusion locale intelligente
+   * Supporte la recherche par user_id ET par user_email pour garantir la cohérence multi-appareils
    */
   static async getResumes(userEmail?: string): Promise<ResumeData[]> {
-    const email = (userEmail || StorageManager.getUser()?.email || "").toLowerCase().trim();
+    const currentUser = StorageManager.getUser();
+    const email = (userEmail || currentUser?.email || "").toLowerCase().trim();
 
-    if (this.isAvailable() && supabase && email) {
+    if (this.isAvailable() && supabase && (email || currentUser?.id)) {
       try {
-        const { data, error } = await supabase
-          .from("resumes")
-          .select("resume_data")
-          .eq("user_email", email)
-          .order("updated_at", { ascending: false });
+        let query = supabase.from("resumes").select("resume_data");
+        if (currentUser?.id && /^[0-9a-f-]{36}$/i.test(currentUser.id)) {
+          if (email) {
+            query = query.or(`user_id.eq.${currentUser.id},user_email.eq.${email}`);
+          } else {
+            query = query.eq("user_id", currentUser.id);
+          }
+        } else if (email) {
+          query = query.eq("user_email", email);
+        }
+
+        const { data, error } = await query.order("updated_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
           const cloudResumes = data.map((item) => item.resume_data as ResumeData);
-          
+
           // Fusionner avec le local pour ne jamais perdre de travail hors-ligne
           const localResumes = StorageManager.getResumes();
           const mergedMap = new Map<string, ResumeData>();
@@ -703,10 +818,353 @@ export class SupabaseService {
           return finalList;
         }
       } catch (e) {
-        console.warn("Repli vers le stockage local");
+        console.warn("Repli vers le stockage local:", e);
       }
     }
     return StorageManager.getResumes();
+  }
+
+  /**
+   * Synchronisation immédiate d'un abonnement ou pack avec le Cloud Supabase
+   * Met à jour à la fois Auth UserMetadata, public.profiles et enregistre la transaction.
+   */
+  static async syncSubscriptionToCloud(
+    tier: PlanTier,
+    details?: Partial<import("./types").UserSubscriptionInfo>
+  ): Promise<boolean> {
+    const user = StorageManager.getUser();
+    const cleanEmail = (user?.email || "").toLowerCase().trim();
+    const isEnterprise =
+      tier === "enterprise30" ||
+      tier === "enterprise75" ||
+      tier === "enterprise200" ||
+      tier === "cyber15";
+
+    let defaultAmount = 0;
+    let allowedCandidates = 0;
+    if (tier === "enterprise200") { allowedCandidates = 200; defaultAmount = 100000; }
+    else if (tier === "enterprise75") { allowedCandidates = 75; defaultAmount = 45000; }
+    else if (tier === "enterprise30") { allowedCandidates = 30; defaultAmount = 20000; }
+    else if (tier === "cyber15") { allowedCandidates = 15; defaultAmount = 15000; }
+    else if (tier === "5000") { allowedCandidates = 4; defaultAmount = 5000; }
+    else if (tier === "2500") { allowedCandidates = 2; defaultAmount = 2500; }
+    else if (tier === "1500") { allowedCandidates = 1; defaultAmount = 1500; }
+
+    const amount = details?.amount || defaultAmount;
+    const resolvedAccountType: AccountType = isEnterprise ? "business" : (user?.accountType || "candidate");
+    const companyName = details?.companyName || user?.business?.companyName;
+
+    // 1. Appel API serveur Next.js pour persistance garantie
+    try {
+      if (typeof window !== "undefined" && cleanEmail) {
+        await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cleanEmail,
+            userId: user?.id,
+            planTier: tier,
+            amount,
+            currency: details?.currency || "FCFA",
+            paymentMethod: details?.paymentMethod || "Mobile Money",
+            phoneNumber: details?.phoneNumber || user?.phone,
+            transactionRef: details?.transactionRef || `TRX_${Date.now()}`,
+            accountType: resolvedAccountType,
+            companyName,
+          }),
+        });
+      }
+    } catch (e) {
+      console.warn("Erreur route API subscriptions:", e);
+    }
+
+    // 2. Mise à jour directe via Supabase Client
+    if (this.isAvailable() && supabase) {
+      try {
+        // A. Mise à jour de l'utilisateur connecté Supabase Auth
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          await supabase.auth.updateUser({
+            data: {
+              plan_tier: tier,
+              account_type: resolvedAccountType,
+              company_name: companyName,
+              phone: details?.phoneNumber || user?.phone || authData.user.user_metadata?.phone,
+            },
+          });
+        }
+
+        // B. Mise à jour directe de public.profiles
+        const updatePayload: any = {
+          plan_tier: tier,
+          account_type: resolvedAccountType,
+          updated_at: new Date().toISOString(),
+        };
+        if (companyName) updatePayload.company_name = companyName;
+        if (details?.phoneNumber || user?.phone) {
+          updatePayload.phone = details?.phoneNumber || user?.phone;
+        }
+
+        if (user?.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
+          await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        } else if (cleanEmail) {
+          await supabase.from("profiles").update(updatePayload).eq("email", cleanEmail);
+        }
+
+        // C. Insertion de la transaction
+        let provider = "wave";
+        const pLower = (details?.paymentMethod || "").toLowerCase();
+        if (pLower.includes("orange")) provider = "orange";
+        else if (pLower.includes("mtn")) provider = "mtn";
+        else if (pLower.includes("moov")) provider = "moov";
+        else if (pLower.includes("card") || pLower.includes("carte") || pLower.includes("visa")) provider = "card";
+        else if (pLower.includes("stripe")) provider = "stripe";
+        else if (pLower.includes("paystack")) provider = "paystack";
+
+        const txPayload: any = {
+          plan_tier: tier,
+          amount_xof: amount,
+          provider,
+          phone_number: details?.phoneNumber || user?.phone,
+          reference_code: details?.transactionRef || `TRX_${Date.now()}`,
+          status: "completed",
+        };
+        if (user?.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
+          txPayload.user_id = user.id;
+        }
+        await supabase.from("transactions").insert(txPayload);
+      } catch (err) {
+        console.warn("Erreur Supabase syncSubscriptionToCloud:", err);
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Rafraîchit l'état de la session utilisateur depuis Supabase Cloud
+   * Utilisé au chargement du Dashboard pour synchroniser instantanément les modifications effectuées sur un autre appareil
+   */
+  static async refreshSessionFromCloud(): Promise<boolean> {
+    const localUser = StorageManager.getUser();
+    if (!localUser?.email) return false;
+    const cleanEmail = localUser.email.toLowerCase().trim();
+
+    if (this.isAvailable() && supabase) {
+      try {
+        let authUser: any = null;
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          authUser = authData.user;
+        }
+
+        let profile: any = null;
+        if (authUser?.id) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", authUser.id)
+            .maybeSingle();
+          profile = p;
+        } else {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("email", cleanEmail)
+            .maybeSingle();
+          profile = p;
+        }
+
+        const meta = authUser?.user_metadata || {};
+        const isPaid = (tier?: string) => typeof tier === "string" && tier !== "free" && tier.trim().length > 0;
+
+        const candidatePlans = [meta.plan_tier, profile?.plan_tier, localUser.planTier];
+        const foundPaid = candidatePlans.find(isPaid) as PlanTier | undefined;
+        const resolvedPlan: PlanTier = foundPaid || localUser.planTier || "free";
+
+        const isEnterprise =
+          meta.account_type === "business" ||
+          profile?.account_type === "business" ||
+          localUser.accountType === "business" ||
+          resolvedPlan.startsWith("enterprise") ||
+          resolvedPlan === "cyber15" ||
+          Boolean(meta.company_name) ||
+          Boolean(profile?.company_name) ||
+          Boolean(localUser.business?.companyName);
+
+        const resolvedAccountType: AccountType = isEnterprise ? "business" : "candidate";
+
+        const companyName =
+          meta.company_name ||
+          profile?.company_name ||
+          localUser.business?.companyName ||
+          "Mon Entreprise";
+
+        const resolvedBusiness: BusinessProfile | undefined = isEnterprise
+          ? {
+              companyName,
+              companyType: meta.company_type || profile?.company_type || localUser.business?.companyType || "PME / Entreprise",
+              managerRole: meta.manager_role || profile?.manager_role || localUser.business?.managerRole || "Responsable RH",
+              rccm: meta.rccm || profile?.rccm || localUser.business?.rccm || "",
+              taxId: meta.tax_id || profile?.tax_id || localUser.business?.taxId || "",
+              billingAddress: meta.billing_address || profile?.billing_address || localUser.business?.billingAddress || "",
+              whatsappPhone: meta.whatsapp_phone || meta.phone || profile?.phone || localUser.business?.whatsappPhone || localUser.phone || "",
+              logoUrl: meta.logo_url || profile?.logo_url || localUser.business?.logoUrl || "",
+            }
+          : undefined;
+
+        const updatedSession: UserSession = {
+          ...localUser,
+          id: authUser?.id || profile?.id || localUser.id,
+          accountType: resolvedAccountType,
+          planTier: resolvedPlan,
+          business: resolvedBusiness,
+          firstName: meta.first_name || profile?.first_name || localUser.firstName,
+          lastName: meta.last_name || profile?.last_name || localUser.lastName,
+          phone: meta.phone || profile?.phone || localUser.phone,
+          city: meta.city || profile?.city || localUser.city,
+          country: meta.country || profile?.country || localUser.country,
+        };
+
+        StorageManager.setUser(updatedSession);
+
+        if (resolvedPlan !== "free") {
+          let allowedCandidates = 0;
+          let defaultAmount = 0;
+          if (resolvedPlan === "enterprise200") { allowedCandidates = 200; defaultAmount = 100000; }
+          else if (resolvedPlan === "enterprise75") { allowedCandidates = 75; defaultAmount = 45000; }
+          else if (resolvedPlan === "enterprise30") { allowedCandidates = 30; defaultAmount = 20000; }
+          else if (resolvedPlan === "cyber15") { allowedCandidates = 15; defaultAmount = 15000; }
+          else if (resolvedPlan === "5000") { allowedCandidates = 4; defaultAmount = 5000; }
+          else if (resolvedPlan === "2500") { allowedCandidates = 2; defaultAmount = 2500; }
+          else if (resolvedPlan === "1500") { allowedCandidates = 1; defaultAmount = 1500; }
+
+          const restoredSub: import("./types").UserSubscriptionInfo = {
+            planTier: resolvedPlan,
+            amount: defaultAmount,
+            currency: "FCFA",
+            paymentMethod: "Mobile Money",
+            phoneNumber: updatedSession.phone,
+            transactionRef: `REFRESH_RESTORED_${(updatedSession.id || "").slice(0, 8)}`,
+            subscribedAt: profile?.created_at || new Date().toISOString(),
+            expiresAt: null,
+            accountType: resolvedAccountType,
+            allowedCandidates,
+            companyName: resolvedBusiness?.companyName,
+          };
+          StorageManager.saveUserSubscription(cleanEmail, restoredSub);
+        }
+
+        const users = StorageManager.getRegisteredUsers();
+        const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+        if (uIdx !== -1) {
+          users[uIdx] = { ...users[uIdx], ...updatedSession };
+          StorageManager.saveRegisteredUsers(users);
+        }
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("storage"));
+        }
+        return true;
+      } catch (err) {
+        console.warn("Erreur refreshSessionFromCloud:", err);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Met à jour le profil entreprise dans Supabase Cloud
+   */
+  static async updateBusinessProfile(business: Partial<BusinessProfile>): Promise<boolean> {
+    const user = StorageManager.getUser();
+    if (!user?.email) return false;
+
+    if (this.isAvailable() && supabase) {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          await supabase.auth.updateUser({
+            data: {
+              company_name: business.companyName || authData.user.user_metadata?.company_name,
+              company_type: business.companyType || authData.user.user_metadata?.company_type,
+              manager_role: business.managerRole || authData.user.user_metadata?.manager_role,
+              rccm: business.rccm || authData.user.user_metadata?.rccm,
+              tax_id: business.taxId || authData.user.user_metadata?.tax_id,
+              billing_address: business.billingAddress || authData.user.user_metadata?.billing_address,
+              whatsapp_phone: business.whatsappPhone || authData.user.user_metadata?.whatsapp_phone,
+              logo_url: business.logoUrl !== undefined ? business.logoUrl : authData.user.user_metadata?.logo_url,
+            },
+          });
+        }
+
+        const updatePayload: any = { updated_at: new Date().toISOString() };
+        if (business.companyName) updatePayload.company_name = business.companyName;
+
+        if (user.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
+          await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        } else {
+          await supabase.from("profiles").update(updatePayload).eq("email", user.email.toLowerCase().trim());
+        }
+        return true;
+      } catch (e) {
+        console.warn("Erreur updateBusinessProfile Supabase:", e);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Met à jour le profil candidat dans Supabase Cloud
+   */
+  static async updateUserProfile(payload: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    city?: string;
+    country?: string;
+    profession?: string;
+  }): Promise<boolean> {
+    const user = StorageManager.getUser();
+    if (!user?.email) return false;
+
+    if (this.isAvailable() && supabase) {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          await supabase.auth.updateUser({
+            data: {
+              first_name: payload.firstName || authData.user.user_metadata?.first_name,
+              last_name: payload.lastName || authData.user.user_metadata?.last_name,
+              phone: payload.phone || authData.user.user_metadata?.phone,
+              city: payload.city || authData.user.user_metadata?.city,
+              country: payload.country || authData.user.user_metadata?.country,
+              profession: payload.profession || authData.user.user_metadata?.profession,
+            },
+          });
+        }
+
+        const updatePayload: any = {
+          updated_at: new Date().toISOString(),
+          first_name: payload.firstName,
+          last_name: payload.lastName,
+          phone: payload.phone,
+          city: payload.city,
+          country: payload.country,
+          profession: payload.profession,
+        };
+
+        if (user.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
+          await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        } else {
+          await supabase.from("profiles").update(updatePayload).eq("email", user.email.toLowerCase().trim());
+        }
+        return true;
+      } catch (e) {
+        console.warn("Erreur updateUserProfile Supabase:", e);
+      }
+    }
+    return false;
   }
 
   /**

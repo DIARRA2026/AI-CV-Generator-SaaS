@@ -2003,26 +2003,48 @@ export default function HomePage() {
       <MobileMoneyModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
-        onSuccess={() => alert("Votre formule a été activée avec succès !")}
+        onSuccess={() => {
+          setIsPaymentOpen(false);
+          const u = StorageManager.getUser();
+          const isBiz =
+            u?.accountType === "business" ||
+            StorageManager.isBusinessAccount() ||
+            selectedPlanPrice?.startsWith("enterprise") ||
+            selectedPlanPrice === "cyber15";
+
+          if (isBiz) {
+            router.push("/dashboard?tab=business");
+          } else {
+            router.push("/dashboard");
+          }
+        }}
         defaultPlan={selectedPlanPrice}
       />
 
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onSuccess={(chosenPlan) => {
+        onSuccess={(chosenPlan, actionType) => {
           setIsAuthOpen(false);
           const u = StorageManager.getUser();
           const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
 
-          if (chosenPlan && chosenPlan !== "free") {
-            setSelectedPlanPrice(chosenPlan);
-            setIsPaymentOpen(true);
-          } else {
+          if (actionType === "login") {
             if (isBiz) {
               router.push("/dashboard?tab=business");
             } else {
               router.push("/dashboard");
+            }
+          } else {
+            if (chosenPlan && chosenPlan !== "free") {
+              setSelectedPlanPrice(chosenPlan);
+              setIsPaymentOpen(true);
+            } else {
+              if (isBiz) {
+                router.push("/dashboard?tab=business");
+              } else {
+                router.push("/dashboard");
+              }
             }
           }
         }}

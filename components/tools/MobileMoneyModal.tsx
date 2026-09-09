@@ -8,6 +8,7 @@ import { StorageManager } from "@/lib/storage";
 import { registerPaymentSuccess } from "@/lib/license-manager";
 import { PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { SupabaseService } from "@/lib/supabaseService";
 
 // ─── Configuration unique de toutes les offres ───────────────────────────────
 type PlanCategory = "particulier" | "entreprise";
@@ -230,34 +231,77 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     if (defaultForTab) setSelectedPlan(defaultForTab.id);
   };
 
-  const handlePay = (e: React.FormEvent) => {
+  const handleFinishAndNavigate = () => {
+    const isEnterprisePlan = selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15";
+    const u = StorageManager.getUser();
+    const isBiz = isEnterprisePlan || u?.accountType === "business" || StorageManager.isBusinessAccount();
+
+    onSuccess();
+    onClose();
+    setIsDone(false);
+
+    if (isBiz) {
+      router.push("/dashboard?tab=business");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  // Redirection automatique vers l'espace entreprise ou candidat après paiement validé
+  useEffect(() => {
+    if (isDone) {
+      const timer = setTimeout(() => {
+        handleFinishAndNavigate();
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [isDone, selectedPlan]);
+
+  const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
-      const activeCv = StorageManager.getActiveResume();
-      const transactionRef = `MM_${paymentMethod.toUpperCase()}_${Date.now()}`;
-      if (activeCv) {
-        const updatedWithLicense = registerPaymentSuccess(
-          activeCv,
-          selectedPlan,
-          transactionRef
-        );
-        StorageManager.saveActiveResume(updatedWithLicense);
-      }
-      StorageManager.setPlanTier(selectedPlan, {
+
+    const activeCv = StorageManager.getActiveResume();
+    const transactionRef = `MM_${paymentMethod.toUpperCase()}_${Date.now()}`;
+    if (activeCv) {
+      const updatedWithLicense = registerPaymentSuccess(
+        activeCv,
+        selectedPlan,
+        transactionRef
+      );
+      StorageManager.saveActiveResume(updatedWithLicense);
+    }
+
+    // Sauvegarde locale de la souscription
+    StorageManager.setPlanTier(selectedPlan, {
+      paymentMethod: `Mobile Money (${paymentMethod.toUpperCase()})`,
+      phoneNumber: phoneNumber.trim(),
+      transactionRef,
+    });
+
+    // Synchronisation Cloud Supabase immédiate (Auth metadata, profil, quota & transactions)
+    const currentPriceStr = currentPlan?.priceNumber || "0";
+    const parsedAmount = parseInt(currentPriceStr.replace(/\s+/g, ""), 10) || 0;
+    try {
+      await SupabaseService.syncSubscriptionToCloud(selectedPlan, {
+        provider: paymentMethod === "card" ? "card" : "mobile_money",
         paymentMethod: `Mobile Money (${paymentMethod.toUpperCase()})`,
         phoneNumber: phoneNumber.trim(),
         transactionRef,
+        amount: parsedAmount,
+        currency: "FCFA",
       });
+    } catch (err) {
+      console.warn("Erreur syncSubscriptionToCloud:", err);
+    }
 
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("storage"));
-      }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
 
-      setIsProcessing(false);
-      setIsDone(true);
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-    }, 1200);
+    setIsProcessing(false);
+    setIsDone(true);
+    confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
   };
 
   // ─── Rendu ─────────────────────────────────────────────────────────────────
@@ -289,7 +333,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={isDone ? handleFinishAndNavigate : onClose}
             className="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
             title="Fermer"
           >
@@ -366,41 +410,35 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               {selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15" ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    onSuccess();
-                    onClose();
-                    setIsDone(false);
-                    router.push("/dashboard?tab=business");
-                  }}
+                  onClick={handleFinishAndNavigate}
                   className="flex-1 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
                 >
                   <Building className="w-4 h-4" />
                   <span>Accéder à mon Espace Vivier RH Entreprise →</span>
                 </button>
               ) : selectedPlan === "5000" ? (
-                <a
-                  href={`/c/${StorageManager.getActiveResume()?.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all"
+                <button
+                  type="button"
+                  onClick={handleFinishAndNavigate}
+                  className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
                 >
                   <Globe className="w-4 h-4" />
-                  <span>Voir mon Portfolio Web VIP</span>
-                </a>
+                  <span>Accéder à mon Espace Portfolio Web VIP →</span>
+                </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => { onSuccess(); onClose(); setIsDone(false); }}
+                  onClick={handleFinishAndNavigate}
                   className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
-                  <span>Accéder à mes fonctionnalités</span>
+                  <span>Accéder à mon Espace Candidat →</span>
                 </button>
               )}
 
               <button
                 type="button"
-                onClick={() => { onSuccess(); onClose(); setIsDone(false); }}
+                onClick={handleFinishAndNavigate}
                 className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span>Fermer</span>

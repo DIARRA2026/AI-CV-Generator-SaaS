@@ -105,6 +105,7 @@ export interface UserSubscriptionInfo {
   amount: number;
   currency: string;
   paymentMethod: string;
+  provider?: string;
   phoneNumber?: string;
   transactionRef: string;
   subscribedAt: string;
@@ -125,6 +126,7 @@ export interface LicenseAccess {
 
 export interface ResumeData {
   id: string;
+  userId?: string;
   userEmail?: string;
   title: string;
   updatedAt: string;

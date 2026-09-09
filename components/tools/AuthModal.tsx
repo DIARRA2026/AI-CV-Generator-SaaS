@@ -92,7 +92,7 @@ export const BUSINESS_PLANS: (PlanOption & { perProfile?: string })[] = [
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (selectedPlan?: PlanTier) => void;
+  onSuccess: (selectedPlan?: PlanTier, actionType?: "login" | "register") => void;
   defaultMode?: "login" | "register";
   defaultAccountType?: AccountType;
   defaultPlan?: PlanTier;
@@ -399,7 +399,7 @@ export const AuthModal: React.FC<Props> = ({
 
     await new Promise((r) => setTimeout(r, 600));
     setEmailVerificationPending(null);
-    onSuccess(res.planTier || StorageManager.getPlanTier());
+    onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
     onClose();
   };
 
@@ -539,7 +539,7 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setDone(true);
       await new Promise((r) => setTimeout(r, 500));
-      onSuccess(selectedPlan);
+      onSuccess(selectedPlan, "register");
       onClose();
       return;
     }
@@ -616,7 +616,7 @@ export const AuthModal: React.FC<Props> = ({
       setIsLoading(false);
       setDone(true);
       await new Promise((r) => setTimeout(r, 500));
-      onSuccess(StorageManager.getPlanTier());
+      onSuccess(StorageManager.getPlanTier(), "login");
       onClose();
       return;
     }

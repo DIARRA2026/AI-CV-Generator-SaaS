@@ -4,7 +4,8 @@ import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInf
 const STORAGE_KEY = "moncv_resumes_v1";
 const ACTIVE_ID_KEY = "moncv_active_id";
 const USER_KEY = "moncv_user_session_v1";
-const USERS_REGISTRY_KEY = "moncv_registered_users_v1";
+export const USERS_REGISTRY_KEY = "moncv_registered_users_v1";
+export const LEGACY_USERS_REGISTRY_KEY = "moncv_registered_users";
 const PENDING_SUB_KEY = "moncv_pending_subscription_v1";
 
 export interface RegisteredUser {
@@ -27,6 +28,7 @@ export interface RegisteredUser {
 }
 
 export interface UserSession {
+  id?: string;
   accountType?: AccountType;
   role?: UserRole;
   isSuspended?: boolean;
@@ -108,7 +110,7 @@ export class StorageManager {
         ) {
           users[userIdx].accountType = "business";
         }
-        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+        this.saveRegisteredUsers(users);
       }
 
       // 3. Mise à jour de la session active si connectée avec cet email
@@ -178,6 +180,17 @@ export class StorageManager {
   }
 
   // === GESTION DES COMPTES UTILISATEURS & AUTHENTIFICATION SÉCURISÉE ===
+  static saveRegisteredUsers(users: RegisteredUser[]): void {
+    if (typeof window === "undefined") return;
+    try {
+      const data = JSON.stringify(users);
+      localStorage.setItem(USERS_REGISTRY_KEY, data);
+      localStorage.setItem(LEGACY_USERS_REGISTRY_KEY, data);
+    } catch (e) {
+      console.error("Erreur sauvegarde registre utilisateurs", e);
+    }
+  }
+
   static getRegisteredUsers(): RegisteredUser[] {
     if (typeof window === "undefined") return [];
     try {
@@ -185,13 +198,24 @@ export class StorageManager {
       if (data) {
         return JSON.parse(data);
       }
+      // Migration automatique de l'ancienne clé legacy si présente
+      const legacyData = localStorage.getItem(LEGACY_USERS_REGISTRY_KEY);
+      if (legacyData) {
+        try {
+          const parsed = JSON.parse(legacyData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.saveRegisteredUsers(parsed);
+            return parsed;
+          }
+        } catch {}
+      }
       // Si premier lancement et qu'une session ou des identifiants mémorisés existaient déjà
       const current = this.getUser();
       const remembered = this.getRememberedCreds();
       if (current?.email) {
         const seeded: RegisteredUser[] = [
           {
-            id: `user-${Date.now()}`,
+            id: current.id || `user-${Date.now()}`,
             firstName: current.firstName || "",
             lastName: current.lastName || "",
             email: current.email.toLowerCase().trim(),
@@ -200,7 +224,7 @@ export class StorageManager {
             createdAt: new Date().toISOString(),
           },
         ];
-        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(seeded));
+        this.saveRegisteredUsers(seeded);
         return seeded;
       }
       return [];
@@ -262,7 +286,7 @@ export class StorageManager {
       };
 
       users.push(newUser);
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      this.saveRegisteredUsers(users);
 
       if (appliedSub) {
         this.saveUserSubscription(normalizedEmail, appliedSub);
@@ -271,6 +295,7 @@ export class StorageManager {
 
       // Créer la session utilisateur active
       this.setUser({
+        id: newUser.id,
         accountType: newUser.accountType,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
@@ -343,10 +368,11 @@ export class StorageManager {
       if (effectiveSub) {
         user.subscription = effectiveSub;
       }
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      this.saveRegisteredUsers(users);
 
       // Connexion réussie : activer la session
       this.setUser({
+        id: user.id,
         accountType: restoredAccountType,
         role: user.role || (normalizedEmail === "admin@moncv.ai" || normalizedEmail === "innova.admin@moncv.ai" || normalizedEmail === "innovagroup225@gmail.com" ? "superadmin" : undefined),
         firstName: user.firstName,
@@ -383,7 +409,7 @@ export class StorageManager {
       }
 
       users[userIndex].passwordHash = newPassword;
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      this.saveRegisteredUsers(users);
 
       // Si les identifiants étaient mémorisés pour cet email, mettre à jour le mot de passe mémorisé
       const remembered = this.getRememberedCreds();
@@ -440,7 +466,7 @@ export class StorageManager {
           country: updatedUser.country || users[idx].country,
           profession: updatedUser.profession || users[idx].profession,
         };
-        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+        this.saveRegisteredUsers(users);
       }
 
       if (typeof window !== "undefined") {
@@ -473,7 +499,7 @@ export class StorageManager {
       }
 
       users[userIndex].passwordHash = newPassword;
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      this.saveRegisteredUsers(users);
 
       // Mettre à jour identifiants mémorisés si applicable
       const remembered = this.getRememberedCreds();
@@ -512,7 +538,7 @@ export class StorageManager {
       if (user?.email) {
         const normalized = user.email.toLowerCase().trim();
         const users = this.getRegisteredUsers().filter((u) => u.email.toLowerCase().trim() !== normalized);
-        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+        this.saveRegisteredUsers(users);
         localStorage.removeItem(`moncv_resumes_${normalized}`);
         localStorage.removeItem(`moncv_active_id_${normalized}`);
       }
@@ -559,7 +585,7 @@ export class StorageManager {
       if (idx === -1) return false;
 
       users[idx] = { ...users[idx], ...updates };
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+      this.saveRegisteredUsers(users);
 
       // Si l'utilisateur modifié est l'utilisateur connecté, synchroniser sa session
       const current = this.getUser();
@@ -584,7 +610,7 @@ export class StorageManager {
       const users = this.getRegisteredUsers();
       const normEmail = email.toLowerCase().trim();
       const filtered = users.filter((u) => u.email.toLowerCase().trim() !== normEmail);
-      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(filtered));
+      this.saveRegisteredUsers(filtered);
 
       localStorage.removeItem(this.getSubscriptionKey(normEmail));
       localStorage.removeItem(`moncv_resumes_${normEmail}`);
@@ -740,6 +766,20 @@ export class StorageManager {
           subscription: subInfo,
           accountType: isEnterprise ? "business" : (user.accountType || "candidate"),
         });
+
+        if (user.email) {
+          const users = this.getRegisteredUsers();
+          const normEmail = user.email.toLowerCase().trim();
+          const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === normEmail);
+          if (uIdx !== -1) {
+            users[uIdx].planTier = tier;
+            users[uIdx].subscription = subInfo;
+            if (isEnterprise) {
+              users[uIdx].accountType = "business";
+            }
+            this.saveRegisteredUsers(users);
+          }
+        }
       }
 
       if (typeof window !== "undefined") {
@@ -827,7 +867,7 @@ export class StorageManager {
           accountType: "business",
           business: updatedBusiness,
         };
-        localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+        this.saveRegisteredUsers(users);
       }
 
       if (typeof window !== "undefined") {

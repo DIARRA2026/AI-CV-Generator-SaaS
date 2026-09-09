@@ -109,6 +109,20 @@ export default function DashboardPage() {
       }
 
       if (user?.email) {
+        SupabaseService.refreshSessionFromCloud()
+          .then((refreshed) => {
+            if (refreshed) {
+              const u = StorageManager.getUser();
+              const b = StorageManager.isBusinessAccount();
+              const q = StorageManager.getBusinessQuotaInfo();
+              setCurrentUser(u);
+              setIsBusinessAccount(b);
+              setBusinessQuota(q);
+              if (b) setActiveTab("business");
+            }
+          })
+          .catch(() => {});
+
         SupabaseService.getResumes(user.email)
           .then((cloudList) => {
             if (cloudList && cloudList.length > 0) {
@@ -266,6 +280,7 @@ export default function DashboardPage() {
 
       if (res.success && res.user) {
         setCurrentUser(res.user);
+        SupabaseService.updateBusinessProfile({ logoUrl: compressedDataUrl }).catch(() => {});
         setLogoFeedback(dict.dashboard.logoUpdatedSuccess);
         setTimeout(() => setLogoFeedback(null), 3500);
       }
@@ -285,6 +300,7 @@ export default function DashboardPage() {
     });
     if (res.success && res.user) {
       setCurrentUser(res.user);
+      SupabaseService.updateBusinessProfile({ logoUrl: "" }).catch(() => {});
       setLogoFeedback(dict.dashboard.logoRemovedSuccess);
       setTimeout(() => setLogoFeedback(null), 3000);
     }
@@ -1316,8 +1332,15 @@ export default function DashboardPage() {
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
         onSuccess={() => {
+          setIsPaymentOpen(false);
+          const u = StorageManager.getUser();
+          const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
+          setCurrentUser(u);
+          setIsBusinessAccount(isBiz);
           setBusinessQuota(StorageManager.getBusinessQuotaInfo());
-          alert("Votre formule a été activée avec succès !");
+          if (isBiz) {
+            setActiveTab("business");
+          }
         }}
         defaultPlan={paymentDefaultPlan}
       />
@@ -1332,8 +1355,15 @@ export default function DashboardPage() {
         onSuccess={() => {
           setIsAuthOpen(false);
           setIsLoggedIn(true);
-          setCurrentUser(StorageManager.getUser());
+          const u = StorageManager.getUser();
+          const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
+          setCurrentUser(u);
+          setIsBusinessAccount(isBiz);
+          setBusinessQuota(StorageManager.getBusinessQuotaInfo());
           setResumes(StorageManager.getResumes());
+          if (isBiz) {
+            setActiveTab("business");
+          }
         }}
       />
     </div>

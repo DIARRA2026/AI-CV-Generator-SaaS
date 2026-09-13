@@ -5,7 +5,7 @@ import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
   KeyRound, AlertTriangle, ArrowLeft, RefreshCw, Info, Building, Building2, Briefcase, FileText,
-  Crown, Check, Globe, Users, Zap
+  Crown, Check, Globe, Users, Zap, ExternalLink, ChevronDown, ChevronUp
 } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
@@ -13,6 +13,23 @@ import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
 import { AccountType, PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
+
+export function getWebmailInfo(email: string): { name: string; url: string } | null {
+  const domain = email.split("@")[1]?.toLowerCase() || "";
+  if (domain.includes("gmail") || domain.includes("googlemail")) {
+    return { name: "Gmail", url: "https://mail.google.com" };
+  }
+  if (domain.includes("outlook") || domain.includes("hotmail") || domain.includes("live") || domain.includes("msn")) {
+    return { name: "Outlook / Hotmail", url: "https://outlook.live.com" };
+  }
+  if (domain.includes("yahoo") || domain.includes("ymail")) {
+    return { name: "Yahoo Mail", url: "https://mail.yahoo.com" };
+  }
+  if (domain.includes("icloud") || domain.includes("me.com") || domain.includes("mac.com")) {
+    return { name: "iCloud Mail", url: "https://www.icloud.com/mail" };
+  }
+  return null;
+}
 
 export interface PlanOption {
   id: PlanTier;
@@ -143,7 +160,11 @@ export const AuthModal: React.FC<Props> = ({
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [resendEmailMessage, setResendEmailMessage] = useState<string | null>(null);
 
-  // Validation par code OTP à 6 chiffres
+  // Validation par lien email et OTP
+  const [savedPassword, setSavedPassword] = useState<string>("");
+  const savedPasswordRef = React.useRef<string>("");
+  const [isCheckingLink, setIsCheckingLink] = useState(false);
+  const [showManualOtpInput, setShowManualOtpInput] = useState(false);
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -179,19 +200,48 @@ export const AuthModal: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  // Réinitialisation et focus automatique lors de l'activation de l'écran OTP
+  // Réinitialisation lors de l'activation de l'écran de vérification par lien email
   useEffect(() => {
     if (emailVerificationPending) {
       setOtpDigits(["", "", "", "", "", ""]);
       setOtpError(null);
       setOtpSuccessMessage(null);
+      setIsCheckingLink(false);
+      setShowManualOtpInput(false);
       setResendCooldown(60);
-      const t = setTimeout(() => {
-        otpInputRefs.current[0]?.focus();
-      }, 250);
-      return () => clearTimeout(t);
     }
   }, [emailVerificationPending]);
+
+  // Polling automatique en arrière-plan (toutes les 3.5s) : détecte dès que l'utilisateur clique sur le lien reçu dans son email
+  useEffect(() => {
+    if (!emailVerificationPending) return;
+    let isActive = true;
+
+    const interval = setInterval(async () => {
+      if (!isActive) return;
+      const targetEmail = emailVerificationPending;
+      const currentPwd = savedPasswordRef.current || savedPassword;
+      const res = await SupabaseService.checkEmailConfirmed(targetEmail, currentPwd);
+      if ((res.success || res.confirmed) && isActive) {
+        clearInterval(interval);
+        setOtpSuccessMessage("Email validé avec succès ! Connexion en cours...");
+        setDone(true);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("storage"));
+        }
+        setTimeout(() => {
+          setEmailVerificationPending(null);
+          onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
+          onClose();
+        }, 600);
+      }
+    }, 3500);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [emailVerificationPending, savedPassword, onClose, onSuccess]);
 
   // Réinitialisation stricte : formulaires 100% vierges et vides sans aucune pré-remplissage
   useEffect(() => {
@@ -403,6 +453,35 @@ export const AuthModal: React.FC<Props> = ({
     onClose();
   };
 
+  const handleCheckLinkConfirmed = async () => {
+    const targetEmail = emailVerificationPending || email;
+    if (!targetEmail || isCheckingLink) return;
+
+    setIsCheckingLink(true);
+    setOtpError(null);
+
+    const currentPwd = savedPasswordRef.current || savedPassword;
+    const res = await SupabaseService.checkEmailConfirmed(targetEmail, currentPwd);
+    setIsCheckingLink(false);
+
+    if (res.success || res.confirmed) {
+      setOtpSuccessMessage("Email validé avec succès ! Connexion en cours...");
+      setDone(true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+      await new Promise((r) => setTimeout(r, 600));
+      setEmailVerificationPending(null);
+      onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
+      onClose();
+    } else {
+      setOtpError(
+        res.message ||
+          "Votre adresse email n'est pas encore activée. Veuillez ouvrir votre boîte mail, cliquer sur le lien de confirmation reçu, puis réessayez."
+      );
+    }
+  };
+
   const handleResendOtp = async () => {
     const targetEmail = emailVerificationPending || email;
     if (!targetEmail || resendCooldown > 0 || isResendingEmail) return;
@@ -416,9 +495,9 @@ export const AuthModal: React.FC<Props> = ({
 
     if (res.success) {
       setResendCooldown(60);
-      setResendEmailMessage("Un nouveau code à 6 chiffres vient d'être envoyé dans votre boîte email !");
+      setResendEmailMessage("Un nouvel email avec votre lien de confirmation vient d'être envoyé ! Pensez à vérifier vos spams.");
     } else {
-      setOtpError(res.message || "Impossible de renvoyer le code pour le moment.");
+      setOtpError(res.message || "Impossible de renvoyer le lien pour le moment.");
     }
   };
 
@@ -532,6 +611,8 @@ export const AuthModal: React.FC<Props> = ({
       // Cas de vérification d'email requise par Supabase Cloud
       if (regResult.emailVerificationRequired) {
         setIsLoading(false);
+        savedPasswordRef.current = password;
+        setSavedPassword(password);
         setEmailVerificationPending(regResult.email || email);
         return;
       }
@@ -553,6 +634,8 @@ export const AuthModal: React.FC<Props> = ({
 
         // Cas 1 : L'email n'a pas encore été confirmé
         if (authResult.emailVerificationRequired) {
+          savedPasswordRef.current = password;
+          setSavedPassword(password);
           setEmailVerificationPending(authResult.email || email);
           return;
         }
@@ -646,15 +729,17 @@ export const AuthModal: React.FC<Props> = ({
 
 
 
-  // ÉCRAN SPÉCIFIQUE : VALIDATION PAR CODE OTP À 6 CHIFFRES (Supabase Cloud Auth)
+  // ÉCRAN SPÉCIFIQUE : ACTIVATION DU COMPTE PAR LIEN EMAIL (Supabase Cloud Auth)
   if (emailVerificationPending) {
+    const webmail = getWebmailInfo(emailVerificationPending);
+
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-md fade-in overflow-y-auto"
         onMouseDown={onClose}
       >
         <div
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-6 sm:p-8 text-center border border-slate-100 relative my-auto"
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-[480px] p-6 sm:p-8 text-center border border-slate-100 relative my-auto animate-in fade-in zoom-in-95 duration-200"
           onMouseDown={(e) => e.stopPropagation()}
         >
           {/* Bouton Fermer */}
@@ -666,56 +751,77 @@ export const AuthModal: React.FC<Props> = ({
             <X className="w-5 h-5" />
           </button>
 
-          {/* Badge icône de sécurité */}
-          <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-blue-500/25">
-            <ShieldCheck className="w-9 h-9" />
+          {/* Badge icône email avec éclat */}
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/25">
+              <Mail className="w-8 h-8" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-1 shadow-md border-2 border-white">
+              <Sparkles className="w-3.5 h-3.5" />
+            </div>
           </div>
 
           <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Code de confirmation
+            Vérifiez votre boîte email
           </h3>
-          <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-            Saisissez le code à <strong>6 chiffres</strong> envoyé par email pour valider votre compte :
+          <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
+            Un email contenant votre <strong>lien de confirmation</strong> sécurisé a été envoyé à :
           </p>
 
-          {/* Email badge */}
+          {/* Badge Email destinataire */}
           <div className="my-3 px-3.5 py-1.5 bg-blue-50 border border-blue-200/80 rounded-full text-xs font-bold text-blue-700 break-all inline-flex items-center gap-1.5 shadow-sm max-w-full truncate">
             <Mail className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
             <span className="truncate">{emailVerificationPending}</span>
           </div>
 
-          {/* Champ de saisie des 6 chiffres */}
-          <div className="my-5">
-            <div className="flex items-center justify-center gap-2 sm:gap-2.5">
-              {otpDigits.map((digit, idx) => (
-                <input
-                  key={idx}
-                  ref={(el) => {
-                    otpInputRefs.current[idx] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={1}
-                  autoComplete="one-time-code"
-                  value={digit}
-                  onChange={(e) => handleOtpChange(idx, e.target.value)}
-                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                  onPaste={handleOtpPaste}
-                  aria-label={`Chiffre ${idx + 1}`}
-                  disabled={isVerifyingOtp}
-                  className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-2xl sm:text-3xl font-black rounded-xl border-2 transition-all select-all outline-none ${
-                    digit
-                      ? "border-blue-600 bg-blue-50/40 text-blue-900 shadow-sm"
-                      : "border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300"
-                  } focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-50`}
-                />
-              ))}
+          {/* 3 Étapes claires */}
+          <div className="my-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2.5">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
+                1
+              </div>
+              <p className="text-xs text-slate-700 leading-snug">
+                <strong>Ouvrez votre boîte mail</strong> (vérifiez vos courriers indésirables / spams si nécessaire).
+              </p>
             </div>
-            <p className="text-[11px] text-slate-400 mt-2.5">
-              Astuce : vous pouvez copier/coller directement le code à 6 chiffres.
-            </p>
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
+                2
+              </div>
+              <p className="text-xs text-slate-700 leading-snug">
+                Cliquez sur le lien <span className="text-blue-700 font-bold">« Confirmer mon adresse email »</span>.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
+                3
+              </div>
+              <p className="text-xs text-slate-700 leading-snug">
+                <strong>Votre compte s'active automatiquement !</strong> Aucune autre action requise.
+              </p>
+            </div>
           </div>
+
+          {/* Bouton direct vers le Webmail si détecté (ex: Gmail, Outlook...) */}
+          {webmail && (
+            <a
+              href={webmail.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-3 w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-200"
+            >
+              <span>Ouvrir {webmail.name}</span>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            </a>
+          )}
+
+          {/* Message de succès */}
+          {otpSuccessMessage && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-700 flex items-center gap-2 text-left">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>{otpSuccessMessage}</span>
+            </div>
+          )}
 
           {/* Alerte d'erreur */}
           {otpError && (
@@ -725,39 +831,37 @@ export const AuthModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Alerte de succès */}
-          {otpSuccessMessage && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-700 flex items-center gap-2 text-left">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>{otpSuccessMessage}</span>
-            </div>
-          )}
-
-          {/* Bouton de validation principal */}
+          {/* Bouton principal : J'ai cliqué sur le lien de confirmation */}
           <button
             type="button"
-            disabled={isVerifyingOtp || otpDigits.some((d) => !d)}
-            onClick={() => executeVerifyOtp()}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isCheckingLink}
+            onClick={handleCheckLinkConfirmed}
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isVerifyingOtp ? (
+            {isCheckingLink ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Vérification du code...</span>
+                <span>Vérification de l'activation...</span>
               </>
             ) : (
               <>
-                <ShieldCheck className="w-4 h-4" />
-                <span>Valider et activer mon compte</span>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>J'ai cliqué sur le lien de confirmation</span>
               </>
             )}
           </button>
 
-          {/* Section renvoi de code OTP */}
-          <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
-            <p className="text-xs text-slate-500">
-              Vous n'avez pas reçu le code par email ?
-            </p>
+          {/* Indicateur de détection automatique en arrière-plan */}
+          <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Détection automatique dès que vous cliquez sur le lien</span>
+          </div>
+
+          {/* Renvoyer l'email */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
             <button
               type="button"
               disabled={isResendingEmail || resendCooldown > 0}
@@ -767,21 +871,85 @@ export const AuthModal: React.FC<Props> = ({
               <RefreshCw className={`w-3.5 h-3.5 ${isResendingEmail ? "animate-spin text-blue-600" : ""}`} />
               <span>
                 {resendCooldown > 0
-                  ? `Renvoyer un nouveau code (${resendCooldown}s)`
+                  ? `Renvoyer l'email (${resendCooldown}s)`
                   : isResendingEmail
                   ? "Envoi en cours..."
-                  : "Renvoyer un nouveau code"}
+                  : "Vous n'avez pas reçu l'email ? Renvoyer"}
               </span>
             </button>
             {resendEmailMessage && (
-              <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200">
+              <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200 mt-2">
                 {resendEmailMessage}
               </p>
             )}
           </div>
 
+          {/* Option de secours rétractable : Vous avez plutôt reçu un code à 6 chiffres ? */}
+          <div className="mt-4 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowManualOtpInput((prev) => !prev)}
+              className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>Vous avez plutôt reçu un code à 6 chiffres ?</span>
+              {showManualOtpInput ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+
+            {showManualOtpInput && (
+              <div className="mt-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl animate-in fade-in duration-200">
+                <p className="text-xs text-slate-600 mb-3">
+                  Saisissez les 6 chiffres reçus par email :
+                </p>
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3">
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => {
+                        otpInputRefs.current[idx] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      autoComplete="one-time-code"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={handleOtpPaste}
+                      aria-label={`Chiffre ${idx + 1}`}
+                      disabled={isVerifyingOtp}
+                      className={`w-9 h-11 sm:w-10 sm:h-12 text-center text-xl sm:text-2xl font-black rounded-lg border-2 transition-all outline-none ${
+                        digit
+                          ? "border-blue-600 bg-blue-50/40 text-blue-900 shadow-sm"
+                          : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
+                      } focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:opacity-50`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  disabled={isVerifyingOtp || otpDigits.some((d) => !d)}
+                  onClick={() => executeVerifyOtp()}
+                  className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {isVerifyingOtp ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Vérification du code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Valider le code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Bouton retour login */}
-          <div className="mt-3">
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => {

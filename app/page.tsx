@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
 import { PlanTier, AccountType } from "@/lib/types";
 import { StorageManager } from "@/lib/storage";
+import { SupabaseService } from "@/lib/supabaseService";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { getWavePaymentUrl } from "@/config/payments";
@@ -47,6 +48,7 @@ import {
   Send,
   Scale,
   Smartphone,
+  X,
 } from "lucide-react";
 
 const COLOR_PALETTE = [
@@ -77,6 +79,7 @@ export default function HomePage() {
   const [isBusinessAccount, setIsBusinessAccount] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLandingExplicit, setIsLandingExplicit] = useState(false);
+  const [showConfirmedBanner, setShowConfirmedBanner] = useState(false);
   const router = useRouter();
   const { t, dict, isRTL, language } = useTranslation();
 
@@ -236,6 +239,45 @@ export default function HomePage() {
     }
   };
 
+  // Traitement automatique au retour de confirmation d'email (lien Supabase /auth/confirm?next=/?confirmed=true)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const isConfirmed = params.get("confirmed") === "true";
+    const hasHashToken = window.location.hash.includes("access_token=");
+
+    if (!isConfirmed && !hasHashToken) return;
+
+    setShowConfirmedBanner(true);
+
+    const processConfirmedAuth = async () => {
+      if (SupabaseService.isConfigured() && SupabaseService.client) {
+        try {
+          const { data } = await SupabaseService.client.auth.getSession();
+          if (data.session?.user) {
+            SupabaseService.syncSessionUser(data.session.user, data.session.access_token);
+            setIsLoggedIn(true);
+            setCurrentUser(StorageManager.getUser());
+            setIsBusinessAccount(StorageManager.isBusinessAccount());
+          }
+        } catch (e) {
+          console.warn("Erreur synchronisation session confirmation", e);
+        }
+      }
+
+      // Reprendre automatiquement un paiement Wave qui attendait la validation du compte
+      const pending = StorageManager.getPendingCheckoutPlan();
+      if (pending) {
+        StorageManager.clearPendingCheckoutPlan();
+        setTimeout(() => {
+          handleOpenPlanPayment(pending.plan, pending.isWave);
+        }, 400);
+      }
+    };
+
+    processConfirmedAuth();
+  }, []);
+
   const selectedTpl = templateGallery.find((t) => t.id === activeTemplate) || templateGallery[0];
 
   return (
@@ -244,6 +286,27 @@ export default function HomePage() {
         onOpenPayment={() => handleOpenPlanPayment("2500")}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
+
+      {/* Bannière de confirmation d'email réussie */}
+      {showConfirmedBanner && (
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-3 shadow-md sticky top-16 z-30 flex items-center justify-between gap-3 text-xs sm:text-sm animate-in slide-in-from-top-2 duration-300">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-100" />
+              <span>
+                <strong className="font-bold">Compte validé avec succès !</strong> Votre adresse email a été confirmée. Bienvenue sur MonCV !
+              </span>
+            </div>
+            <button
+              onClick={() => setShowConfirmedBanner(false)}
+              className="p-1 hover:bg-emerald-700/50 rounded-lg text-white transition-colors cursor-pointer"
+              aria-label="Fermer la bannière"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bannière de session active */}
       {isLoggedIn && isLandingExplicit && (

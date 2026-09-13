@@ -4,6 +4,7 @@ import { ResumeData, PlanTier, AccountType, BusinessProfile, UserSubscriptionInf
 
 export interface CloudAuthResponse {
   success: boolean;
+  confirmed?: boolean;
   user?: UserSession;
   message?: string;
   emailVerificationRequired?: boolean;
@@ -13,11 +14,17 @@ export interface CloudAuthResponse {
 }
 
 export class SupabaseService {
+  static client = supabase;
+
   /**
    * Vérifie si Supabase est actuellement configuré et connecté
    */
   static isAvailable(): boolean {
     return isSupabaseConfigured() && supabase !== null;
+  }
+
+  static isConfigured(): boolean {
+    return this.isAvailable();
   }
 
   /**
@@ -51,10 +58,15 @@ export class SupabaseService {
     // 2. Si Supabase Cloud est connecté, synchroniser avec Supabase Auth
     if (this.isAvailable() && supabase) {
       try {
+        const emailRedirectTo = typeof window !== "undefined"
+          ? `${window.location.origin}/auth/confirm?next=${encodeURIComponent(window.location.pathname)}`
+          : undefined;
+
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail,
           password: payload.password,
           options: {
+            emailRedirectTo,
             data: {
               account_type: payload.accountType || "candidate",
               plan_tier: payload.planTier || "free",
@@ -119,7 +131,7 @@ export class SupabaseService {
             emailVerificationRequired: true,
             email: cleanEmail,
             user: userSession,
-            message: `Un code de validation à 6 chiffres a été envoyé à ${cleanEmail}. Veuillez vérifier votre boîte de réception ou vos spams.`,
+            message: `Un email avec un lien de confirmation a été envoyé à ${cleanEmail}. Veuillez cliquer sur ce lien pour activer votre compte.`,
           };
         }
 
@@ -382,6 +394,223 @@ export class SupabaseService {
   }
 
   /**
+   * Reconstitue la session utilisateur complète à partir d'un utilisateur Supabase Auth
+   */
+  static async syncSessionUser(authUser: any, token?: string): Promise<UserSession | null> {
+    if (!authUser || !authUser.email) return null;
+    const cleanEmail = authUser.email.toLowerCase().trim();
+
+    let profile: any = null;
+    if (this.isAvailable() && supabase) {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", authUser.id)
+          .maybeSingle();
+        profile = data;
+      } catch {}
+    }
+
+    const meta = authUser.user_metadata || {};
+    const localUsers = StorageManager.getRegisteredUsers();
+    const localMatch = localUsers.find((u) => u.email.toLowerCase().trim() === cleanEmail);
+    const savedSub = StorageManager.getUserSubscription(cleanEmail);
+
+    const isPaidPlan = (p: any): boolean =>
+      typeof p === "string" && p !== "free" && p.trim().length > 0;
+
+    const candidatePlans = [
+      meta.plan_tier,
+      profile?.plan_tier,
+      localMatch?.planTier,
+      savedSub?.planTier,
+    ];
+    const foundPaid = candidatePlans.find(isPaidPlan) as PlanTier | undefined;
+    const resolvedPlan: PlanTier =
+      foundPaid || (meta.plan_tier as PlanTier) || (profile?.plan_tier as PlanTier) || "free";
+
+    const isEnterprise =
+      meta.account_type === "business" ||
+      profile?.account_type === "business" ||
+      resolvedPlan.startsWith("enterprise") ||
+      resolvedPlan === "cyber15" ||
+      Boolean(meta.company_name) ||
+      Boolean(profile?.company_name) ||
+      localMatch?.accountType === "business";
+
+    const resolvedAccountType: AccountType = isEnterprise
+      ? "business"
+      : (meta.account_type || profile?.account_type || localMatch?.accountType || "candidate");
+
+    const resolvedFirstName =
+      meta.first_name ||
+      profile?.first_name ||
+      localMatch?.firstName ||
+      (cleanEmail.split("@")[0].charAt(0).toUpperCase() + cleanEmail.split("@")[0].slice(1));
+
+    const resolvedLastName =
+      meta.last_name ||
+      profile?.last_name ||
+      localMatch?.lastName ||
+      "";
+
+    const resolvedBusiness: BusinessProfile | undefined = isEnterprise
+      ? {
+          companyName: meta.company_name || profile?.company_name || localMatch?.business?.companyName || "Mon Entreprise",
+          companyType: meta.company_type || localMatch?.business?.companyType || "PME / Entreprise",
+          managerRole: meta.manager_role || localMatch?.business?.managerRole || "Responsable RH",
+          rccm: meta.rccm || localMatch?.business?.rccm || "",
+          taxId: meta.tax_id || localMatch?.business?.taxId || "",
+          billingAddress: meta.billing_address || localMatch?.business?.billingAddress || `${meta.city || "Abidjan"}, ${meta.country || "Côte d'Ivoire"}`,
+          whatsappPhone: meta.whatsapp_phone || meta.phone || localMatch?.business?.whatsappPhone || "",
+          logoUrl: meta.logo_url || localMatch?.business?.logoUrl || "",
+        }
+      : undefined;
+
+    let cloudSub: UserSubscriptionInfo | null = savedSub || localMatch?.subscription || null;
+    if (!cloudSub && resolvedPlan !== "free") {
+      let allowedCandidates = 1;
+      let defaultAmount = 0;
+      if (resolvedPlan === "enterprise200") { allowedCandidates = 200; defaultAmount = 100000; }
+      else if (resolvedPlan === "enterprise75") { allowedCandidates = 75; defaultAmount = 45000; }
+      else if (resolvedPlan === "enterprise30") { allowedCandidates = 30; defaultAmount = 20000; }
+      else if (resolvedPlan === "cyber15") { allowedCandidates = 15; defaultAmount = 15000; }
+      else if (resolvedPlan === "5000") { allowedCandidates = 4; defaultAmount = 5000; }
+      else if (resolvedPlan === "2500") { allowedCandidates = 2; defaultAmount = 2500; }
+      else if (resolvedPlan === "1500") { allowedCandidates = 1; defaultAmount = 1500; }
+
+      cloudSub = {
+        planTier: resolvedPlan,
+        amount: defaultAmount,
+        currency: "FCFA",
+        status: "pending",
+        paymentMethod: "Wave Mobile Money (CI)",
+        phoneNumber: meta.phone || profile?.phone,
+        transactionRef: `SUB_${authUser.id.slice(0, 8)}_${Date.now()}`,
+        subscribedAt: authUser.created_at || new Date().toISOString(),
+        expiresAt: null,
+        accountType: resolvedAccountType,
+        allowedCandidates,
+        companyName: resolvedBusiness?.companyName,
+      };
+    }
+
+    if (cloudSub) {
+      StorageManager.saveUserSubscription(cleanEmail, cloudSub);
+    }
+
+    const userSession: UserSession = {
+      id: authUser.id,
+      email: cleanEmail,
+      accountType: resolvedAccountType,
+      firstName: resolvedFirstName,
+      lastName: resolvedLastName,
+      phone: meta.phone || profile?.phone || authUser.phone || localMatch?.phone,
+      country: meta.country || profile?.country || localMatch?.country || "Côte d'Ivoire",
+      city: meta.city || profile?.city || localMatch?.city || "Abidjan",
+      business: resolvedBusiness,
+      planTier: resolvedPlan,
+      subscription: cloudSub || undefined,
+      token: token,
+      createdAt: authUser.created_at,
+    };
+
+    StorageManager.setUser(userSession);
+
+    const users = StorageManager.getRegisteredUsers();
+    const uIdx = users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+    if (uIdx !== -1) {
+      users[uIdx] = {
+        ...users[uIdx],
+        id: authUser.id,
+        accountType: userSession.accountType,
+        planTier: userSession.planTier,
+        business: userSession.business,
+        subscription: cloudSub || users[uIdx].subscription,
+      };
+    } else {
+      users.push({
+        id: authUser.id,
+        email: cleanEmail,
+        passwordHash: "",
+        accountType: userSession.accountType,
+        firstName: userSession.firstName || "",
+        lastName: userSession.lastName || "",
+        phone: userSession.phone,
+        country: userSession.country,
+        city: userSession.city,
+        business: userSession.business,
+        planTier: userSession.planTier,
+        subscription: cloudSub || undefined,
+        createdAt: userSession.createdAt || new Date().toISOString(),
+      });
+    }
+    StorageManager.saveRegisteredUsers(users);
+
+    return userSession;
+  }
+
+  /**
+   * Vérifie si l'email a été validé (via le lien de confirmation)
+   */
+  static async checkEmailConfirmed(email: string, password?: string): Promise<CloudAuthResponse> {
+    const cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail) return { success: false, message: "Adresse email manquante." };
+
+    if (this.isAvailable() && supabase) {
+      try {
+        // 1. Si une session active existe déjà sur le client
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (
+          sessionData?.session?.user &&
+          sessionData.session.user.email?.toLowerCase().trim() === cleanEmail
+        ) {
+          const u = sessionData.session.user;
+          if (u.email_confirmed_at || u.confirmed_at) {
+            const userSession = await this.syncSessionUser(u, sessionData.session.access_token);
+            if (userSession) {
+              return { success: true, confirmed: true, user: userSession, message: "Compte activé avec succès !" };
+            }
+          }
+        }
+
+        // 2. Si un mot de passe est fourni, tester la connexion
+        if (password) {
+          const signInRes = await this.signIn(cleanEmail, password);
+          if (signInRes.success) {
+            return { ...signInRes, confirmed: true };
+          }
+          if (signInRes.emailVerificationRequired) {
+            return {
+              success: false,
+              confirmed: false,
+              emailVerificationRequired: true,
+              message: "Le lien de confirmation n'a pas encore été cliqué. Veuillez ouvrir votre email et cliquer sur le lien d'activation.",
+            };
+          }
+          return signInRes;
+        }
+
+        // 3. Vérifier directement dans public.profiles si le profil a été créé
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("email", cleanEmail)
+          .maybeSingle();
+
+        if (profile) {
+          return { success: true, confirmed: true, message: "Compte validé avec succès !" };
+        }
+      } catch (err: any) {
+        console.warn("Erreur checkEmailConfirmed:", err);
+      }
+    }
+
+    return { success: false, message: "Email non encore validé." };
+  }
+
+  /**
    * Connexion sécurisée avec repli automatique LocalStorage et tolérance déconnectée
    * Restaure intégralement l'environnement utilisateur sur TOUT nouvel appareil
    */
@@ -567,7 +796,7 @@ export class SupabaseService {
             success: false,
             emailVerificationRequired: true,
             email: cleanEmail,
-            message: "Votre adresse email n'a pas encore été validée. Veuillez saisir le code à 6 chiffres reçu par email.",
+            message: "Votre adresse email n'a pas encore été validée. Veuillez cliquer sur le lien de confirmation reçu dans votre boîte email.",
           };
         }
 

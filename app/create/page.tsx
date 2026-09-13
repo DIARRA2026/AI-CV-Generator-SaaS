@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ResumeData } from "@/lib/types";
+import { ResumeData, PlanTier } from "@/lib/types";
 import { initialResumeData, createEmptyResume } from "@/lib/initialData";
 import { StorageManager } from "@/lib/storage";
 import { downloadResumePDF } from "@/lib/pdf-export";
@@ -59,13 +59,13 @@ export default function CreateCVPage() {
   const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [paymentDefaultPlan, setPaymentDefaultPlan] = useState<"1500" | "2500" | "5000">("2500");
+  const [paymentDefaultPlan, setPaymentDefaultPlan] = useState<PlanTier>("2500");
   const [isJobApplicationOpen, setIsJobApplicationOpen] = useState(false);
   const [isScanConvertOpen, setIsScanConvertOpen] = useState(false);
   const [isSmartGenerateOpen, setIsSmartGenerateOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"coverLetter" | "jobApplication" | "smartGenerate" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"coverLetter" | "jobApplication" | "smartGenerate" | "payment" | null>(null);
 
   // Indicateur Full-Stack Cloud Auto-Save
   const [cloudSyncStatus, setCloudSyncStatus] = useState<"saved" | "saving" | "local" | "error">("saved");
@@ -74,9 +74,14 @@ export default function CreateCVPage() {
 
   // Ouvre auth si pas connecté, sinon ouvre directement le modal
   const requireAuth = (action: typeof pendingAction, openFn: () => void) => {
-    if (isLoggedIn) { openFn(); return; }
+    if (isLoggedIn || StorageManager.isLoggedIn()) { openFn(); return; }
     setPendingAction(action);
     setIsAuthOpen(true);
+  };
+
+  const handleOpenPayment = (plan: PlanTier = "2500") => {
+    setPaymentDefaultPlan(plan);
+    requireAuth("payment", () => setIsPaymentOpen(true));
   };
 
   const previewRef = useRef<HTMLDivElement>(null);
@@ -264,7 +269,7 @@ export default function CreateCVPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white" dir={isRTL ? "rtl" : "ltr"}>
       <Navbar
-        onOpenPayment={() => { setPaymentDefaultPlan("2500"); setIsPaymentOpen(true); }}
+        onOpenPayment={() => handleOpenPayment("2500")}
         isEditorPage={true}
       />
 
@@ -457,7 +462,7 @@ export default function CreateCVPage() {
             onDownloadPDF={handleDownloadPDF}
             onDownloadWord={handleDownloadWord}
             onShare={() => setIsShareOpen(true)}
-            onOpenPayment={() => setIsPaymentOpen(true)}
+            onOpenPayment={() => handleOpenPayment("2500")}
           />
         </div>
 
@@ -710,6 +715,7 @@ export default function CreateCVPage() {
           if (pendingAction === "coverLetter") setIsCoverLetterOpen(true);
           else if (pendingAction === "jobApplication") setIsJobApplicationOpen(true);
           else if (pendingAction === "smartGenerate") setIsSmartGenerateOpen(true);
+          else if (pendingAction === "payment") setIsPaymentOpen(true);
           setPendingAction(null);
         }}
         defaultMode="register"

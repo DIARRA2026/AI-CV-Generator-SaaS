@@ -859,6 +859,7 @@ export class SupabaseService {
     const amount = details?.amount || defaultAmount;
     const resolvedAccountType: AccountType = isEnterprise ? "business" : (user?.accountType || "candidate");
     const companyName = details?.companyName || user?.business?.companyName;
+    const subStatus = details?.status || "pending";
 
     // 1. Appel API serveur Next.js pour persistance garantie
     try {
@@ -872,9 +873,10 @@ export class SupabaseService {
             planTier: tier,
             amount,
             currency: details?.currency || "FCFA",
-            paymentMethod: details?.paymentMethod || "Mobile Money",
+            status: subStatus,
+            paymentMethod: details?.paymentMethod || "Wave Mobile Money (CI)",
             phoneNumber: details?.phoneNumber || user?.phone,
-            transactionRef: details?.transactionRef || `TRX_${Date.now()}`,
+            transactionRef: details?.transactionRef || `WAVE_${Date.now()}`,
             accountType: resolvedAccountType,
             companyName,
           }),
@@ -917,7 +919,26 @@ export class SupabaseService {
           await supabase.from("profiles").update(updatePayload).eq("email", cleanEmail);
         }
 
-        // C. Insertion de la transaction
+        // C. Enregistrement officiel dans public.subscriptions (Liaison Compte ↔ Abonnement)
+        const subPayload: any = {
+          user_email: cleanEmail,
+          plan_tier: tier,
+          amount,
+          currency: details?.currency || "FCFA",
+          status: subStatus,
+          payment_method: details?.paymentMethod || "Wave Mobile Money (CI)",
+          phone_number: details?.phoneNumber || user?.phone,
+          transaction_ref: details?.transactionRef || `WAVE_${Date.now()}`,
+          allowed_candidates: allowedCandidates,
+          created_at: new Date().toISOString(),
+          activated_at: subStatus === "active" ? new Date().toISOString() : null,
+        };
+        if (user?.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
+          subPayload.user_id = user.id;
+        }
+        await supabase.from("subscriptions").upsert(subPayload, { onConflict: "transaction_ref" });
+
+        // D. Insertion de la transaction
         let provider = "wave";
         const pLower = (details?.paymentMethod || "").toLowerCase();
         if (pLower.includes("orange")) provider = "orange";
@@ -933,7 +954,7 @@ export class SupabaseService {
           provider,
           phone_number: details?.phoneNumber || user?.phone,
           reference_code: details?.transactionRef || `TRX_${Date.now()}`,
-          status: "completed",
+          status: subStatus === "active" ? "completed" : "pending",
         };
         if (user?.id && /^[0-9a-f-]{36}$/i.test(user.id)) {
           txPayload.user_id = user.id;
@@ -1211,6 +1232,69 @@ export class SupabaseService {
       }
     }
     return { success: false, message: "Service Supabase non connecté." };
+  }
+
+  /**
+   * Récupère les abonnements enregistrés dans public.subscriptions
+   */
+  static async getUserSubscriptions(emailOrUserId?: string): Promise<any[]> {
+    const user = StorageManager.getUser();
+    const cleanEmail = (emailOrUserId || user?.email || "").toLowerCase().trim();
+    const userId = user?.id;
+
+    // 1. Appel API Next.js
+    try {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams();
+        if (cleanEmail) params.set("email", cleanEmail);
+        if (userId) params.set("userId", userId);
+        const res = await fetch(`/api/subscriptions?${params.toString()}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.subscriptions)) {
+            return json.subscriptions;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Erreur fetch API getUserSubscriptions:", e);
+    }
+
+    // 2. Repli direct Supabase
+    if (this.isAvailable() && supabase) {
+      try {
+        let query = supabase.from("subscriptions").select("*").order("created_at", { ascending: false });
+        if (userId && /^[0-9a-f-]{36}$/i.test(userId)) {
+          query = cleanEmail ? query.or(`user_id.eq.${userId},user_email.eq.${cleanEmail}`) : query.eq("user_id", userId);
+        } else if (cleanEmail) {
+          query = query.eq("user_email", cleanEmail);
+        }
+        const { data } = await query;
+        return data || [];
+      } catch (err) {
+        console.warn("Erreur direct Supabase getUserSubscriptions:", err);
+      }
+    }
+    return [];
+  }
+
+  /**
+   * Active manuellement un abonnement (passe de pending à active)
+   */
+  static async activateSubscription(transactionRef: string): Promise<boolean> {
+    const nowIso = new Date().toISOString();
+    if (this.isAvailable() && supabase) {
+      try {
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({ status: "active", activated_at: nowIso })
+          .eq("transaction_ref", transactionRef);
+        return !error;
+      } catch (e) {
+        console.warn("Erreur activateSubscription:", e);
+      }
+    }
+    return false;
   }
 }
 

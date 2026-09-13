@@ -100,10 +100,13 @@ export interface BusinessProfile {
 
 export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15" | "enterprise30" | "enterprise75" | "enterprise200";
 
+export type SubscriptionStatus = "pending" | "active" | "cancelled" | "expired";
+
 export interface UserSubscriptionInfo {
   planTier: PlanTier;
   amount: number;
   currency: string;
+  status?: SubscriptionStatus;
   paymentMethod: string;
   provider?: string;
   phoneNumber?: string;
@@ -113,6 +116,24 @@ export interface UserSubscriptionInfo {
   accountType: AccountType;
   allowedCandidates: number;
   companyName?: string;
+}
+
+export interface SubscriptionRecord {
+  id?: string;
+  userId?: string;
+  userEmail: string;
+  planTier: PlanTier;
+  amount: number;
+  currency: string;
+  status: SubscriptionStatus;
+  paymentMethod: string;
+  phoneNumber?: string;
+  transactionRef: string;
+  allowedCandidates: number;
+  metadata?: Record<string, any>;
+  createdAt?: string;
+  activatedAt?: string | null;
+  expiresAt?: string | null;
 }
 
 export interface LicenseAccess {

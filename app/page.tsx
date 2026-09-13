@@ -215,16 +215,25 @@ export default function HomePage() {
   };
 
   const handleOpenPlanPayment = (plan: PlanTier, waveDirectOpened: boolean = false) => {
-    setIsPaymentWaveOpened(waveDirectOpened);
     if (typeof window !== "undefined" && !StorageManager.isLoggedIn()) {
+      StorageManager.setPendingCheckoutPlan(plan, waveDirectOpened);
       const isBiz = plan.startsWith("enterprise") || plan === "cyber15";
       setAuthAccountType(isBiz ? "business" : "candidate");
       setAuthDefaultPlan(plan);
       setIsAuthOpen(true);
       return;
     }
+
     setSelectedPlanPrice(plan);
+    setIsPaymentWaveOpened(waveDirectOpened);
     setIsPaymentOpen(true);
+
+    if (waveDirectOpened) {
+      const waveUrl = getWavePaymentUrl(plan);
+      if (waveUrl && typeof window !== "undefined") {
+        window.open(waveUrl, "_blank", "noopener,noreferrer");
+      }
+    }
   };
 
   const selectedTpl = templateGallery.find((t) => t.id === activeTemplate) || templateGallery[0];
@@ -1253,16 +1262,14 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-2">
-                  <a
-                    href={getWavePaymentUrl("1500") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("1500", true)}
                     className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs transition-all cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 flex items-center justify-center gap-2 card-hover-lift"
                   >
                     <span>Payer 1 500 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("1500", false)}
@@ -1317,17 +1324,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-2">
-                  <a
-                    href={getWavePaymentUrl("2500") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("2500", true)}
                     className="w-full py-3.5 bg-gradient-to-r from-[#1dc4fe] via-blue-500 to-indigo-500 hover:from-[#1ab0e5] hover:to-blue-600 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-blue-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
                     <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
                     <span>Payer 2 500 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("2500", false)}
@@ -1392,17 +1397,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-2">
-                  <a
-                    href={getWavePaymentUrl("5000") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("5000", true)}
                     className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-[#1dc4fe] hover:from-purple-500 hover:to-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
                     <span>Payer 5 000 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("5000", false)}
@@ -1612,17 +1615,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-8 flex flex-col gap-2">
-                  <a
-                    href={getWavePaymentUrl("enterprise30") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("enterprise30", true)}
                     className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 card-hover-lift"
                   >
                     <Building className="w-4 h-4" />
                     <span>Payer 20 000 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise30", false)}
@@ -1692,17 +1693,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-8 flex flex-col gap-2 relative z-10">
-                  <a
-                    href={getWavePaymentUrl("enterprise75") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("enterprise75", true)}
                     className="w-full py-4 bg-gradient-to-r from-amber-500 via-[#1dc4fe] to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
                   >
                     <Sparkles className="w-4 h-4 text-slate-950" />
                     <span>Payer 45 000 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise75", false)}
@@ -1765,17 +1764,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-8 flex flex-col gap-2">
-                  <a
-                    href={getWavePaymentUrl("enterprise200") || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={() => handleOpenPlanPayment("enterprise200", true)}
                     className="w-full py-3.5 bg-gradient-to-r from-slate-800 to-[#1dc4fe] hover:from-[#1dc4fe] hover:to-[#1ab0e5] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
                     <span>Payer 100 000 FCFA avec Wave</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise200", false)}
@@ -2097,29 +2094,46 @@ export default function HomePage() {
 
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
+        onClose={() => {
+          setIsAuthOpen(false);
+          StorageManager.clearPendingCheckoutPlan();
+        }}
         onSuccess={(chosenPlan, actionType) => {
           setIsAuthOpen(false);
           const u = StorageManager.getUser();
           const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
 
-          if (actionType === "login") {
+          setIsLoggedIn(true);
+          setCurrentUser(u);
+          setIsBusinessAccount(isBiz);
+
+          const pending = StorageManager.getPendingCheckoutPlan();
+          StorageManager.clearPendingCheckoutPlan();
+
+          const targetPlan = (pending?.plan && pending.plan !== "free")
+            ? pending.plan
+            : (chosenPlan && chosenPlan !== "free")
+            ? chosenPlan
+            : null;
+
+          const shouldOpenWave = pending ? pending.isWave : Boolean(targetPlan);
+
+          if (targetPlan) {
+            setSelectedPlanPrice(targetPlan);
+            setIsPaymentWaveOpened(shouldOpenWave);
+            setIsPaymentOpen(true);
+
+            if (shouldOpenWave) {
+              const waveUrl = getWavePaymentUrl(targetPlan);
+              if (waveUrl && typeof window !== "undefined") {
+                window.open(waveUrl, "_blank", "noopener,noreferrer");
+              }
+            }
+          } else {
             if (isBiz) {
               router.push("/dashboard?tab=business");
             } else {
               router.push("/dashboard");
-            }
-          } else {
-            if (chosenPlan && chosenPlan !== "free") {
-              setSelectedPlanPrice(chosenPlan);
-              setIsPaymentWaveOpened(false);
-              setIsPaymentOpen(true);
-            } else {
-              if (isBiz) {
-                router.push("/dashboard?tab=business");
-              } else {
-                router.push("/dashboard");
-              }
             }
           }
         }}

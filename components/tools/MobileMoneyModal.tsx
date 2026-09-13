@@ -215,6 +215,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   const [planTab, setPlanTab] = useState<PlanCategory>("particulier");
   const [waveOpened, setWaveOpened] = useState(Boolean(initialWaveOpened));
   const { t, dict, isRTL } = useTranslation();
+  const currentUser = StorageManager.getUser();
 
   useEffect(() => {
     if (isOpen && defaultPlan) {
@@ -306,18 +307,20 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
       StorageManager.saveActiveResume(updatedWithLicense);
     }
 
-    // Sauvegarde locale de la souscription
+    // Sauvegarde locale de la souscription (statut pending par défaut)
     StorageManager.setPlanTier(selectedPlan, {
+      status: "pending",
       paymentMethod: paymentMethod === "wave" ? "Wave Mobile Money (CI)" : `Mobile Money (${paymentMethod.toUpperCase()})`,
       phoneNumber: phoneNumber.trim(),
       transactionRef,
     });
 
-    // Synchronisation Cloud Supabase immédiate (Auth metadata, profil, quota & transactions)
+    // Synchronisation Cloud Supabase immédiate (table public.subscriptions en status pending)
     const currentPriceStr = currentPlan?.priceNumber || "0";
     const parsedAmount = parseInt(currentPriceStr.replace(/\s+/g, ""), 10) || 0;
     try {
       await SupabaseService.syncSubscriptionToCloud(selectedPlan, {
+        status: "pending",
         provider: paymentMethod === "card" ? "card" : "mobile_money",
         paymentMethod: paymentMethod === "wave" ? "Wave Mobile Money (CI)" : `Mobile Money (${paymentMethod.toUpperCase()})`,
         phoneNumber: phoneNumber.trim(),
@@ -422,10 +425,10 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
             </div>
             <div>
               <h4 className="text-xl sm:text-2xl font-black text-slate-900">
-                Paiement Validé avec Succès ! 🎉
+                Paiement Enregistré avec Succès ! 🎉
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
-                Votre formule <strong>{currentPlan.name}</strong> ({currentPlan.price}) est désormais active à 100%.
+                Votre formule <strong>{currentPlan.name}</strong> ({currentPlan.price}) est officiellement rattachée à votre compte <strong className="text-slate-900 font-bold">{currentUser?.email || ""}</strong>.
               </p>
             </div>
 
@@ -624,6 +627,25 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                   })}
                 </div>
               </div>
+
+              {/* ── Liaison Compte Utilisateur ── */}
+              {currentUser && (
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-slate-500 text-[10.5px] block font-semibold">Abonnement associé au compte</span>
+                      <span className="text-slate-900 font-bold truncate block">{currentUser.email}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-full border border-emerald-300 shrink-0 inline-flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    Authentifié
+                  </span>
+                </div>
+              )}
 
               {/* ── Section 3 : Coordonnées de règlement ── */}
               <div className="space-y-3 pt-1">

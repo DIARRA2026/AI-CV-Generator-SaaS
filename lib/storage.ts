@@ -772,6 +772,7 @@ export class StorageManager {
         planTier: tier,
         amount: details?.amount || defaultAmount,
         currency: details?.currency || "FCFA",
+        status: details?.status || "pending",
         paymentMethod: details?.paymentMethod || "Mobile Money (Wave / Orange / MTN)",
         phoneNumber: details?.phoneNumber || user?.phone,
         transactionRef: details?.transactionRef || `TRX-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,
@@ -825,6 +826,44 @@ export class StorageManager {
       }
     } catch (e) {
       console.error("Erreur mise à jour plan tier", e);
+    }
+  }
+
+  // === GESTION DU PLAN EN ATTENTE AVANT AUTHENTIFICATION ===
+  static setPendingCheckoutPlan(plan: PlanTier, isWave: boolean = true): void {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem("moncv_pending_checkout_plan", plan);
+      localStorage.setItem("moncv_pending_checkout_plan", plan);
+      sessionStorage.setItem("moncv_pending_checkout_wave", isWave ? "1" : "0");
+      localStorage.setItem("moncv_pending_checkout_wave", isWave ? "1" : "0");
+    } catch (e) {
+      console.warn("Erreur setPendingCheckoutPlan", e);
+    }
+  }
+
+  static getPendingCheckoutPlan(): { plan: PlanTier; isWave: boolean } | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const plan = sessionStorage.getItem("moncv_pending_checkout_plan") || localStorage.getItem("moncv_pending_checkout_plan");
+      if (!plan) return null;
+      const waveVal = sessionStorage.getItem("moncv_pending_checkout_wave") ?? localStorage.getItem("moncv_pending_checkout_wave");
+      const isWave = waveVal !== "0";
+      return { plan: plan as PlanTier, isWave };
+    } catch {
+      return null;
+    }
+  }
+
+  static clearPendingCheckoutPlan(): void {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.removeItem("moncv_pending_checkout_plan");
+      localStorage.removeItem("moncv_pending_checkout_plan");
+      sessionStorage.removeItem("moncv_pending_checkout_wave");
+      localStorage.removeItem("moncv_pending_checkout_wave");
+    } catch (e) {
+      console.warn("Erreur clearPendingCheckoutPlan", e);
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users, ExternalLink } from "lucide-react";
@@ -225,6 +225,32 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     }
   }, [isOpen, defaultPlan, initialWaveOpened]);
 
+  const handleFinishAndNavigate = useCallback(() => {
+    const isEnterprisePlan = selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15";
+    const u = StorageManager.getUser();
+    const isBiz = isEnterprisePlan || u?.accountType === "business" || StorageManager.isBusinessAccount();
+
+    onSuccess();
+    onClose();
+    setIsDone(false);
+
+    if (isBiz) {
+      router.push("/dashboard?tab=business");
+    } else {
+      router.push("/dashboard");
+    }
+  }, [selectedPlan, onSuccess, onClose, router]);
+
+  // Redirection automatique vers l'espace entreprise ou candidat après paiement validé
+  useEffect(() => {
+    if (isDone) {
+      const timer = setTimeout(() => {
+        handleFinishAndNavigate();
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [isDone, handleFinishAndNavigate]);
+
   if (!isOpen) return null;
 
   // ── Helpers ──
@@ -258,32 +284,6 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
       setWaveOpened(true);
     }
   };
-
-  const handleFinishAndNavigate = () => {
-    const isEnterprisePlan = selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15";
-    const u = StorageManager.getUser();
-    const isBiz = isEnterprisePlan || u?.accountType === "business" || StorageManager.isBusinessAccount();
-
-    onSuccess();
-    onClose();
-    setIsDone(false);
-
-    if (isBiz) {
-      router.push("/dashboard?tab=business");
-    } else {
-      router.push("/dashboard");
-    }
-  };
-
-  // Redirection automatique vers l'espace entreprise ou candidat après paiement validé
-  useEffect(() => {
-    if (isDone) {
-      const timer = setTimeout(() => {
-        handleFinishAndNavigate();
-      }, 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [isDone, selectedPlan]);
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();

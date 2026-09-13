@@ -90,8 +90,36 @@ export default function DashboardPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoFeedback, setLogoFeedback] = useState<string | null>(null);
 
+  // 1. Initialisation et paramètres d'URL (exécuté une seule fois au montage)
   useEffect(() => {
-    const syncState = () => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    if (params.get("new") === "true" || params.get("create") === "true") {
+      setIsCreatingModal(true);
+    }
+    if (params.get("tab") === "business" || params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
+      setActiveTab("business");
+      if (params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
+        setTimeout(() => {
+          const el = document.getElementById("candidate-pool-section");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            el.classList.add("ring-4", "ring-amber-400/50");
+            setTimeout(() => el.classList.remove("ring-4", "ring-amber-400/50"), 1500);
+            const searchInput = el.querySelector("input");
+            if (searchInput) searchInput.focus();
+          }
+        }, 300);
+      }
+    } else if (params.get("tab") === "candidate") {
+      setActiveTab("candidate");
+    }
+  }, []);
+
+  // 2. Synchronisation de l'état local (écoute passive des événements storage locaux, sans boucle réseau)
+  useEffect(() => {
+    const syncLocalState = () => {
       const logged = StorageManager.isLoggedIn();
       const user = StorageManager.getUser();
       const isBiz = StorageManager.isBusinessAccount();
@@ -104,33 +132,8 @@ export default function DashboardPage() {
       setResumes(StorageManager.getResumes());
       setIsInitialized(true);
 
-      if (isBiz) {
+      if (isBiz && typeof window !== "undefined" && !window.location.search.includes("tab=candidate")) {
         setActiveTab("business");
-      }
-
-      if (user?.email) {
-        SupabaseService.refreshSessionFromCloud()
-          .then((refreshed) => {
-            if (refreshed) {
-              const u = StorageManager.getUser();
-              const b = StorageManager.isBusinessAccount();
-              const q = StorageManager.getBusinessQuotaInfo();
-              setCurrentUser(u);
-              setIsBusinessAccount(b);
-              setBusinessQuota(q);
-              if (b) setActiveTab("business");
-            }
-          })
-          .catch(() => {});
-
-        SupabaseService.getResumes(user.email)
-          .then((cloudList) => {
-            if (cloudList && cloudList.length > 0) {
-              setResumes(cloudList);
-              setBusinessQuota(StorageManager.getBusinessQuotaInfo());
-            }
-          })
-          .catch(() => {});
       }
 
       if (!logged) {
@@ -138,36 +141,55 @@ export default function DashboardPage() {
       } else {
         setIsAuthOpen(false);
       }
+    };
 
-      if (typeof window !== "undefined") {
-        const params = new URLSearchParams(window.location.search);
-        const hash = window.location.hash;
-        if (params.get("new") === "true" || params.get("create") === "true") {
-          setIsCreatingModal(true);
-        }
-        if (params.get("tab") === "business" || params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
-          setActiveTab("business");
-          if (params.get("section") === "candidate-pool" || hash === "#candidate-pool-section") {
-            setTimeout(() => {
-              const el = document.getElementById("candidate-pool-section");
-              if (el) {
-                el.scrollIntoView({ behavior: "smooth", block: "start" });
-                el.classList.add("ring-4", "ring-amber-400/50");
-                setTimeout(() => el.classList.remove("ring-4", "ring-amber-400/50"), 1500);
-                const searchInput = el.querySelector("input");
-                if (searchInput) searchInput.focus();
-              }
-            }, 300);
+    syncLocalState();
+    window.addEventListener("storage", syncLocalState);
+    return () => window.removeEventListener("storage", syncLocalState);
+  }, []);
+
+  // 3. Synchronisation Cloud asynchrone (exécutée une seule fois au montage pour éviter les boucles)
+  useEffect(() => {
+    let isMounted = true;
+    const user = StorageManager.getUser();
+    if (!user?.email) return;
+
+    const syncCloud = async () => {
+      try {
+        const refreshed = await SupabaseService.refreshSessionFromCloud();
+        if (!isMounted) return;
+        if (refreshed) {
+          const u = StorageManager.getUser();
+          const b = StorageManager.isBusinessAccount();
+          const q = StorageManager.getBusinessQuotaInfo();
+          setCurrentUser(u);
+          setIsBusinessAccount(b);
+          setBusinessQuota(q);
+          if (b && typeof window !== "undefined" && !window.location.search.includes("tab=candidate")) {
+            setActiveTab("business");
           }
-        } else if (params.get("tab") === "candidate") {
-          setActiveTab("candidate");
         }
+      } catch (e) {
+        console.warn("Erreur synchronisation cloud session:", e);
+      }
+
+      try {
+        const cloudList = await SupabaseService.getResumes(user.email);
+        if (!isMounted) return;
+        if (cloudList && cloudList.length > 0) {
+          setResumes(cloudList);
+          setBusinessQuota(StorageManager.getBusinessQuotaInfo());
+        }
+      } catch (e) {
+        console.warn("Erreur synchronisation cloud CVs:", e);
       }
     };
 
-    syncState();
-    window.addEventListener("storage", syncState);
-    return () => window.removeEventListener("storage", syncState);
+    syncCloud();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleNavigateToVivier = () => {
@@ -1299,17 +1321,21 @@ export default function DashboardPage() {
         />
       )}
 
-      <CoverLetterModal
-        isOpen={isCoverLetterOpen}
-        onClose={() => setIsCoverLetterOpen(false)}
-        resumeData={selectedForCoverLetter || resumes[0] || StorageManager.getActiveResume()}
-      />
+      {isCoverLetterOpen && (
+        <CoverLetterModal
+          isOpen={isCoverLetterOpen}
+          onClose={() => setIsCoverLetterOpen(false)}
+          resumeData={selectedForCoverLetter || resumes[0] || StorageManager.getActiveResume()}
+        />
+      )}
 
-      <JobApplicationModal
-        isOpen={isJobAppOpen}
-        onClose={() => setIsJobAppOpen(false)}
-        resumeData={selectedForJobApp || resumes[0] || StorageManager.getActiveResume()}
-      />
+      {isJobAppOpen && (
+        <JobApplicationModal
+          isOpen={isJobAppOpen}
+          onClose={() => setIsJobAppOpen(false)}
+          resumeData={selectedForJobApp || resumes[0] || StorageManager.getActiveResume()}
+        />
+      )}
 
       <AccountSettingsModal
         isOpen={isSettingsOpen}

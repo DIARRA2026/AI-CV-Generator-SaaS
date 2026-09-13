@@ -18,7 +18,7 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
   onClose,
   resumeData,
 }) => {
-  const [targetJob, setTargetJob] = useState(resumeData.personal.title || "Responsable Commercial");
+  const [targetJob, setTargetJob] = useState(resumeData?.personal?.title || "Responsable Commercial");
   const [targetCompany, setTargetCompany] = useState("Entreprise Leader");
   const [letterContent, setLetterContent] = useState("");
   const [isCopied, setIsCopied] = useState(false);
@@ -44,14 +44,14 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
 
   // Exporter au format Word (.docx) natif et professionnel
   const handleExportWord = async () => {
-    const lastName = resumeData.personal.lastName || "Candidat";
+    const lastName = resumeData?.personal?.lastName || "Candidat";
     await downloadCoverLetterDocx(letterContent, lastName);
     setShowExportMenu(false);
   };
 
   // Exporter au format PDF (.pdf)
   const handleExportPDF = () => {
-    const filename = `Lettre_Motivation_${resumeData.personal.lastName || "Candidat"}`;
+    const filename = `Lettre_Motivation_${resumeData?.personal?.lastName || "Candidat"}`;
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",

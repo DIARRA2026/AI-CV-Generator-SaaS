@@ -981,6 +981,11 @@ export class SupabaseService {
           profile = p;
         }
 
+        // Si le compte n'existe plus sur Supabase Cloud (ex: supprimé)
+        if (!authUser && !profile) {
+          return false;
+        }
+
         const meta = authUser?.user_metadata || {};
         const isPaid = (tier?: string) => typeof tier === "string" && tier !== "free" && tier.trim().length > 0;
 
@@ -1068,9 +1073,6 @@ export class SupabaseService {
           StorageManager.saveRegisteredUsers(users);
         }
 
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("storage"));
-        }
         return true;
       } catch (err) {
         console.warn("Erreur refreshSessionFromCloud:", err);

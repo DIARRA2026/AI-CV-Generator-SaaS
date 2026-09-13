@@ -35,7 +35,7 @@ import jsPDF from "jspdf";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 
 export const JobApplicationModal: React.FC<Props> = ({ isOpen, onClose, resumeData }) => {
-  const p = resumeData.personal;
+  const p = resumeData?.personal || ({} as any);
 
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");

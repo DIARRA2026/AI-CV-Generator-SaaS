@@ -33,6 +33,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [targetRedirect, setTargetRedirect] = useState<string>("/dashboard");
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [candidateCountState, setCandidateCountState] = useState<number>(0);
+  const [isBusinessState, setIsBusinessState] = useState<boolean>(false);
+  const [isAdminState, setIsAdminState] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -41,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { t, dict, isRTL } = useTranslation();
 
   useEffect(() => {
+    setIsMounted(true);
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
     };
@@ -50,28 +55,23 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   useEffect(() => {
     const update = () => {
-      setCurrentUser(StorageManager.getUser());
+      const u = StorageManager.getUser();
+      setCurrentUser(u);
+      setIsBusinessState(StorageManager.isBusinessAccount() || u?.accountType === "business");
+      setIsAdminState(StorageManager.isAdmin());
+      try {
+        const resumes = StorageManager.getResumes();
+        setCandidateCountState(resumes.length);
+      } catch {}
     };
     update();
     window.addEventListener("storage", update);
     return () => window.removeEventListener("storage", update);
   }, []);
 
-  const [candidateCountState, setCandidateCountState] = useState<number>(0);
-
-  useEffect(() => {
-    const updateCount = () => {
-      try {
-        const resumes = StorageManager.getResumes();
-        setCandidateCountState(resumes.length);
-      } catch {}
-    };
-    updateCount();
-    window.addEventListener("storage", updateCount);
-    return () => window.removeEventListener("storage", updateCount);
-  }, []);
-
-  const effectiveCandidateCount = candidateCount ?? candidateCountState;
+  const isBusiness = isMounted && (isBusinessState || currentUser?.accountType === "business");
+  const isAdmin = isMounted && isAdminState;
+  const effectiveCandidateCount = isMounted ? (candidateCount ?? candidateCountState) : 0;
 
   const handleCandidatePoolClick = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
@@ -184,7 +184,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (StorageManager.isBusinessAccount() || currentUser?.accountType === "business") {
+                  if (isBusiness) {
                     if (typeof window !== "undefined") {
                       localStorage.setItem("moncv_view_mode", "enterprise");
                       window.dispatchEvent(new Event("storage"));
@@ -195,17 +195,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer btn-press border shadow-xs ${
-                  StorageManager.isBusinessAccount() || currentUser?.accountType === "business"
+                  isBusiness
                     ? "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 border-amber-400 font-black shadow-amber-500/20 hover:from-amber-400 hover:to-orange-400"
                     : "text-slate-700 hover:text-blue-600 hover:bg-slate-100 border-slate-200/80 bg-white"
                 }`}
                 title={
-                  StorageManager.isBusinessAccount() || currentUser?.accountType === "business"
+                  isBusiness
                     ? "Retourner à l'Espace Entreprise & Vivier RH"
                     : "Retourner à mon tableau de bord"
                 }
               >
-                {StorageManager.isBusinessAccount() || currentUser?.accountType === "business" ? (
+                {isBusiness ? (
                   <>
                     <Building className="w-4 h-4 text-slate-950 shrink-0" />
                     <span>{dict.nav.backToEnterprise}</span>
@@ -234,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ) : (
               <>
-                {StorageManager.isBusinessAccount() || currentUser?.accountType === "business" ? (
+                {isBusiness ? (
                   <button
                     type="button"
                     onClick={handleCandidatePoolClick}
@@ -244,9 +244,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <Building className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>{dict.nav.candidatePool}</span>
                     {effectiveCandidateCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/60 text-[10px] font-black">
-                        {effectiveCandidateCount}
-                      </span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/60 text-[10px] font-black">
+                    {effectiveCandidateCount}
+                  </span>
                     )}
                   </button>
                 ) : (
@@ -282,7 +282,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </Link>
 
-                {(!currentUser || currentUser.accountType !== "business") && (
+                {(!currentUser || !isBusiness) && (
                   <Link
                     href="/#business"
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
@@ -319,10 +319,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ) : null}
 
-            {StorageManager.isAdmin() && (
+            {isAdmin && (
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/90 rounded-xl transition-all cursor-pointer shadow-xs btn-press"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/90 rounded-xl transition-all cursor-pointer shadow-xs btn-press"
                 title="Console d'Administration Globale"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
@@ -387,7 +387,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </p>
                     </div>
 
-                    {StorageManager.isAdmin() && (
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         onClick={() => setIsProfileMenuOpen(false)}
@@ -401,7 +401,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </Link>
                     )}
 
-                    {(currentUser.accountType === "business" || StorageManager.isBusinessAccount()) && (
+                    {isBusiness && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -778,7 +778,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </span>
                   </Link>
 
-                  {StorageManager.isAdmin() && (
+                  {isAdmin && (
                     <Link
                       href="/admin"
                       onClick={() => setIsMobileDrawerOpen(false)}
@@ -794,7 +794,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </Link>
                   )}
 
-                  {(currentUser?.accountType === "business" || StorageManager.isBusinessAccount()) && (
+                  {isBusiness && (
                     <Link
                       href="/dashboard?tab=business"
                       onClick={() => {
@@ -816,7 +816,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </Link>
                   )}
 
-                  {(!currentUser || currentUser.accountType !== "business") && (
+                  {(!currentUser || !isBusiness) && (
                     <Link
                       href="/#business"
                       onClick={() => setIsMobileDrawerOpen(false)}

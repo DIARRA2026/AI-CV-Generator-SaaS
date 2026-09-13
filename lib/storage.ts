@@ -552,6 +552,44 @@ export class StorageManager {
     }
   }
 
+  static deleteUserByEmail(email: string): void {
+    if (typeof window === "undefined" || !email) return;
+    try {
+      const normalized = email.toLowerCase().trim();
+      const users = this.getRegisteredUsers().filter((u) => u.email.toLowerCase().trim() !== normalized);
+      this.saveRegisteredUsers(users);
+      localStorage.removeItem(`moncv_resumes_${normalized}`);
+      localStorage.removeItem(`moncv_active_id_${normalized}`);
+      localStorage.removeItem(this.getSubscriptionKey(normalized));
+
+      const current = this.getUser();
+      if (current?.email && current.email.toLowerCase().trim() === normalized) {
+        this.logout();
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) {
+      console.error("Erreur suppression utilisateur par email", e);
+    }
+  }
+
+  static clearAllUsers(): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(USERS_REGISTRY_KEY);
+      localStorage.removeItem(LEGACY_USERS_REGISTRY_KEY);
+      localStorage.removeItem(USER_KEY);
+      this.logout();
+      this.clearRememberedCreds();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) {
+      console.error("Erreur vidage utilisateurs", e);
+    }
+  }
+
   // === ADMINISTRATION & SUPERVISION ===
   static isAdmin(): boolean {
     if (typeof window === "undefined") return false;

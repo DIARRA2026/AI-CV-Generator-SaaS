@@ -571,23 +571,29 @@ export class SupabaseService {
           };
         }
 
-        // Si Supabase renvoie identifiants invalides, tester le compte local
+        // Si Supabase renvoie identifiants invalides
         if (error && error.message.toLowerCase().includes("invalid login credentials")) {
-          const localCheck = StorageManager.verifyLogin(cleanEmail, password);
-          if (localCheck.success && localCheck.user) {
-            const activeUser = StorageManager.getUser();
-            return { success: true, user: activeUser || (localCheck.user as any) };
-          }
+          // Vérifier si l'utilisateur existe toujours dans les profils Supabase Cloud
+          const { data: cloudProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", cleanEmail)
+            .maybeSingle();
 
-          // Si le mot de passe est faux mais l'email existe
-          const registeredUsers = StorageManager.getRegisteredUsers();
-          const emailExists = registeredUsers.some((u) => u.email.toLowerCase().trim() === cleanEmail);
-          if (!emailExists) {
+          if (!cloudProfile) {
+            // Le compte a été supprimé sur le Cloud Supabase : purge locale immédiate
+            StorageManager.deleteUserByEmail(cleanEmail);
             return {
               success: false,
               userNotFound: true,
               message: `Aucun compte n'a été trouvé avec l'adresse ${cleanEmail}. Souhaitez-vous créer votre compte ?`,
             };
+          }
+
+          const localCheck = StorageManager.verifyLogin(cleanEmail, password);
+          if (localCheck.success && localCheck.user) {
+            const activeUser = StorageManager.getUser();
+            return { success: true, user: activeUser || (localCheck.user as any) };
           }
 
           return {

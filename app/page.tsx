@@ -11,6 +11,7 @@ import { PlanTier, AccountType } from "@/lib/types";
 import { StorageManager } from "@/lib/storage";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { getWavePaymentUrl } from "@/config/payments";
 import {
   Sparkles,
   ArrowRight,
@@ -59,6 +60,7 @@ const COLOR_PALETTE = [
 
 export default function HomePage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isPaymentWaveOpened, setIsPaymentWaveOpened] = useState(false);
   const [selectedPlanPrice, setSelectedPlanPrice] = useState<PlanTier>("2500");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
@@ -212,7 +214,8 @@ export default function HomePage() {
     setIsAuthOpen(true);
   };
 
-  const handleOpenPlanPayment = (plan: PlanTier) => {
+  const handleOpenPlanPayment = (plan: PlanTier, waveDirectOpened: boolean = false) => {
+    setIsPaymentWaveOpened(waveDirectOpened);
     if (typeof window !== "undefined" && !StorageManager.isLoggedIn()) {
       const isBiz = plan.startsWith("enterprise") || plan === "cyber15";
       setAuthAccountType(isBiz ? "business" : "candidate");
@@ -1249,14 +1252,25 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("1500")}
-                  className="mt-6 w-full py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-2xl border border-blue-200 text-center text-xs transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 animate-cta-loop"
-                >
-                  <Smartphone className="w-3.5 h-3.5 animate-bounce-soft" />
-                  <span>{dict.pricing.candidateEssentialCta}</span>
-                </button>
+                <div className="mt-6 flex flex-col gap-2">
+                  <a
+                    href={getWavePaymentUrl("1500") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("1500", true)}
+                    className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs transition-all cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 flex items-center justify-center gap-2 card-hover-lift"
+                  >
+                    <span>Payer 1 500 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("1500", false)}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
 
               {/* OFFRE 3 : PACK CANDIDATURE PRO (2 500 FCFA) - RECOMMANDÉ */}
@@ -1302,14 +1316,26 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("2500")}
-                  className="mt-6 w-full py-3.5 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-2xl text-center text-xs shadow-lg shadow-blue-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
-                  <span>{dict.pricing.candidateProCta}</span>
-                </button>
+                <div className="mt-6 flex flex-col gap-2">
+                  <a
+                    href={getWavePaymentUrl("2500") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("2500", true)}
+                    className="w-full py-3.5 bg-gradient-to-r from-[#1dc4fe] via-blue-500 to-indigo-500 hover:from-[#1ab0e5] hover:to-blue-600 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-blue-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
+                    <span>Payer 2 500 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("2500", false)}
+                    className="text-[11px] text-blue-200/80 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
 
               {/* OFFRE 4 : PACK CARRIÈRE VIP & PORTFOLIO (5 000 FCFA) */}
@@ -1365,14 +1391,26 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("5000")}
-                  className="mt-6 w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:to-pink-500 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
-                >
-                  <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
-                  <span>{dict.pricing.candidateVipCta}</span>
-                </button>
+                <div className="mt-6 flex flex-col gap-2">
+                  <a
+                    href={getWavePaymentUrl("5000") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("5000", true)}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-[#1dc4fe] hover:from-purple-500 hover:to-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
+                  >
+                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
+                    <span>Payer 5 000 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("5000", false)}
+                    className="text-[11px] text-purple-200/80 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1573,14 +1611,26 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("enterprise30")}
-                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-teal-600 text-white font-extrabold rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-teal-600/30 card-hover-lift"
-                >
-                  <Building className="w-4 h-4 animate-bounce-soft" />
-                  <span>{dict.pricing.enterpriseStarterCta}</span>
-                </button>
+                <div className="mt-8 flex flex-col gap-2">
+                  <a
+                    href={getWavePaymentUrl("enterprise30") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("enterprise30", true)}
+                    className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 card-hover-lift"
+                  >
+                    <Building className="w-4 h-4" />
+                    <span>Payer 20 000 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("enterprise30", false)}
+                    className="text-[11px] text-slate-400 hover:text-slate-200 font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
 
               {/* PACK 2 : BUSINESS PRO */}
@@ -1641,15 +1691,26 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("enterprise75")}
-                  className="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop relative z-10"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
-                  <span>{dict.pricing.enterpriseProCta}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="mt-8 flex flex-col gap-2 relative z-10">
+                  <a
+                    href={getWavePaymentUrl("enterprise75") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("enterprise75", true)}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 via-[#1dc4fe] to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
+                  >
+                    <Sparkles className="w-4 h-4 text-slate-950" />
+                    <span>Payer 45 000 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("enterprise75", false)}
+                    className="text-[11px] text-slate-300 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
 
               {/* PACK 3 : ENTREPRISE PREMIUM */}
@@ -1703,14 +1764,26 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPlanPayment("enterprise200")}
-                  className="mt-8 w-full py-3.5 bg-slate-800 hover:bg-amber-600 hover:text-slate-950 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-amber-600/30 card-hover-lift"
-                >
-                  <Crown className="w-4 h-4 animate-bounce-soft" />
-                  <span>{dict.pricing.enterprisePremiumCta}</span>
-                </button>
+                <div className="mt-8 flex flex-col gap-2">
+                  <a
+                    href={getWavePaymentUrl("enterprise200") || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleOpenPlanPayment("enterprise200", true)}
+                    className="w-full py-3.5 bg-gradient-to-r from-slate-800 to-[#1dc4fe] hover:from-[#1dc4fe] hover:to-[#1ab0e5] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
+                  >
+                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
+                    <span>Payer 100 000 FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPlanPayment("enterprise200", false)}
+                    className="text-[11px] text-slate-400 hover:text-slate-200 font-semibold text-center transition-colors py-1 cursor-pointer"
+                  >
+                    Autres modes de paiement (Orange, MTN, Carte)
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2019,6 +2092,7 @@ export default function HomePage() {
           }
         }}
         defaultPlan={selectedPlanPrice}
+        initialWaveOpened={isPaymentWaveOpened}
       />
 
       <AuthModal
@@ -2038,6 +2112,7 @@ export default function HomePage() {
           } else {
             if (chosenPlan && chosenPlan !== "free") {
               setSelectedPlanPrice(chosenPlan);
+              setIsPaymentWaveOpened(false);
               setIsPaymentOpen(true);
             } else {
               if (isBiz) {

@@ -8,6 +8,7 @@ import {
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
 import { StorageManager, UserSession } from "@/lib/storage";
+import { AdminService } from "@/lib/adminService";
 import { PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -58,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       const u = StorageManager.getUser();
       setCurrentUser(u);
       setIsBusinessState(StorageManager.isBusinessAccount() || u?.accountType === "business");
-      setIsAdminState(StorageManager.isAdmin());
+      setIsAdminState(StorageManager.isAdmin() || AdminService.isAdminAuthenticated());
       try {
         const resumes = StorageManager.getResumes();
         setCandidateCountState(resumes.length);

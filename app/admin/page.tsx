@@ -58,7 +58,7 @@ export default function AdminConsolePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authChecking, setAuthChecking] = useState<boolean>(false);
   const [passkeyInput, setPasskeyInput] = useState<string>("");
-  const [emailInput, setEmailInput] = useState<string>("");
+  const [emailInput, setEmailInput] = useState<string>("admin@moncv.ai");
   const [authError, setAuthError] = useState<string>("");
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -244,12 +244,13 @@ export default function AdminConsolePage() {
     }
   };
 
-  // Déconnexion Admin
-  const handleLogout = () => {
-    AdminService.logoutAdmin();
+  // Déconnexion Admin & Verrouillage Immédiat
+  const handleLogout = async () => {
+    await AdminService.logoutAdmin();
     setIsAuthenticated(false);
     setPasskeyInput("");
-    showToast("Session administrateur fermée", "info");
+    setAuthError("");
+    showToast("Console d'Administration verrouillée", "info");
   };
 
   // Exécution de correctifs en 1 clic
@@ -479,9 +480,14 @@ export default function AdminConsolePage() {
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Identifiant Administrateur / Email
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-300">
+                  Identifiant Administrateur / Email
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Optionnel si Clé Maître directe
+                </span>
+              </div>
               <input
                 type="text"
                 value={emailInput}
@@ -489,23 +495,28 @@ export default function AdminConsolePage() {
                 disabled={isLockedOut || authLoading}
                 placeholder="admin@moncv.ai"
                 className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
-                required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Clé Maître (Master Passkey) ou Mot de passe
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-300">
+                  Clé Maître (Master Passkey) ou Mot de passe
+                </label>
+                <span className="text-[10px] text-amber-400 font-bold">
+                  Accès Requis
+                </span>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={passkeyInput}
                   onChange={(e) => setPasskeyInput(e.target.value)}
                   disabled={isLockedOut || authLoading}
-                  placeholder="Saisissez la clé maître ou mot de passe..."
+                  placeholder="Saisissez la Clé Maître ou mot de passe..."
                   className="w-full pl-4 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
                   required
+                  autoFocus
                 />
                 <button
                   type="button"
@@ -653,10 +664,10 @@ export default function AdminConsolePage() {
             type="button"
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            title="Fermer la session"
+            title="Verrouiller la console et fermer la session"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Quitter</span>
+            <Lock className="w-3.5 h-3.5" />
+            <span>Verrouiller</span>
           </button>
         </div>
       </header>

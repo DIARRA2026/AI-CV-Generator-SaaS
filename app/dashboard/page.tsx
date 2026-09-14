@@ -18,6 +18,7 @@ import { exportResumeToDocx } from "@/lib/docx-export";
 import { isEnterpriseFormulaActive } from "@/lib/license-manager";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { compressImage } from "@/lib/image-utils";
+import confetti from "canvas-confetti";
 import {
   Plus,
   Edit3,
@@ -49,6 +50,8 @@ import {
   Camera,
   Upload,
   Image as ImageIcon,
+  X,
+  AlertCircle,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -90,6 +93,13 @@ export default function DashboardPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoFeedback, setLogoFeedback] = useState<string | null>(null);
 
+  const [paymentNotice, setPaymentNotice] = useState<{
+    type: "success" | "cancelled" | "info";
+    title: string;
+    message: string;
+    planTier?: PlanTier;
+  } | null>(null);
+
   // 1. Initialisation et paramètres d'URL (exécuté une seule fois au montage)
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -114,6 +124,74 @@ export default function DashboardPage() {
       }
     } else if (params.get("tab") === "candidate") {
       setActiveTab("candidate");
+    }
+
+    // Gestion du retour de paiement LigdiCash
+    const paymentStatus = params.get("payment");
+    const ref = params.get("ref");
+    const token = params.get("token");
+
+    if (paymentStatus === "success" && ref) {
+      const confirmAndActivate = async () => {
+        try {
+          const res = await fetch(
+            `/api/payments/ligdicash/status?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(token || "")}`
+          );
+          const data = await res.json();
+
+          if (data.success && data.status === "active") {
+            const activePlan = data.planTier as PlanTier;
+            const isBiz = activePlan.startsWith("enterprise") || activePlan === "cyber15";
+
+            const localUser = StorageManager.getUser();
+            if (localUser?.email) {
+              StorageManager.saveUserSubscription(localUser.email, {
+                planTier: activePlan,
+                amount: data.amount || 0,
+                currency: "FCFA",
+                paymentMethod: "LigdiCash Mobile Money",
+                transactionRef: ref,
+                subscribedAt: new Date().toISOString(),
+                expiresAt: null,
+                accountType: isBiz ? "business" : "candidate",
+                allowedCandidates: data.allowedCandidates || 1,
+              });
+            }
+
+            await SupabaseService.refreshSessionFromCloud();
+
+            try {
+              confetti({ particleCount: 160, spread: 100, origin: { y: 0.55 } });
+            } catch {}
+
+            setPaymentNotice({
+              type: "success",
+              title: "Paiement Validé avec Succès ! 🎉",
+              message: `Votre formule est officiellement active. Tous les avantages ont été débloqués pour votre compte.`,
+              planTier: activePlan,
+            });
+
+            if (isBiz) {
+              setActiveTab("business");
+            }
+
+            // Nettoyage de l'URL pour ne pas redéclencher au rechargement de page
+            const newUrl = window.location.pathname + (isBiz ? "?tab=business" : "");
+            window.history.replaceState({}, document.title, newUrl);
+          }
+        } catch (err) {
+          console.warn("Erreur vérification statut LigdiCash dashboard :", err);
+        }
+      };
+
+      confirmAndActivate();
+    } else if (paymentStatus === "cancelled") {
+      setPaymentNotice({
+        type: "cancelled",
+        title: "Paiement Annulé",
+        message: "La transaction n'a pas été débitée. Vous pouvez relancer le paiement quand vous le souhaitez.",
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
@@ -436,6 +514,49 @@ export default function DashboardPage() {
         </main>
       ) : (
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          {/* Bannière de confirmation de paiement LigdiCash */}
+          {paymentNotice && (
+            <div
+              className={`p-4 sm:p-5 rounded-2xl border shadow-md flex items-start justify-between gap-4 transition-all animate-fade-in ${
+                paymentNotice.type === "success"
+                  ? "bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-emerald-200 text-emerald-950"
+                  : "bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-amber-200 text-amber-950"
+              }`}
+            >
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className={`p-2 rounded-xl shrink-0 ${
+                    paymentNotice.type === "success"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "bg-amber-500 text-slate-950 shadow-sm"
+                  }`}
+                >
+                  {paymentNotice.type === "success" ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-sm sm:text-base font-black leading-tight">
+                    {paymentNotice.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm font-medium opacity-90 leading-relaxed">
+                    {paymentNotice.message}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaymentNotice(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-black/5 transition-colors cursor-pointer shrink-0"
+                title="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {isBusinessAccount && (
             <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-slate-200/80 rounded-2xl border border-slate-300/80 shadow-xs">
               <div className="flex items-center gap-1.5 w-full sm:w-auto">

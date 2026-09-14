@@ -1236,10 +1236,24 @@ export class SupabaseService {
           return false;
         }
 
+        // Recherche d'un abonnement actif dans subscriptions
+        let activeSub: any = null;
+        try {
+          const { data: subData } = await supabase
+            .from("subscriptions")
+            .select("*")
+            .eq("user_email", cleanEmail)
+            .eq("status", "active")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          activeSub = subData;
+        } catch {}
+
         const meta = authUser?.user_metadata || {};
         const isPaid = (tier?: string) => typeof tier === "string" && tier !== "free" && tier.trim().length > 0;
 
-        const candidatePlans = [meta.plan_tier, profile?.plan_tier, localUser.planTier];
+        const candidatePlans = [meta.plan_tier, profile?.plan_tier, activeSub?.plan_tier, localUser.planTier];
         const foundPaid = candidatePlans.find(isPaid) as PlanTier | undefined;
         const resolvedPlan: PlanTier = foundPaid || localUser.planTier || "free";
 

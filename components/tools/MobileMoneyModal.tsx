@@ -285,60 +285,58 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     }
   };
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsProcessing(true);
+    setErrorMessage(null);
 
-    // Si la méthode est Wave et que la page Wave n'a pas encore été ouverte, on l'ouvre en nouvel onglet
-    if (paymentMethod === "wave" && !waveOpened) {
-      handleOpenWaveUrl();
+    const activeUser = StorageManager.getUser();
+    if (!activeUser?.email) {
+      setIsProcessing(false);
+      setErrorMessage("Veuillez vous connecter pour lier votre formule à votre compte.");
       return;
     }
 
-    setIsProcessing(true);
-
-    const activeCv = StorageManager.getActiveResume();
-    const transactionRef = `MM_${paymentMethod.toUpperCase()}_${Date.now()}`;
-    if (activeCv) {
-      const updatedWithLicense = registerPaymentSuccess(
-        activeCv,
-        selectedPlan,
-        transactionRef
-      );
-      StorageManager.saveActiveResume(updatedWithLicense);
-    }
-
-    // Sauvegarde locale de la souscription (statut pending par défaut)
-    StorageManager.setPlanTier(selectedPlan, {
-      status: "pending",
-      paymentMethod: paymentMethod === "wave" ? "Wave Mobile Money (CI)" : `Mobile Money (${paymentMethod.toUpperCase()})`,
-      phoneNumber: phoneNumber.trim(),
-      transactionRef,
-    });
-
-    // Synchronisation Cloud Supabase immédiate (table public.subscriptions en status pending)
-    const currentPriceStr = currentPlan?.priceNumber || "0";
-    const parsedAmount = parseInt(currentPriceStr.replace(/\s+/g, ""), 10) || 0;
     try {
-      await SupabaseService.syncSubscriptionToCloud(selectedPlan, {
-        status: "pending",
-        provider: paymentMethod === "card" ? "card" : "mobile_money",
-        paymentMethod: paymentMethod === "wave" ? "Wave Mobile Money (CI)" : `Mobile Money (${paymentMethod.toUpperCase()})`,
-        phoneNumber: phoneNumber.trim(),
-        transactionRef,
-        amount: parsedAmount,
-        currency: "FCFA",
+      const response = await fetch("/api/payments/ligdicash/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planTier: selectedPlan,
+          userId: activeUser.id,
+          userEmail: activeUser.email,
+          customerFirstName: activeUser.firstName || "Client",
+          customerLastName: activeUser.lastName || "MonCV",
+          customerPhone: phoneNumber.trim(),
+          companyName: activeUser.business?.companyName,
+        }),
       });
-    } catch (err) {
-      console.warn("Erreur syncSubscriptionToCloud:", err);
-    }
 
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("storage"));
-    }
+      const data = await response.json();
 
-    setIsProcessing(false);
-    setIsDone(true);
-    confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
+      if (data.success && data.checkoutUrl) {
+        // Enregistrement préventif de la transaction en attente dans le stockage local
+        StorageManager.setPlanTier(selectedPlan, {
+          status: "pending",
+          paymentMethod: `LigdiCash (${paymentMethod.toUpperCase()})`,
+          phoneNumber: phoneNumber.trim(),
+          transactionRef: data.transactionRef,
+        });
+
+        // Redirection vers l'interface de paiement LigdiCash (ou écran de simulation si sandbox)
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      setErrorMessage(data.message || "Échec d'initialisation du paiement LigdiCash.");
+      setIsProcessing(false);
+    } catch (err: any) {
+      console.error("Erreur checkout LigdiCash :", err);
+      setErrorMessage(err.message || "Impossible d'établir la connexion avec le serveur de paiement.");
+      setIsProcessing(false);
+    }
   };
 
   // ─── Rendu ─────────────────────────────────────────────────────────────────
@@ -585,40 +583,46 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 </div>
               </div>
 
-              {/* ── Section 2 : Mode de règlement ── */}
+              {/* ── Section 2 : Mode de règlement LigdiCash ── */}
               <div className="space-y-2.5 pt-1">
-                <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">2</span>
-                  <span>Sélectionnez votre moyen de paiement :</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">2</span>
+                    <span>Opérateur ou moyen de paiement :</span>
+                  </label>
+                  <span className="text-[10.5px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                    Passerelle Officielle LigdiCash
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {([
                     { id: "wave", name: "Wave", fee: "0% frais", bg: "bg-[#1dc4fe] text-white" },
                     { id: "orange", name: "Orange Money", fee: "Instantané", bg: "bg-[#ff7900] text-white" },
                     { id: "mtn", name: "MTN MoMo", fee: "Instantané", bg: "bg-[#ffcc00] text-slate-950" },
+                    { id: "moov", name: "Moov Money", fee: "Instantané", bg: "bg-[#005ca9] text-white" },
                     { id: "card", name: "Carte Bancaire", fee: "Visa / Mastercard", bg: "bg-slate-900 text-white" },
                   ] as const).map((pm) => {
-                    const isSel = paymentMethod === pm.id;
+                    const isSel = paymentMethod === (pm.id as any);
                     return (
                       <button
                         key={pm.id}
                         type="button"
-                        onClick={() => handleSelectPaymentMethod(pm.id)}
-                        className={`p-3 rounded-2xl text-xs font-bold text-center border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer relative ${
+                        onClick={() => handleSelectPaymentMethod(pm.id as any)}
+                        className={`p-2.5 rounded-2xl text-xs font-bold text-center border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer relative ${
                           isSel
-                            ? "border-[#1dc4fe] bg-sky-50/70 ring-2 ring-[#1dc4fe]/20 shadow-xs"
+                            ? "border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         }`}
                       >
-                        <span className={`px-2.5 py-0.5 rounded-lg text-[10.5px] font-black ${pm.bg}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${pm.bg}`}>
                           {pm.name}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-medium">
+                        <span className="text-[9.5px] text-slate-500 font-medium">
                           {pm.fee}
                         </span>
                         {isSel && (
-                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center text-[9px]">
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold">
                             ✓
                           </span>
                         )}
@@ -629,7 +633,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               </div>
 
               {/* ── Liaison Compte Utilisateur ── */}
-              {currentUser && (
+              {currentUser ? (
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 text-xs shadow-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
@@ -645,148 +649,42 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                     Authentifié
                   </span>
                 </div>
+              ) : (
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Connectez-vous pour que cette formule soit liée à votre compte de façon permanente.</span>
+                </div>
               )}
 
-              {/* ── Section 3 : Coordonnées de règlement ── */}
-              <div className="space-y-3 pt-1">
-                {paymentMethod === "wave" ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full bg-[#1dc4fe] text-white inline-flex items-center justify-center text-[10px] font-black">3</span>
-                        <span>Règlement direct Wave Côte d'Ivoire :</span>
-                      </label>
-                      <span className="px-2 py-0.5 bg-[#1dc4fe]/10 text-[#0ba4db] text-[10px] font-extrabold rounded-md border border-[#1dc4fe]/20">
-                        0% de frais
-                      </span>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1dc4fe]/10 via-sky-50 to-blue-50/50 border border-[#1dc4fe]/30 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-[#1dc4fe] text-white text-[10.5px] font-black uppercase tracking-wide">
-                              Wave CI
-                            </span>
-                            <span className="text-xs font-bold text-slate-900">
-                              {currentPlan.name}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-600">
-                            Montant exact certifié : <strong className="text-slate-900 font-black">{currentPlan.price}</strong>
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                            Marchand Certifié
-                          </span>
-                        </div>
-                      </div>
-
-                      {!waveOpened ? (
-                        <div className="space-y-2 pt-1">
-                          <p className="text-[11.5px] text-slate-600 leading-relaxed font-medium">
-                            Cliquez sur le bouton ci-dessous pour ouvrir la page de paiement sécurisée Wave. Le montant de <strong>{currentPlan.price}</strong> est déjà verrouillé.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={handleOpenWaveUrl}
-                            className="w-full py-3 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-white font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-[#1dc4fe]/30 transition-all cursor-pointer card-hover-lift"
-                          >
-                            <span>Ouvrir la page de paiement Wave ({currentPlan.price})</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5 pt-1">
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5 text-xs">
-                            <div className="flex items-center gap-2 font-black text-amber-950">
-                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                              <span>Paiement Wave ouvert dans le nouvel onglet</span>
-                            </div>
-                            <ol className="list-decimal list-inside text-[11px] text-slate-700 space-y-0.5 pl-0.5 font-medium">
-                              <li>Validez le débit de <strong>{currentPlan.price}</strong> dans votre application Wave ou via le QR code.</li>
-                              <li>Une fois validé, confirmez ci-dessous pour débloquer votre compte sans délai.</li>
-                            </ol>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[11px] px-1">
-                            <span className="text-slate-500 font-medium">Page Wave non affichée ou fermée ?</span>
-                            <button
-                              type="button"
-                              onClick={handleOpenWaveUrl}
-                              className="text-[#0ba4db] hover:underline font-bold inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                              <span>Rouvrir la page Wave ↗</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Numéro Wave pour traçabilité */}
-                      <div className="pt-2 border-t border-[#1dc4fe]/20 space-y-1">
-                        <label className="text-[11px] font-bold text-slate-700 block">
-                          Numéro Wave utilisé pour le règlement (pour votre reçu normalisé) :
-                        </label>
-                        <div className="relative">
-                          <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                          <input
-                            type="tel"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="+225 07 00 51 05 24"
-                            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1dc4fe]/40 transition-all"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : paymentMethod !== "card" ? (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">3</span>
-                      <span>Numéro de téléphone {paymentMethod.toUpperCase()} :</span>
-                    </label>
-                    <div className="relative">
-                      <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                      <input
-                        type="tel"
-                        required
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+225 07 00 51 05 24"
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:bg-white transition-all"
-                      />
-                    </div>
-                    <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium mt-1">
-                      <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Une notification Push ou un code de validation SMS sera transmis à ce numéro.</span>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">3</span>
-                      <span>Numéro de Carte Bancaire (Visa / Mastercard) :</span>
-                    </label>
-                    <div className="relative">
-                      <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="4000 1234 5678 9010"
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:bg-white transition-all"
-                      />
-                    </div>
-                    <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium mt-1">
-                      <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Paiement sécurisé avec protocole 3D-Secure et chiffrement SSL 256-bit.</span>
-                    </p>
-                  </div>
-                )}
+              {/* ── Section 3 : Numéro de téléphone Mobile Money ── */}
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">3</span>
+                  <span>Numéro de téléphone Mobile Money (pré-remplissage facture) :</span>
+                </label>
+                <div className="relative">
+                  <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+225 07 00 51 05 24"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:bg-white transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium mt-1">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Paiement sécurisé agrégé par LigdiCash (UEMOA : CI, BF, SN, BJ, TG, ML, NE).</span>
+                </p>
               </div>
+
+              {/* Message d'erreur éventuel */}
+              {errorMessage && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold flex items-center gap-2">
+                  <X className="w-4 h-4 text-red-500 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
 
             </div>
 
@@ -795,43 +693,27 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               <button
                 type="submit"
                 disabled={isProcessing}
-                className={`w-full py-3.5 sm:py-4 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer animate-cta-loop ${
-                  paymentMethod === "wave"
-                    ? waveOpened
-                      ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-600/25"
-                      : "bg-gradient-to-r from-[#1dc4fe] via-sky-500 to-blue-600 hover:from-[#1ab0e5] hover:to-blue-700 text-white shadow-sky-500/25"
-                    : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/25"
-                }`}
+                className="w-full py-3.5 sm:py-4 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer animate-cta-loop bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/25"
               >
                 {isProcessing ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : paymentMethod === "wave" ? (
-                  waveOpened ? (
-                    <CheckCircle2 className="w-4 h-4" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4" />
-                  )
                 ) : (
                   <ShieldCheck className="w-4 h-4" />
                 )}
                 {isProcessing
-                  ? "Validation de la transaction en cours..."
-                  : paymentMethod === "wave"
-                  ? waveOpened
-                    ? `✓ J'ai validé mon paiement sur Wave (${currentPlan.price})`
-                    : `Payer ${currentPlan.price} avec Wave ↗`
-                  : `Valider et payer ${currentPlan.price}`}
+                  ? "Initialisation du paiement LigdiCash..."
+                  : `Payer ${currentPlan.price} avec LigdiCash (Mobile Money / Carte) →`}
               </button>
 
               <div className="flex items-center justify-center gap-3 text-[10.5px] text-slate-500 font-medium">
                 <span className="flex items-center gap-1">
                   <Lock className="w-3 h-3 text-slate-400" />
-                  <span>Paiement 100% sécurisé</span>
+                  <span>Paiement LigdiCash 100% sécurisé</span>
                 </span>
                 <span>•</span>
-                <span>Facture normalisée OHADA</span>
+                <span>Déblocage instantané</span>
                 <span>•</span>
-                <span>Déblocage immédiat</span>
+                <span>Facture normalisée OHADA</span>
               </div>
             </div>
 

@@ -1327,19 +1327,24 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("1500", true)}
-                    className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs transition-all cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 flex items-center justify-center gap-2 card-hover-lift"
-                  >
-                    <span>Payer 1 500 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => handleOpenPlanPayment("1500", false)}
-                    className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold text-center transition-colors py-1 cursor-pointer"
+                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-2xl text-center text-xs transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
                   >
-                    Autres modes de paiement (Orange, MTN, Carte)
+                    <span>Payer 1 500 FCFA (Mobile Money / Carte)</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                   </button>
+                  <div className="text-[10.5px] text-slate-500 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-slate-700">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
 
@@ -1389,20 +1394,25 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("2500", true)}
-                    className="w-full py-3.5 bg-gradient-to-r from-[#1dc4fe] via-blue-500 to-indigo-500 hover:from-[#1ab0e5] hover:to-blue-600 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-blue-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
-                    <span>Payer 2 500 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => handleOpenPlanPayment("2500", false)}
-                    className="text-[11px] text-blue-200/80 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
+                    className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-center text-xs shadow-xl shadow-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
-                    Autres modes de paiement (Orange, MTN, Carte)
+                    <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow" />
+                    <span>Payer 2 500 FCFA (Mobile Money / Carte)</span>
+                    <Crown className="w-3.5 h-3.5" />
                   </button>
+                  <div className="text-[10.5px] text-blue-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-amber-300">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
 
@@ -1427,34 +1437,24 @@ export default function HomePage() {
 
                   <ul className="mt-5 space-y-2.5 text-xs text-purple-100">
                     <li className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber animate-bounce-soft" />
+                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
                       <span><strong>{dict.pricing.candidateVipF1}</strong></span>
                     </li>
-                    <li className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-pink-400 shrink-0 icon-glow-purple" />
-                        <span><strong>{dict.pricing.candidateVipF2}</strong></span>
-                      </div>
-                      <Link
-                        href="/portfolio"
-                        target="_blank"
-                        className="text-[10.5px] font-bold text-pink-300 hover:text-white underline pl-6 flex items-center gap-1 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        <span>{dict.pricing.candidateVipF2Link}</span>
-                      </Link>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
+                      <span><strong>{dict.pricing.candidateVipF2}</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Download className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span>{dict.pricing.candidateVipF3}</span>
+                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
+                      <span><strong>{dict.pricing.candidateVipF3}</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span>{dict.pricing.candidateVipF4}</span>
+                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
+                      <span><strong>{dict.pricing.candidateVipF4}</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span>{dict.pricing.candidateVipF5}</span>
+                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
+                      <span><strong>{dict.pricing.candidateVipF5}</strong></span>
                     </li>
                   </ul>
                 </div>
@@ -1462,20 +1462,25 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("5000", true)}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-[#1dc4fe] hover:from-purple-500 hover:to-[#1ab0e5] text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
+                    onClick={() => handleOpenPlanPayment("5000", false)}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
-                    <span>Payer 5 000 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Payer 5 000 FCFA (Mobile Money / Carte)</span>
+                    <Sparkles className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("5000", false)}
-                    className="text-[11px] text-purple-200/80 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
-                  >
-                    Autres modes de paiement (Orange, MTN, Carte)
-                  </button>
+                  <div className="text-[10.5px] text-purple-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-pink-300">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1680,20 +1685,25 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise30", true)}
-                    className="w-full py-3.5 bg-[#1dc4fe] hover:bg-[#1ab0e5] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-[#1dc4fe]/30 card-hover-lift"
+                    onClick={() => handleOpenPlanPayment("enterprise30", false)}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-emerald-600/30 card-hover-lift"
                   >
                     <Building className="w-4 h-4" />
-                    <span>Payer 20 000 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Payer 20 000 FCFA (Mobile Money / Carte)</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise30", false)}
-                    className="text-[11px] text-slate-400 hover:text-slate-200 font-semibold text-center transition-colors py-1 cursor-pointer"
-                  >
-                    Autres modes de paiement (Orange, MTN, Carte)
-                  </button>
+                  <div className="text-[10.5px] text-slate-400 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-teal-300">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
 
@@ -1758,20 +1768,25 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2 relative z-10">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise75", true)}
-                    className="w-full py-4 bg-gradient-to-r from-amber-500 via-[#1dc4fe] to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-indigo-600/40 animate-cta-loop"
+                    onClick={() => handleOpenPlanPayment("enterprise75", false)}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-amber-500/40 animate-cta-loop"
                   >
                     <Sparkles className="w-4 h-4 text-slate-950" />
-                    <span>Payer 45 000 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Payer 45 000 FCFA (Mobile Money / Carte)</span>
+                    <Crown className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise75", false)}
-                    className="text-[11px] text-slate-300 hover:text-white font-semibold text-center transition-colors py-1 cursor-pointer"
-                  >
-                    Autres modes de paiement (Orange, MTN, Carte)
-                  </button>
+                  <div className="text-[10.5px] text-indigo-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-amber-300">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
 
@@ -1829,20 +1844,25 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise200", true)}
-                    className="w-full py-3.5 bg-gradient-to-r from-slate-800 to-[#1dc4fe] hover:from-[#1dc4fe] hover:to-[#1ab0e5] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
+                    onClick={() => handleOpenPlanPayment("enterprise200", false)}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
-                    <span>Payer 100 000 FCFA avec Wave</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Payer 100 000 FCFA (Mobile Money / Carte)</span>
+                    <Sparkles className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise200", false)}
-                    className="text-[11px] text-slate-400 hover:text-slate-200 font-semibold text-center transition-colors py-1 cursor-pointer"
-                  >
-                    Autres modes de paiement (Orange, MTN, Carte)
-                  </button>
+                  <div className="text-[10.5px] text-slate-400 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-purple-300">LigdiCash :</span>
+                    <span>Wave</span>
+                    <span>•</span>
+                    <span>Orange</span>
+                    <span>•</span>
+                    <span>MTN</span>
+                    <span>•</span>
+                    <span>Moov</span>
+                    <span>•</span>
+                    <span>Carte</span>
+                  </div>
                 </div>
               </div>
             </div>

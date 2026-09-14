@@ -111,6 +111,7 @@ export interface UserSubscriptionInfo {
   provider?: string;
   phoneNumber?: string;
   transactionRef: string;
+  externalToken?: string;
   subscribedAt: string;
   expiresAt: string | null; // null = à vie
   accountType: AccountType;
@@ -129,6 +130,7 @@ export interface SubscriptionRecord {
   paymentMethod: string;
   phoneNumber?: string;
   transactionRef: string;
+  externalToken?: string;
   allowedCandidates: number;
   metadata?: Record<string, any>;
   createdAt?: string;

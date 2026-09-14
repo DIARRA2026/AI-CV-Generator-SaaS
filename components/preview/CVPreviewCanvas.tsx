@@ -27,7 +27,8 @@ export const CVPreviewCanvas = forwardRef<HTMLDivElement, CVPreviewCanvasProps>(
     const { dict, isRTL } = useTranslation();
 
     const renderTemplate = () => {
-      switch (data.design.template) {
+      const template = data?.design?.template || "modern";
+      switch (template) {
         case "elegant":
           return <TemplateElegant data={data} />;
         case "corporate":

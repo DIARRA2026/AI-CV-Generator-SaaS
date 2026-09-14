@@ -122,11 +122,105 @@ const getCardTheme = (color?: string) => {
   }
 };
 
+/**
+ * Normalisateur défensif de données de CV
+ * Garantit que toutes les sous-structures (personal, design, skills, experiences)
+ * possèdent des valeurs stables et non nulles pour empêcher tout plantage runtime côté client.
+ */
+function ensureSafeResumeData(raw: Partial<ResumeData> | null | undefined): ResumeData {
+  if (!raw) return initialResumeData;
+
+  const rawPersonal = (raw as any)?.personal || {};
+  const personal = {
+    firstName: rawPersonal.firstName || "",
+    lastName: rawPersonal.lastName || "",
+    title: rawPersonal.title || "",
+    email: rawPersonal.email || "",
+    phone: rawPersonal.phone || "",
+    city: rawPersonal.city || "",
+    country: rawPersonal.country || "Côte d'Ivoire",
+    birthDate: rawPersonal.birthDate || "",
+    birthPlace: rawPersonal.birthPlace || "",
+    maritalStatus: rawPersonal.maritalStatus || "",
+    linkedin: rawPersonal.linkedin || "",
+    website: rawPersonal.website || "",
+    photoUrl: rawPersonal.photoUrl || "",
+  };
+
+  const rawDesign = (raw as any)?.design || {};
+  const design = {
+    template: rawDesign.template || "modern",
+    primaryColor: rawDesign.primaryColor || "#2563eb",
+    fontFamily: rawDesign.fontFamily || "sans",
+    showPhoto: rawDesign.showPhoto ?? true,
+    spacing: rawDesign.spacing || "normal",
+  };
+
+  const rawSkills = Array.isArray(raw.skills) ? raw.skills : [];
+  const skills = rawSkills.map((s: any, idx: number) => ({
+    id: s?.id || `sk-${idx}`,
+    category: s?.category || "Compétences",
+    items: Array.isArray(s?.items) ? s.items.filter(Boolean) : [],
+  }));
+
+  const rawExp = Array.isArray(raw.experiences) ? raw.experiences : [];
+  const experiences = rawExp.map((exp: any, idx: number) => ({
+    id: exp?.id || `exp-${idx}`,
+    role: exp?.role || exp?.position || "Poste Occupé",
+    company: exp?.company || "Entreprise",
+    city: exp?.city || "",
+    country: exp?.country || "",
+    startDate: exp?.startDate || "",
+    endDate: exp?.endDate || "",
+    current: Boolean(exp?.current),
+    highlights: Array.isArray(exp?.highlights)
+      ? exp.highlights.filter(Boolean)
+      : typeof exp?.highlights === "string" && exp.highlights.trim().length > 0
+      ? [exp.highlights.trim()]
+      : [],
+    rawInput: exp?.rawInput || "",
+  }));
+
+  const educations = Array.isArray(raw.educations) ? raw.educations : [];
+  const languages = Array.isArray(raw.languages) ? raw.languages : [];
+  const rawSec = (raw as any)?.sections || {};
+  const sections = {
+    certifications: Array.isArray(rawSec.certifications) ? rawSec.certifications : [],
+    projects: Array.isArray(rawSec.projects) ? rawSec.projects : [],
+    interests: Array.isArray(rawSec.interests) ? rawSec.interests : [],
+    references: Array.isArray(rawSec.references) ? rawSec.references : [],
+    volunteer: Array.isArray(rawSec.volunteer) ? rawSec.volunteer : [],
+  };
+
+  return {
+    id: raw.id || `cv-${Date.now()}`,
+    userId: raw.userId,
+    userEmail: raw.userEmail,
+    title: raw.title || personal.title || "Mon CV Professionnel",
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    targetProfile: raw.targetProfile || "professional",
+    language: raw.language || "fr",
+    slug: raw.slug || "",
+    isPremium: Boolean(raw.isPremium),
+    planTier: raw.planTier || "free",
+    license: raw.license,
+    personal,
+    summary: raw.summary || "",
+    experiences,
+    educations,
+    skills,
+    languages,
+    sections,
+    design,
+  };
+}
+
 export default function PublicCandidateCVPage() {
   const { dict, isRTL } = useTranslation();
   const params = useParams();
-  const slug = params?.slug as string;
-  const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
+  const rawSlug = params?.slug;
+  const slug = Array.isArray(rawSlug) ? rawSlug[0] : (rawSlug as string) || "";
+  const [resumeData, setResumeData] = useState<ResumeData>(() => ensureSafeResumeData(initialResumeData));
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "cv">("portfolio");
@@ -156,18 +250,18 @@ export default function PublicCandidateCVPage() {
     };
     checkBiz();
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
+      const searchParams = new URLSearchParams(window.location.search);
       const isExplicitShared =
-        params.get("shared") === "true" ||
-        params.get("view") === "shared" ||
-        params.get("view") === "public" ||
-        params.get("share") === "1" ||
-        params.get("mode") === "public";
+        searchParams.get("shared") === "true" ||
+        searchParams.get("view") === "shared" ||
+        searchParams.get("view") === "public" ||
+        searchParams.get("share") === "1" ||
+        searchParams.get("mode") === "public";
 
       setIsShared(isExplicitShared);
 
       // Le mode entreprise n'est actif que si l'on vient de l'espace entreprise ET qu'il ne s'agit pas d'un lien partagé
-      if (!isExplicitShared && (params.get("from") === "enterprise" || params.get("tab") === "business")) {
+      if (!isExplicitShared && (searchParams.get("from") === "enterprise" || searchParams.get("tab") === "business")) {
         setIsFromEnterprise(true);
       }
     }
@@ -183,24 +277,24 @@ export default function PublicCandidateCVPage() {
   };
 
   useEffect(() => {
+    if (!slug) return;
+
     // 1. Repli local synchrone immédiat si disponible dans le cache
     const found = StorageManager.getResumeBySlug(slug);
     if (found) {
-      setResumeData(found);
+      setResumeData(ensureSafeResumeData(found));
     }
 
     // 2. Récupération Cloud Full-Stack (permet à tout recruteur sur n'importe quel appareil de voir le CV)
-    if (slug) {
-      SupabaseService.getResumeBySlug(slug)
-        .then((cloudResume) => {
-          if (cloudResume) {
-            setResumeData(cloudResume);
-          }
-        })
-        .catch((err) => {
-          console.warn("Erreur chargement cloud candidat:", err);
-        });
-    }
+    SupabaseService.getResumeBySlug(slug)
+      .then((cloudResume) => {
+        if (cloudResume) {
+          setResumeData(ensureSafeResumeData(cloudResume));
+        }
+      })
+      .catch((err) => {
+        console.warn("Erreur chargement cloud candidat:", err);
+      });
   }, [slug]);
 
   const toggleTheme = () => {
@@ -276,8 +370,9 @@ export default function PublicCandidateCVPage() {
     }, 3500);
   };
 
-  const p = resumeData.personal;
-  const primaryColor = resumeData.design.primaryColor || "#2563eb";
+  const safeData = ensureSafeResumeData(resumeData);
+  const p = safeData.personal;
+  const primaryColor = safeData.design.primaryColor || "#2563eb";
   const isDark = theme === "dark";
 
   // Contrôles de gestion d'entreprise et sélecteur de profil interne :
@@ -290,17 +385,17 @@ export default function PublicCandidateCVPage() {
   const showProfileSwitcher = !isShared && isFromEnterprise && Boolean(isUserBusinessAccount);
 
   // Compétences dynamiques
-  const skillsList = resumeData.skills && resumeData.skills.length > 0
-    ? resumeData.skills
+  const skillsList = safeData.skills && safeData.skills.length > 0 && safeData.skills.some(s => Array.isArray(s.items) && s.items.length > 0)
+    ? safeData.skills
     : [
-        { category: "Expertise Technique", items: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Architecture Logicielle"] },
-        { category: "Méthodologies & Outils", items: ["Méthode STAR", "Git / GitHub", "Scrum / Agile", "Design System", "Tests Unitaires"] },
-        { category: "Gestion & Stratégie", items: ["Direction de Projet", "Relation Client", "Product Discovery", "Performance Web"] },
+        { id: "sk1", category: "Expertise Technique", items: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Architecture Logicielle"] },
+        { id: "sk2", category: "Méthodologies & Outils", items: ["Méthode STAR", "Git / GitHub", "Scrum / Agile", "Design System", "Tests Unitaires"] },
+        { id: "sk3", category: "Gestion & Stratégie", items: ["Direction de Projet", "Relation Client", "Product Discovery", "Performance Web"] },
       ];
 
   // Expériences dynamiques
-  const experiencesList = resumeData.experiences && resumeData.experiences.length > 0
-    ? resumeData.experiences
+  const experiencesList = safeData.experiences && safeData.experiences.length > 0
+    ? safeData.experiences
     : [
         {
           id: "1",
@@ -449,8 +544,8 @@ export default function PublicCandidateCVPage() {
     },
   ];
 
-  const candidateFullName = `${p.firstName || "Candidat"} ${p.lastName || ""}`.trim();
-  const cleanPhone = p.phone?.replace(/\s+/g, "") || "";
+  const candidateFullName = `${p?.firstName || "Candidat"} ${p?.lastName || ""}`.trim() || "Candidat";
+  const cleanPhone = p?.phone?.replace(/\s+/g, "") || "";
   const whatsappUrl = cleanPhone
     ? `https://wa.me/${cleanPhone.replace("+", "")}?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20j'ai%20consulté%20votre%20portfolio%20sur%20MonCV.ai%20et%20souhaite%20échanger%20avec%20vous.`
     : `https://wa.me/2250700510524?text=Bonjour%20${encodeURIComponent(candidateFullName)},%20je%20souhaite%20échanger%20avec%20vous.`;
@@ -463,11 +558,11 @@ export default function PublicCandidateCVPage() {
       if (metaDesc) {
         metaDesc.setAttribute(
           "content",
-          resumeData.summary || `${p.title || "Portfolio"} — CV professionnel de ${candidateFullName}`
+          safeData.summary || `${p?.title || "Portfolio"} — CV professionnel de ${candidateFullName}`
         );
       }
     }
-  }, [candidateFullName, resumeData.summary, p.title]);
+  }, [candidateFullName, safeData.summary, p?.title]);
 
   return (
     <div
@@ -496,20 +591,20 @@ export default function PublicCandidateCVPage() {
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-md transition-transform group-hover:scale-105"
                 style={{ backgroundColor: primaryColor }}
               >
-                {p.firstName?.[0] || "C"}{p.lastName?.[0] || "V"}
+                {p?.firstName?.[0] || "C"}{p?.lastName?.[0] || "V"}
               </div>
               <div className="hidden xs:flex flex-col">
                 <span className="font-black text-xs sm:text-sm tracking-tight truncate max-w-[140px] sm:max-w-[180px]">
                   {candidateFullName}
                 </span>
                 <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">
-                  {dict.cv.certifiedProfile}
+                  {dict?.cv?.certifiedProfile || "Profil Certifié"}
                 </span>
               </div>
             </Link>
 
             <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10.5px] font-bold">
-              ● {dict.portfolio.badge}
+              ● {dict?.portfolio?.badge || "Disponible"}
             </span>
           </div>
 
@@ -542,7 +637,7 @@ export default function PublicCandidateCVPage() {
                 }`}
               >
                 <Globe className="w-3 h-3" />
-                <span className="hidden sm:inline">{dict.portfolio.navAbout}</span>
+                <span className="hidden sm:inline">{dict?.portfolio?.navAbout || "Présentation"}</span>
               </button>
               <button
                 type="button"
@@ -554,7 +649,7 @@ export default function PublicCandidateCVPage() {
                 }`}
               >
                 <FileText className="w-3 h-3" />
-                <span className="hidden sm:inline">{dict.portfolio.navResume}</span>
+                <span className="hidden sm:inline">{dict?.portfolio?.navResume || "Format CV"}</span>
               </button>
             </div>
 
@@ -567,17 +662,17 @@ export default function PublicCandidateCVPage() {
                   ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
-              title={dict.portfolio.shareProfile}
+              title={dict?.portfolio?.shareProfile || "Partager ce profil"}
             >
               {copiedLink ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" />
-                  <span className="hidden md:inline text-emerald-500 font-bold">{dict.portfolio.formSuccess}</span>
+                  <span className="hidden md:inline text-emerald-500 font-bold">{dict?.portfolio?.formSuccess || "Lien copié !"}</span>
                 </>
               ) : (
                 <>
                   <QrCode className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">{dict.portfolio.shareProfile}</span>
+                  <span className="hidden md:inline">{dict?.portfolio?.shareProfile || "Partager"}</span>
                 </>
               )}
             </button>
@@ -597,10 +692,10 @@ export default function PublicCandidateCVPage() {
                 href="/dashboard?tab=business"
                 onClick={handleReturnToEnterprise}
                 className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0 border border-amber-400/50"
-                title={dict.creator.backToEnterpriseBtn}
+                title={dict?.creator?.backToEnterpriseBtn || "RETOUR ESPACE ENTREPRISE"}
               >
                 <Building className="w-3.5 h-3.5 text-slate-950" />
-                <span>{dict.creator.backToEnterpriseBtn}</span>
+                <span>{dict?.creator?.backToEnterpriseBtn || "RETOUR ESPACE ENTREPRISE"}</span>
               </Link>
             )}
 
@@ -612,10 +707,10 @@ export default function PublicCandidateCVPage() {
                   ? "bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800"
                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-xs"
               }`}
-              title={dict.portfolio.backHome}
+              title={dict?.portfolio?.backHome || "Accueil"}
             >
               <Home className="w-3.5 h-3.5 text-blue-500 group-hover:-translate-x-0.5 transition-transform duration-300" />
-              <span className="hidden sm:inline whitespace-nowrap">{dict.portfolio.backHome}</span>
+              <span className="hidden sm:inline whitespace-nowrap">{dict?.portfolio?.backHome || "Accueil"}</span>
             </Link>
 
             {/* Bouton Menu Mobile */}
@@ -662,7 +757,7 @@ export default function PublicCandidateCVPage() {
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 cursor-pointer"
               >
                 <Building className="w-4 h-4 text-slate-950" />
-                <span>{dict.creator.backToEnterpriseBtn}</span>
+                <span>{dict?.creator?.backToEnterpriseBtn || "RETOUR ESPACE ENTREPRISE"}</span>
               </Link>
             )}
 
@@ -673,14 +768,14 @@ export default function PublicCandidateCVPage() {
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-md shadow-blue-600/20"
             >
               <Home className="w-4 h-4" />
-              <span>← {dict.portfolio.backHome}</span>
+              <span>← {dict?.portfolio?.backHome || "Accueil"}</span>
             </Link>
             <a
               href="#contact"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20"
             >
-              <span>{dict.portfolio.contactMe}</span>
+              <span>{dict?.portfolio?.contactMe || "Me Contacter"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -709,7 +804,7 @@ export default function PublicCandidateCVPage() {
                   {/* Cadre Portrait */}
                   <div className="relative w-full h-full rounded-3xl p-1 bg-gradient-to-b from-blue-500/40 via-indigo-500/25 to-transparent shadow-xl">
                     <div className="overflow-hidden rounded-[22px] w-full h-full bg-slate-900 relative">
-                      {p.photoUrl && resumeData.design.showPhoto ? (
+                      {p.photoUrl && safeData.design.showPhoto ? (
                         <img
                           src={p.photoUrl}
                           alt={candidateFullName}
@@ -720,7 +815,7 @@ export default function PublicCandidateCVPage() {
                           className="w-full h-full flex items-center justify-center text-white font-black text-4xl sm:text-5xl"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          {p.firstName?.[0] || "C"}{p.lastName?.[0] || "V"}
+                          {p?.firstName?.[0] || "C"}{p?.lastName?.[0] || "V"}
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40" />
@@ -739,7 +834,7 @@ export default function PublicCandidateCVPage() {
                       <Zap className="w-3 h-3" />
                     </div>
                     <div className="text-left leading-tight">
-                      <span className="text-[10px] font-black block">{dict.atsDemo.badge}</span>
+                      <span className="text-[10px] font-black block">{dict?.atsDemo?.badge || "Format ATS"}</span>
                       <span className="text-[8.5px] font-semibold text-slate-400">Score 98/100</span>
                     </div>
                   </div>
@@ -770,7 +865,7 @@ export default function PublicCandidateCVPage() {
                 {/* Badge Disponibilité & Profil Certifié */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{dict.cv.certifiedProfile} • {dict.portfolio.badge}</span>
+                  <span>{dict?.cv?.certifiedProfile || "Profil Certifié"} • {dict?.portfolio?.badge || "Disponible"}</span>
                 </div>
 
                 {/* Titre & Identité */}
@@ -784,7 +879,7 @@ export default function PublicCandidateCVPage() {
 
                   {/* Titre Professionnel Badge Élégant */}
                   <div className="inline-block px-3.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-500 font-extrabold text-xs sm:text-sm uppercase tracking-wider">
-                    {p.title || "Professionnel d'Excellence"}
+                    {p?.title || "Professionnel d'Excellence"}
                   </div>
                 </div>
 
@@ -794,7 +889,7 @@ export default function PublicCandidateCVPage() {
                     isDark ? "text-slate-300" : "text-slate-600"
                   }`}
                 >
-                  {resumeData.summary ||
+                  {safeData.summary ||
                     "Professionnel rigoureux et orienté résultats, alliant expertise technique et méthodologie agile pour créer une forte valeur ajoutée commerciale."}
                 </p>
 
@@ -805,7 +900,7 @@ export default function PublicCandidateCVPage() {
                     className="flex-1 min-w-[180px] px-5 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{dict.portfolio.contactMe}</span>
+                    <span>{dict?.portfolio?.contactMe || "Contacter"}</span>
                   </a>
 
                   <a
@@ -817,42 +912,42 @@ export default function PublicCandidateCVPage() {
                     }`}
                   >
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span>{dict.portfolio.navProjects}</span>
+                    <span>{dict?.portfolio?.navProjects || "Réalisations"}</span>
                   </a>
                 </div>
 
                 {/* Coordonnées Rapides Centrées */}
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-slate-400 font-semibold pt-1">
-                  {[p.city, p.country].filter(Boolean).length > 0 && (
+                  {[p?.city, p?.country].filter(Boolean).length > 0 && (
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
                       <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>{[p.city, p.country].filter(Boolean).join(", ")}</span>
+                      <span>{[p?.city, p?.country].filter(Boolean).join(", ")}</span>
                     </span>
                   )}
-                  {p.email && (
+                  {p?.email && (
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
                       <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                       <span>{p.email}</span>
                     </span>
                   )}
-                  {p.phone && (
+                  {p?.phone && (
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
                       <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>{p.phone}</span>
                     </span>
                   )}
-                  {(p.birthDate || p.birthPlace) && (
+                  {(p?.birthDate || p?.birthPlace) && (
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
                       <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>
                         {[
-                          p.birthDate ? `${dict.cv.bornOn} ${p.birthDate}` : "",
-                          p.birthPlace ? `${dict.cv.bornAt} ${p.birthPlace}` : ""
+                          p.birthDate ? `${dict?.cv?.bornOn || "Né(e) le"} ${p.birthDate}` : "",
+                          p.birthPlace ? `${dict?.cv?.bornAt || "à"} ${p.birthPlace}` : ""
                         ].filter(Boolean).join(" ")}
                       </span>
                     </span>
                   )}
-                  {p.maritalStatus && (
+                  {p?.maritalStatus && (
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20">
                       <Users className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                       <span>{p.maritalStatus}</span>
@@ -878,7 +973,7 @@ export default function PublicCandidateCVPage() {
                   </div>
                   <div>
                     <span className="text-xl sm:text-3xl font-black text-indigo-400 block">
-                      {skillsList.reduce((acc, s) => acc + s.items.length, 0)}+
+                      {skillsList.reduce((acc, s) => acc + (Array.isArray(s.items) ? s.items.length : 0), 0)}+
                     </span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 block">
                       Compétences
@@ -1067,7 +1162,7 @@ export default function PublicCandidateCVPage() {
 
                       {/* Pills */}
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {sk.items.map((item, i) => (
+                        {(Array.isArray(sk.items) ? sk.items : []).map((item, i) => (
                           <span
                             key={i}
                             className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition-all cursor-default hover:scale-105 ${
@@ -1218,7 +1313,7 @@ export default function PublicCandidateCVPage() {
                           href="#contact"
                           className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${themeStyle.btn}`}
                         >
-                          <span>➜ {dict.portfolio.sendMessage}</span>
+                          <span>➜ {dict?.portfolio?.sendMessage || "Envoyer un message"}</span>
                         </a>
                       </div>
                     </div>
@@ -1255,7 +1350,7 @@ export default function PublicCandidateCVPage() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                       <span className="text-xs font-extrabold text-blue-500">
-                        {exp.startDate} — {exp.current ? dict.cv.present : exp.endDate}
+                        {exp.startDate} — {exp.current ? (dict?.cv?.present || "Présent") : exp.endDate}
                       </span>
                       {[exp.city, exp.country].filter(Boolean).length > 0 && (
                         <span className="text-[10.5px] font-medium text-slate-400">
@@ -1267,7 +1362,7 @@ export default function PublicCandidateCVPage() {
                     <p className="text-xs font-bold text-indigo-400 mt-0.5 mb-2">
                       {exp.company}
                     </p>
-                    {exp.highlights && exp.highlights.length > 0 ? (
+                    {Array.isArray(exp.highlights) && exp.highlights.length > 0 ? (
                       <ul className="space-y-1">
                         {exp.highlights.map((h, hIdx) => (
                           <li
@@ -1420,14 +1515,14 @@ export default function PublicCandidateCVPage() {
                     className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>{dict.portfolio.whatsAppDirect}</span>
+                    <span>{dict?.portfolio?.whatsAppDirect || "WhatsApp Direct"}</span>
                   </a>
                   <a
                     href="#contact"
                     className="w-full sm:w-auto px-5 py-2.5 bg-white text-blue-900 font-extrabold rounded-xl text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105"
                   >
                     <Mail className="w-4 h-4 text-blue-600" />
-                    <span>{dict.portfolio.sendMessage}</span>
+                    <span>{dict?.portfolio?.sendMessage || "Envoyer un message"}</span>
                   </a>
                 </div>
               </div>
@@ -1446,7 +1541,7 @@ export default function PublicCandidateCVPage() {
                     Contact Direct
                   </span>
                   <h2 className="text-xl sm:text-3xl font-black tracking-tight mt-0.5">
-                    Échanger avec {p.firstName || "le Candidat"}
+                    Échanger avec {p?.firstName || "le Candidat"}
                   </h2>
                   <p className={`text-xs sm:text-sm mt-1.5 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                     Réponse assurée dans les 24 heures pour toute proposition sérieuse.
@@ -1454,7 +1549,7 @@ export default function PublicCandidateCVPage() {
                 </div>
 
                 <div className="space-y-2.5">
-                  {p.email && (
+                  {p?.email && (
                     <a
                       href={`mailto:${p.email}`}
                       className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
@@ -1465,13 +1560,13 @@ export default function PublicCandidateCVPage() {
                         <Mail className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <span className="text-[10px] text-slate-400 block">{dict.cv.email}</span>
+                        <span className="text-[10px] text-slate-400 block">{dict?.cv?.email || "Email"}</span>
                         <span className="text-xs sm:text-sm font-bold truncate block">{p.email}</span>
                       </div>
                     </a>
                   )}
 
-                  {p.phone && (
+                  {p?.phone && (
                     <a
                       href={whatsappUrl}
                       target="_blank"
@@ -1484,13 +1579,13 @@ export default function PublicCandidateCVPage() {
                         <Phone className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <span className="text-[10px] text-slate-400 block">{dict.cv.phone}</span>
+                        <span className="text-[10px] text-slate-400 block">{dict?.cv?.phone || "Téléphone"}</span>
                         <span className="text-xs sm:text-sm font-bold truncate block">{p.phone}</span>
                       </div>
                     </a>
                   )}
 
-                  {[p.city, p.country].filter(Boolean).length > 0 && (
+                  {[p?.city, p?.country].filter(Boolean).length > 0 && (
                     <div
                       className={`flex items-center gap-3 p-3 rounded-2xl border ${
                         isDark ? "bg-[#14151d] border-slate-800" : "bg-white border-slate-200"
@@ -1500,15 +1595,15 @@ export default function PublicCandidateCVPage() {
                         <MapPin className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block">{dict.cv.address}</span>
+                        <span className="text-[10px] text-slate-400 block">{dict?.cv?.address || "Localisation"}</span>
                         <span className="text-xs sm:text-sm font-bold block">
-                          {[p.city, p.country].filter(Boolean).join(", ")}
+                          {[p?.city, p?.country].filter(Boolean).join(", ")}
                         </span>
                       </div>
                     </div>
                   )}
 
-                  {p.linkedin && (
+                  {p?.linkedin && (
                     <a
                       href={p.linkedin}
                       target="_blank"
@@ -1540,7 +1635,7 @@ export default function PublicCandidateCVPage() {
                     <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
-                    <h3 className="text-base font-bold">{dict.portfolio.formSuccess}</h3>
+                    <h3 className="text-base font-bold">{dict?.portfolio?.formSuccess || "Message envoyé avec succès !"}</h3>
                     <p className="text-xs text-slate-400 max-w-sm mx-auto">
                       Votre prise de contact a été enregistrée. {candidateFullName} vous répondra très rapidement.
                     </p>
@@ -1554,7 +1649,7 @@ export default function PublicCandidateCVPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
                         <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                          {dict.portfolio.formName} <span className="text-red-400">*</span>
+                          {dict?.portfolio?.formName || "Votre Nom & Prénom"} <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
@@ -1570,7 +1665,7 @@ export default function PublicCandidateCVPage() {
 
                       <div>
                         <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                          {dict.portfolio.formEmail} <span className="text-red-400">*</span>
+                          {dict?.portfolio?.formEmail || "Email Professionnel"} <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
@@ -1622,7 +1717,7 @@ export default function PublicCandidateCVPage() {
 
                     <div>
                       <label className="block text-[10.5px] font-bold text-slate-400 mb-0.5">
-                        {dict.portfolio.formMessage} <span className="text-red-400">*</span>
+                        {dict?.portfolio?.formMessage || "Votre Message"} <span className="text-red-400">*</span>
                       </label>
                       <textarea
                         required
@@ -1641,7 +1736,7 @@ export default function PublicCandidateCVPage() {
                       className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <Send className="w-4 h-4" />
-                      <span>{dict.portfolio.formSend}</span>
+                      <span>{dict?.portfolio?.formSend || "Envoyer le message"}</span>
                     </button>
                   </form>
                 )}
@@ -1650,7 +1745,7 @@ export default function PublicCandidateCVPage() {
           </section>
 
           {/* Bannière Déblocage VIP (Si le candidat n'a pas encore le pack 5000) */}
-          {resumeData.planTier !== "5000" && (
+          {safeData.planTier !== "5000" && (
             <div className="max-w-4xl mx-auto px-4 sm:px-6">
               <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border border-purple-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                 <div className="flex items-center gap-3">
@@ -1686,8 +1781,8 @@ export default function PublicCandidateCVPage() {
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-blue-400" />
               <div>
-                <h3 className="font-bold text-sm text-white">{dict.portfolio.viewCvA4}</h3>
-                <p className="text-[11px] text-slate-400">{dict.cv.certifiedDocument}</p>
+                <h3 className="font-bold text-sm text-white">{dict?.portfolio?.viewCvA4 || "Format CV Imprimable A4"}</h3>
+                <p className="text-[11px] text-slate-400">{dict?.cv?.certifiedDocument || "Document Officiel Certifié"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1699,7 +1794,7 @@ export default function PublicCandidateCVPage() {
                 title="Télécharger au format Word (.docx)"
               >
                 <FileText className="w-4 h-4" />
-                <span>{dict.portfolio.downloadWord}</span>
+                <span>{dict?.portfolio?.downloadWord || "Word (.docx)"}</span>
               </button>
               <button
                 type="button"
@@ -1708,13 +1803,13 @@ export default function PublicCandidateCVPage() {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all"
               >
                 <Download className="w-4 h-4" />
-                <span>{dict.portfolio.downloadPdf}</span>
+                <span>{dict?.portfolio?.downloadPdf || "PDF"}</span>
               </button>
             </div>
           </div>
 
           <div className="flex justify-center bg-slate-900/50 p-3 sm:p-8 rounded-3xl border border-slate-800 overflow-x-auto shadow-2xl">
-            <CVPreviewCanvas data={resumeData} scale={0.88} />
+            <CVPreviewCanvas data={safeData} scale={0.88} />
           </div>
         </div>
       )}
@@ -1729,7 +1824,7 @@ export default function PublicCandidateCVPage() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">Portfolio de {candidateFullName}</span>
             <span>•</span>
-            <span>Propulsé par MonCV.ai • {dict.footer.developedBy}</span>
+            <span>Propulsé par MonCV.ai • {dict?.footer?.developedBy || "Par DIARRA"}</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-semibold">
             <Link href="/terms" className="hover:text-blue-400 transition-colors">
@@ -1753,7 +1848,7 @@ export default function PublicCandidateCVPage() {
         onSuccess={() => {
           const fresh = StorageManager.getActiveResume();
           if (fresh) {
-            setResumeData(fresh);
+            setResumeData(ensureSafeResumeData(fresh));
           }
         }}
       />
@@ -1770,7 +1865,7 @@ export default function PublicCandidateCVPage() {
           title="Retourner à l'accueil du site MonCV.ai"
         >
           <Home className="w-4 h-4 text-blue-500" />
-          <span>← {dict.portfolio.backHome}</span>
+          <span>← {dict?.portfolio?.backHome || "Accueil"}</span>
         </Link>
       </div>
     </div>

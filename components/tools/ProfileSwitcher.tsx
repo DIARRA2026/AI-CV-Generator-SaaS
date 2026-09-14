@@ -81,12 +81,12 @@ export const ProfileSwitcher: React.FC<ProfileSwitcherProps> = ({
     null;
 
   const currentDisplayName = currentDisplayedResume
-    ? `${currentDisplayedResume.personal.firstName || ""} ${
-        currentDisplayedResume.personal.lastName || ""
-      }`.trim() || currentDisplayedResume.title
+    ? `${currentDisplayedResume.personal?.firstName || ""} ${
+        currentDisplayedResume.personal?.lastName || ""
+      }`.trim() || currentDisplayedResume.title || "Mon CV"
     : "Sélectionner un profil";
 
-  const currentRole = currentDisplayedResume?.personal.title || "Candidat";
+  const currentRole = currentDisplayedResume?.personal?.title || "Candidat";
 
   const handleSelectResume = (cv: ResumeData) => {
     StorageManager.saveActiveResume(cv);
@@ -142,7 +142,7 @@ export const ProfileSwitcher: React.FC<ProfileSwitcherProps> = ({
         title="Changer de profil client ou d'espace"
       >
         <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[10px] flex items-center justify-center shrink-0 shadow-xs">
-          {currentDisplayedResume?.personal.firstName?.[0]?.toUpperCase() || "P"}
+          {currentDisplayedResume?.personal?.firstName?.[0]?.toUpperCase() || "P"}
         </div>
 
         <div className="flex flex-col text-left leading-none">
@@ -202,9 +202,9 @@ export const ProfileSwitcher: React.FC<ProfileSwitcherProps> = ({
               </div>
             ) : (
               resumes.map((cv) => {
-                const fullName = `${cv.personal.firstName || ""} ${
-                  cv.personal.lastName || ""
-                }`.trim() || cv.title;
+                const fullName = `${cv.personal?.firstName || ""} ${
+                  cv.personal?.lastName || ""
+                }`.trim() || cv.title || "Profil";
                 const isCurrent =
                   currentDisplayedResume?.id === cv.id ||
                   (currentSlug && (cv.slug === currentSlug || cv.id === currentSlug));
@@ -234,12 +234,12 @@ export const ProfileSwitcher: React.FC<ProfileSwitcherProps> = ({
                             : "bg-slate-200 text-slate-700"
                         }`}
                       >
-                        {cv.personal.firstName?.[0]?.toUpperCase() || "C"}
+                        {cv.personal?.firstName?.[0]?.toUpperCase() || "C"}
                       </div>
                       <div className="min-w-0">
                         <div className="font-bold truncate text-xs">{fullName}</div>
                         <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                          {cv.personal.title || "Poste non défini"}
+                          {cv.personal?.title || "Poste non défini"}
                         </div>
                       </div>
                     </div>

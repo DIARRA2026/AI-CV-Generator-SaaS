@@ -12,6 +12,8 @@ import { PlanTier } from "@/lib/types";
  * d'un paiement LigdiCash après la redirection du client.
  */
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

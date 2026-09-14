@@ -4,6 +4,8 @@ import { getPaymentPlanConfig } from "@/config/payments";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { PlanTier } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));

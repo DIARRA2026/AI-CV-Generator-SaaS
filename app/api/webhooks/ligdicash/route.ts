@@ -15,6 +15,8 @@ import { PlanTier } from "@/lib/types";
  * 4. Activation pérenne de l'abonnement et du profil Supabase
  */
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     let payload: any = {};

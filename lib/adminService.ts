@@ -25,18 +25,25 @@ export class AdminService {
 
   /**
    * Vérification de session côté serveur (Source de Vérité Sécurisée)
-   * Interroge l'API /api/admin/auth avec le cookie httpOnly.
+   * Interroge l'API /api/admin/auth avec cookie httpOnly et en-tête Bearer token en repli.
    */
   static async verifyServerSession(): Promise<{ authenticated: boolean; email?: string }> {
     if (typeof window === "undefined") return { authenticated: false };
+    const localSession = this.getAdminSession();
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes de tolérance
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (localSession?.token) {
+        headers["Authorization"] = `Bearer ${localSession.token}`;
+      }
 
       const response = await fetch("/api/admin/auth", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify" }),
+        headers,
+        body: JSON.stringify({ action: "verify", token: localSession?.token }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -46,20 +53,34 @@ export class AdminService {
         if (data.authenticated) {
           const sessionData = {
             authenticated: true,
-            email: data.email,
+            email: data.email || localSession?.email,
             role: "superadmin" as UserRole,
-            loggedAt: new Date().toISOString(),
+            token: data.token || localSession?.token,
+            loggedAt: localSession?.loggedAt || new Date().toISOString(),
           };
           localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-          return { authenticated: true, email: data.email };
+          return { authenticated: true, email: data.email || localSession?.email };
         }
       }
 
-      // Si le serveur rejette la session, purger la valeur locale
-      localStorage.removeItem(ADMIN_SESSION_KEY);
+      // Si le serveur renvoie explicitement 401 ou 403 (jeton expiré ou banni)
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+        return { authenticated: false };
+      }
+
+      // Pour tout autre code (ex: 500, 502, 503 temporaire) : préserver la session si le token local existe
+      if (localSession && localSession.authenticated) {
+        return { authenticated: true, email: localSession.email };
+      }
+
       return { authenticated: false };
     } catch (e) {
       console.warn("Vérification session admin serveur indisponible :", e);
+      // Tolérance aux pannes réseau : si la session locale est déjà valide, ne pas déconnecter brutalement
+      if (localSession && localSession.authenticated) {
+        return { authenticated: true, email: localSession.email };
+      }
       return { authenticated: false };
     }
   }
@@ -86,7 +107,7 @@ export class AdminService {
   /**
    * Récupère les données de la session administrateur locale
    */
-  static getAdminSession(): { email: string; role: UserRole; loggedAt: string } | null {
+  static getAdminSession(): { authenticated?: boolean; email: string; role: UserRole; loggedAt: string; token?: string } | null {
     if (typeof window === "undefined") return null;
     try {
       const raw = localStorage.getItem(ADMIN_SESSION_KEY);
@@ -140,6 +161,7 @@ export class AdminService {
           authenticated: true,
           email: data.user?.email || targetEmail,
           role: "superadmin" as UserRole,
+          token: data.token,
           loggedAt: new Date().toISOString(),
         };
 
@@ -152,7 +174,6 @@ export class AdminService {
           "success"
         );
 
-        window.dispatchEvent(new Event("storage"));
         return { success: true, message: "Accès SuperAdmin validé avec succès." };
       }
 

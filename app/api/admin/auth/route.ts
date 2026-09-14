@@ -128,12 +128,22 @@ export async function POST(request: NextRequest) {
     // ACTION : VÉRIFICATION DU JETON (SESSION CHECK)
     // -------------------------------------------------------------
     if (action === "verify") {
-      const cookieToken = request.cookies.get("moncv_admin_token")?.value;
-      if (!cookieToken) {
-        return NextResponse.json({ authenticated: false }, { status: 401 });
+      let tokenToVerify = request.cookies.get("moncv_admin_token")?.value;
+      if (!tokenToVerify) {
+        const authHeader = request.headers.get("authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          tokenToVerify = authHeader.replace("Bearer ", "").trim();
+        }
+      }
+      if (!tokenToVerify && body?.token) {
+        tokenToVerify = String(body.token).trim();
       }
 
-      const tokenCheck = verifyAdminToken(cookieToken, config.secret);
+      if (!tokenToVerify) {
+        return NextResponse.json({ authenticated: false, error: "Jeton de session manquant" }, { status: 401 });
+      }
+
+      const tokenCheck = verifyAdminToken(tokenToVerify, config.secret);
       if (tokenCheck.valid && tokenCheck.email) {
         // Vérification additionnelle que l'email appartient toujours aux emails autorisés
         if (config.allowedEmails.includes(tokenCheck.email.toLowerCase().trim())) {
@@ -141,30 +151,32 @@ export async function POST(request: NextRequest) {
             authenticated: true,
             email: tokenCheck.email,
             role: "superadmin",
+            token: tokenToVerify,
           });
         }
       }
 
-      return NextResponse.json({ authenticated: false }, { status: 401 });
+      return NextResponse.json({ authenticated: false, error: "Jeton de session invalide ou expiré" }, { status: 401 });
     }
 
     // -------------------------------------------------------------
     // ACTION : DÉCONNEXION (LOGOUT)
     // -------------------------------------------------------------
     if (action === "logout") {
+      const isHttps = request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https";
       const res = NextResponse.json({ success: true, message: "Déconnexion réussie." });
       res.cookies.set("moncv_admin_token", "", {
         path: "/",
         maxAge: 0,
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: isHttps,
       });
       res.cookies.set("moncv_auth_token", "", {
         path: "/",
         maxAge: 0,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: isHttps,
       });
       return res;
     }
@@ -222,9 +234,11 @@ export async function POST(request: NextRequest) {
         resetRateLimit(rateLimitKey);
 
         const token = generateAdminToken(rawEmail, config.secret);
+        const isHttps = request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https";
 
         const response = NextResponse.json({
           success: true,
+          token,
           message: "Authentification SuperAdmin validée avec succès.",
           user: {
             email: rawEmail,
@@ -236,17 +250,17 @@ export async function POST(request: NextRequest) {
         // Définir le cookie de session sécurisé (httpOnly obligatoire)
         response.cookies.set("moncv_admin_token", token, {
           path: "/",
-          maxAge: 86400, // 24 heures
+          maxAge: 86400 * 7, // 7 jours pour un confort de travail optimal de l'administrateur
           httpOnly: true, // Protection absolue contre le vol de jeton par XSS / JS client
           sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
+          secure: isHttps,
         });
 
         response.cookies.set("moncv_auth_token", "admin-session-active", {
           path: "/",
-          maxAge: 86400,
+          maxAge: 86400 * 7,
           sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
+          secure: isHttps,
         });
 
         return response;

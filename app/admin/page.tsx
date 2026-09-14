@@ -131,7 +131,7 @@ export default function AdminConsolePage() {
   }, []);
 
   // Vérifier l'état d'authentification admin côté serveur
-  const checkAuth = async () => {
+  const checkAuth = async (initialCheck = false) => {
     // Si aucune session admin locale n'existe, afficher directement l'écran de connexion sans bloquer
     if (!AdminService.isAdminAuthenticated()) {
       setIsAuthenticated(false);
@@ -139,7 +139,11 @@ export default function AdminConsolePage() {
       return;
     }
 
-    setAuthChecking(true);
+    // N'afficher le loader de plein écran que lors du tout premier chargement
+    if (initialCheck) {
+      setAuthChecking(true);
+    }
+
     try {
       const result = await AdminService.verifyServerSession();
       setIsAuthenticated(result.authenticated);
@@ -147,19 +151,25 @@ export default function AdminConsolePage() {
         loadAdminData();
       }
     } catch {
-      setIsAuthenticated(false);
+      // Tolérance réseau : si la session locale est toujours active, ne pas déconnecter
+      if (!AdminService.isAdminAuthenticated()) {
+        setIsAuthenticated(false);
+      }
     } finally {
-      setAuthChecking(false);
+      if (initialCheck) {
+        setAuthChecking(false);
+      }
     }
   };
 
   useEffect(() => {
-    checkAuth();
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    checkAuth(true);
+
+    // Vérification douce en arrière-plan toutes les 2 minutes sans bloquer l'interface
+    const timer = setInterval(() => {
+      checkAuth(false);
+    }, 120000);
+    return () => clearInterval(timer);
   }, []);
 
   // Afficher un toast éphémère
@@ -591,7 +601,11 @@ export default function AdminConsolePage() {
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Live Control</span>
+                <span>Console Active</span>
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold">
+                <Database className="w-2.5 h-2.5 text-blue-400" />
+                <span>Supabase Connecté</span>
               </span>
               {maintenanceMode && (
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black uppercase">

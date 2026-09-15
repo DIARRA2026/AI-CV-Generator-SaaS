@@ -61,11 +61,11 @@ Pour déverrouiller la console d'administration, vous disposez de **deux méthod
 
 ---
 
-## 🚀 4. Présentation des 5 Modules de la Console (/admin)
+## 🚀 4. Présentation des 6 Modules Majeurs de la Console (/admin)
 
 1. **📊 Vue d'Ensemble & Métriques 360°** :
    - Indicateurs en direct : Total utilisateurs inscrits (Candidats vs Entreprises vs Admins).
-   - Nombre total de CVs créés et stockés dans le système.
+   - Nombre total de CVs créés et stockés dans le système avec score ATS moyen.
    - **Chiffre d'Affaires en FCFA** avec décomposition par formule :
      - *Essentiel* : 1 500 FCFA
      - *Pro* : 2 500 FCFA
@@ -74,36 +74,47 @@ Pour déverrouiller la console d'administration, vous disposez de **deux méthod
      - *Starter RH* : 30 000 FCFA
      - *Business RH* : 75 000 FCFA
      - *Entreprise Illimitée* : 200 000 FCFA
-   - Taux de conversion global et score de conformité ATS moyen.
-   - Journal d'audit en direct (Live Audit Stream).
+   - **Volume d'Encaissements Mobile Money LigdiCash** (Validés vs En Attente).
+   - Journal d'audit en direct (Live Audit Stream) et horloge GMT.
+   - **Bouton "Sync Cloud"** : Synchronisation complète bi-directionnelle avec Supabase PostgreSQL en 1 clic.
 
-2. **👥 Gestion des Utilisateurs & Viviers** :
+2. **💳 Paiements & Transactions LigdiCash Mobile Money (NOUVEAU)** :
+   - **Monitoring en direct des transactions** : Orange Money, MTN MoMo, Moov Money, Wave et Cartes bancaires (UEMOA / XOF).
+   - **Statut de la passerelle** : Webhook officiel en production (`/api/webhooks/ligdicash`), monnaies supportées et latence.
+   - **Filtres et recherche multicritères** : Recherche instantanée par code référence (`TRX_LC_...`), token, email client, téléphone, statut et formule.
+   - **Re-Vérification en 1 clic** auprès de l'API officielle LigdiCash pour actualiser les paiements en attente.
+   - **Validation Manuelle Forcée** : Permet au SuperAdmin d'activer immédiatement l'abonnement d'un client suite à un SMS opérateur ou accord commercial.
+   - **Export CSV des transactions** (`moncv_transactions_ligdicash_*.csv`).
+
+3. **👥 Gestion des Utilisateurs & Viviers** :
    - Recherche instantanée par nom, email, téléphone, entreprise.
-   - Filtres par rôle (*Candidat*, *Entreprise*, *Admin*) et par formule.
+   - Filtres par rôle (*Candidat*, *Entreprise*, *Admin*) et par statut (*Actif*, *Suspendu*).
    - **Surclassement de formule en 1 clic** (ex: accorder VIP ou Entreprise manuellement).
    - **Réinitialisation du mot de passe** pour dépanner un utilisateur bloqué.
    - **Suspension / Réactivation** immédiate d'un compte suspect.
    - **Suppression définitive sécurisée**.
-   - **Exportation complète en CSV** (`moncv_export_utilisateurs.csv`).
+   - **Exportation complète en CSV** (`moncv_export_utilisateurs_*.csv`).
 
-3. **💼 Abonnements & Viviers Entreprises B2B** :
+4. **💼 Abonnements & Viviers Entreprises B2B** :
    - Suivi des licences professionnelles et des quotas consommés (15, 30, 75, 200 candidats).
    - Données légales de l'entreprise (RCCM, adresse, gérant, téléphone WhatsApp).
 
-4. **🩺 Diagnostic Proactif des Incidents (Auto-Scan)** :
-   - Scanner en 6 points de contrôle d'intégrité :
-     1. Intégrité des abonnements payants.
-     2. Indexation des CVs et détection des orphelins.
-     3. Respect des quotas vivier entreprise.
-     4. Disponibilité de la base Cloud Supabase PostgreSQL.
-     5. État des endpoints de génération IA.
-     6. Intégrité du stockage local et détection de corruptions.
+5. **🩺 Diagnostic Proactif des Incidents (Auto-Scan en 8 Points)** :
+   1. Intégrité des abonnements payants.
+   2. Indexation des CVs et détection des orphelins.
+   3. Respect des quotas vivier entreprise.
+   4. Disponibilité de la base Cloud Supabase PostgreSQL.
+   5. Passerelle de Paiement LigdiCash Mobile Money & Webhook.
+   6. Registre des abonnements Cloud Supabase.
+   7. Moteur ATS & Générateur STAR IA.
+   8. Intégrité du stockage local et détection de corruptions.
 
-5. **🛠️ Correctifs en 1 Clic (Auto-Heal & Maintenance)** :
+6. **🛠️ Correctifs en 1 Clic (Auto-Heal & Maintenance)** :
+   - **"Sync Cloud"** : Télécharge et réconcilie toutes les données PostgreSQL distantes.
    - **"Réparer & Resynchroniser les Abonnements"** : consolide et réécrit les clés manquantes.
    - **"Rattacher les CVs Orphelins"** : réindexe automatiquement les CVs sans propriétaire.
    - **"Nettoyer & Compacter le Stockage"** : purge les clés temporaires et obsolètes.
-   - **"Mode Maintenance"** : active un bandeau d'information pour les visiteurs.
+   - **"Mode Maintenance Global"** : active un bandeau d'information pour les visiteurs.
    - **"Générer des Données Démo"** : crée 1 profil VIP et 1 entreprise pour vos présentations.
 
 ---

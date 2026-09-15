@@ -204,6 +204,24 @@ export interface ATSAnalysisResult {
   }[];
 }
 
+export interface TransactionRecord {
+  id: string;
+  userId?: string | null;
+  userEmail?: string;
+  planTier: PlanTier;
+  amountXof: number;
+  amount?: number;
+  currency?: string;
+  provider: string;
+  phoneNumber?: string;
+  referenceCode: string;
+  externalToken?: string;
+  status: "completed" | "pending" | "failed" | "cancelled";
+  createdAt: string;
+  updatedAt?: string;
+  metadata?: Record<string, any>;
+}
+
 // === ADMINISTRATION & SUPERVISION GLOBALE ===
 
 export type UserRole = "candidate" | "business" | "admin" | "superadmin";
@@ -221,7 +239,7 @@ export interface AdminAuditLog {
 export interface SystemDiagnosticCheck {
   id: string;
   title: string;
-  category: "subscriptions" | "resumes" | "quotas" | "cloud" | "ai" | "storage";
+  category: "subscriptions" | "resumes" | "quotas" | "cloud" | "ai" | "storage" | "payments";
   status: "healthy" | "warning" | "critical" | "pending";
   message: string;
   lastRunAt?: string;
@@ -242,6 +260,11 @@ export interface SystemMetricSummary {
   revenueByPlan: Record<PlanTier, { count: number; revenueFcfa: number }>;
   activeSubscriptionsCount: number;
   averageAtsScore: number;
+  totalTransactions?: number;
+  completedTransactions?: number;
+  pendingTransactions?: number;
+  failedTransactions?: number;
+  mobileMoneyVolumeFcfa?: number;
 }
 
 export interface SystemHealthStatus {

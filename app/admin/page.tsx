@@ -40,6 +40,9 @@ import {
   Eye,
   EyeOff,
   Shield,
+  CreditCard,
+  Copy,
+  Check,
 } from "lucide-react";
 import { StorageManager, RegisteredUser, UserSession } from "@/lib/storage";
 import {
@@ -48,6 +51,7 @@ import {
   AdminAuditLog,
   SystemDiagnosticCheck,
   SystemMetricSummary,
+  TransactionRecord,
 } from "@/lib/types";
 import { AdminService } from "@/lib/adminService";
 
@@ -86,7 +90,7 @@ export default function AdminConsolePage() {
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<
-    "overview" | "users" | "business" | "diagnostics" | "maintenance"
+    "overview" | "users" | "business" | "transactions" | "diagnostics" | "maintenance"
   >("overview");
 
   // Données
@@ -97,6 +101,29 @@ export default function AdminConsolePage() {
   const [diagLoading, setDiagLoading] = useState<boolean>(false);
   const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Données Transactions & Paiements LigdiCash
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [txStats, setTxStats] = useState<{
+    total: number;
+    completed: number;
+    pending: number;
+    failed: number;
+    totalVolumeXof: number;
+  }>({ total: 0, completed: 0, pending: 0, failed: 0, totalVolumeXof: 0 });
+  const [txLoading, setTxLoading] = useState<boolean>(false);
+  const [txSearch, setTxSearch] = useState<string>("");
+  const [txStatusFilter, setTxStatusFilter] = useState<string>("all");
+  const [txPlanFilter, setTxPlanFilter] = useState<string>("all");
+  const [copiedRef, setCopiedRef] = useState<string | null>(null);
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+  const [reverifyingRef, setReverifyingRef] = useState<string | null>(null);
+
+  // Modal Validation Manuelle
+  const [manualModalOpen, setManualModalOpen] = useState<boolean>(false);
+  const [manualRef, setManualRef] = useState<string>("");
+  const [manualEmail, setManualEmail] = useState<string>("");
+  const [manualPlan, setManualPlan] = useState<PlanTier>("2500");
 
   // Filtres utilisateurs
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -180,6 +207,110 @@ export default function AdminConsolePage() {
     }, 4000);
   };
 
+  // Charger les transactions depuis Supabase Cloud
+  const loadTransactions = async () => {
+    setTxLoading(true);
+    try {
+      const res = await AdminService.fetchCloudTransactions();
+      if (res.success) {
+        setTransactions(res.transactions);
+        setTxStats(res.stats);
+      }
+    } catch (e) {
+      console.warn("Erreur chargement transactions LigdiCash:", e);
+    } finally {
+      setTxLoading(false);
+    }
+  };
+
+  // Synchronisation Complète Cloud Supabase (Utilisateurs + Transactions + Abonnements)
+  const handleSyncCloud = async () => {
+    setIsSyncingCloud(true);
+    try {
+      await loadTransactions();
+      loadAdminData();
+      await handleRunDiagnostics();
+      showToast("Synchronisation Cloud Supabase terminée avec succès", "success");
+    } catch (e: any) {
+      showToast("Erreur lors de la synchronisation cloud", "error");
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
+  // Re-vérifier une transaction avec LigdiCash
+  const handleReverifyTx = async (referenceCode: string, token?: string) => {
+    setReverifyingRef(referenceCode);
+    try {
+      const res = await AdminService.reverifyLigdiCashTransaction(referenceCode, token);
+      if (res.success) {
+        showToast(res.message, res.isPaid ? "success" : "info");
+        await loadTransactions();
+        loadAdminData();
+      } else {
+        showToast(res.message, "error");
+      }
+    } catch (e: any) {
+      showToast(e.message || "Erreur de contact LigdiCash", "error");
+    } finally {
+      setReverifyingRef(null);
+    }
+  };
+
+  // Valider manuellement une transaction (ex: confirmation par SMS opérateur)
+  const handleManualValidateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualRef.trim()) return;
+
+    try {
+      const res = await AdminService.manualValidateTransaction(
+        manualRef.trim(),
+        manualEmail.trim() || undefined,
+        manualPlan
+      );
+      if (res.success) {
+        showToast(res.message, "success");
+        setManualModalOpen(false);
+        setManualRef("");
+        setManualEmail("");
+        await loadTransactions();
+        loadAdminData();
+      } else {
+        showToast(res.message, "error");
+      }
+    } catch (e: any) {
+      showToast(e.message || "Erreur de validation", "error");
+    }
+  };
+
+  // Exporter les transactions au format CSV
+  const handleExportTransactions = () => {
+    const csvContent = AdminService.exportTransactionsCsv(transactions);
+    if (!csvContent) {
+      showToast("Aucune transaction à exporter", "info");
+      return;
+    }
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `moncv_transactions_ligdicash_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Export CSV des transactions généré avec succès", "success");
+  };
+
+  // Copier dans le presse-papier
+  const copyToClipboard = (text: string, id: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedRef(id);
+      setTimeout(() => setCopiedRef(null), 2500);
+      showToast("Référence copiée dans le presse-papier", "info");
+    }
+  };
+
   // Charger toutes les données du dashboard admin
   const loadAdminData = () => {
     try {
@@ -193,6 +324,7 @@ export default function AdminConsolePage() {
       setAuditLogs(logs);
 
       setMaintenanceMode(AdminService.isMaintenanceMode());
+      loadTransactions();
     } catch (e) {
       console.error("Erreur chargement données admin", e);
     }
@@ -409,6 +541,28 @@ export default function AdminConsolePage() {
         Boolean(u.business?.companyName)
     );
   }, [users]);
+
+  // Filtrage des transactions LigdiCash
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      const q = txSearch.toLowerCase().trim();
+      const matchesSearch =
+        q === "" ||
+        t.referenceCode.toLowerCase().includes(q) ||
+        (t.externalToken && t.externalToken.toLowerCase().includes(q)) ||
+        (t.userEmail && t.userEmail.toLowerCase().includes(q)) ||
+        (t.phoneNumber && t.phoneNumber.toLowerCase().includes(q)) ||
+        (t.provider && t.provider.toLowerCase().includes(q));
+
+      const matchesStatus =
+        txStatusFilter === "all" || t.status === txStatusFilter;
+
+      const matchesPlan =
+        txPlanFilter === "all" || t.planTier === txPlanFilter;
+
+      return matchesSearch && matchesStatus && matchesPlan;
+    });
+  }, [transactions, txSearch, txStatusFilter, txPlanFilter]);
 
   // =========================================================================
   // ÉCRAN DE VERROUILLAGE & ACCÈS SÉCURISÉ (SI NON AUTHENTIFIÉ)
@@ -648,6 +802,17 @@ export default function AdminConsolePage() {
 
           <button
             type="button"
+            onClick={handleSyncCloud}
+            disabled={isSyncingCloud}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            title="Synchroniser toutes les données avec Supabase Cloud PostgreSQL"
+          >
+            <Database className={`w-3.5 h-3.5 ${isSyncingCloud ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">Sync Cloud</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               loadAdminData();
               handleRunDiagnostics();
@@ -685,6 +850,27 @@ export default function AdminConsolePage() {
         >
           <Activity className="w-4 h-4" />
           <span>Vue d'ensemble & Métriques</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("transactions");
+            if (transactions.length === 0) loadTransactions();
+          }}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "transactions"
+              ? "border-emerald-500 text-emerald-400 bg-emerald-500/5"
+              : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Paiements LigdiCash ({transactions.length})</span>
+          {txStats.pending > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black animate-pulse">
+              {txStats.pending}
+            </span>
+          )}
         </button>
 
         <button
@@ -967,6 +1153,342 @@ export default function AdminConsolePage() {
                     Gérer et purger les logs dans Maintenance →
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* ONGLET NOUVEAU : PAIEMENTS & TRANSACTIONS LIGDICASH MOBILE MONEY  */}
+        {/* ================================================================= */}
+        {activeTab === "transactions" && (
+          <div className="space-y-6 fade-in">
+            {/* Bannière Passerelle LigdiCash & Intégration UEMOA */}
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-sm text-white">
+                      Passerelle Mobile Money LigdiCash (UEMOA)
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">
+                      Direct Live Webhook
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                    Acceptation instantanée des paiements par <strong className="text-white">Orange Money, MTN MoMo, Moov Money, Wave</strong> et cartes bancaires. Les abonnements et CVs sont débloqués automatiquement à la réception du webhook.
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400">
+                    <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                      ● Webhook actif :
+                    </span>
+                    <code className="bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 text-slate-300">
+                      /api/webhooks/ligdicash
+                    </code>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end lg:self-center">
+                <button
+                  type="button"
+                  onClick={loadTransactions}
+                  disabled={txLoading}
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-slate-700"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${txLoading ? "animate-spin" : ""}`} />
+                  <span>Actualiser</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManualModalOpen(true)}
+                  className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Validation Manuelle</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportTransactions}
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Exporter CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 4 KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Chiffre d'Affaires Mobile Money
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-emerald-400">
+                    {txStats.totalVolumeXof.toLocaleString("fr-FR")}
+                  </span>
+                  <span className="text-xs text-slate-400 font-bold">FCFA</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Encaissé via LigdiCash
+                </p>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Paiements Validés
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-white">{txStats.completed}</span>
+                  <span className="text-xs text-emerald-400 font-bold">confirmés</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Abonnements déverrouillés
+                </p>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  En Attente de Validation
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-amber-400">{txStats.pending}</span>
+                  <span className="text-xs text-slate-400 font-medium">initiés</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  En attente de confirmation client
+                </p>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Total Transactions
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-white">{txStats.total}</span>
+                  <span className="text-xs text-slate-400 font-medium">flux enregistrés</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Échecs / Annulés : {txStats.failed}
+                </p>
+              </div>
+            </div>
+
+            {/* Barre de Recherche & Filtres */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={txSearch}
+                  onChange={(e) => setTxSearch(e.target.value)}
+                  placeholder="Rechercher par référence, email client, téléphone, jeton..."
+                  className="w-full pl-10 pr-4 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={txStatusFilter}
+                  onChange={(e) => setTxStatusFilter(e.target.value)}
+                  className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="all">Tous les Statuts</option>
+                  <option value="completed">Validés (Completed)</option>
+                  <option value="pending">En Attente (Pending)</option>
+                  <option value="failed">Échoués / Annulés</option>
+                </select>
+
+                <select
+                  value={txPlanFilter}
+                  onChange={(e) => setTxPlanFilter(e.target.value)}
+                  className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="all">Toutes les Formules</option>
+                  <option value="1500">Essentiel (1 500 F)</option>
+                  <option value="2500">Pro (2 500 F)</option>
+                  <option value="5000">VIP (5 000 F)</option>
+                  <option value="cyber15">Cyber 15 (15 000 F)</option>
+                  <option value="enterprise30">Starter RH (30 000 F)</option>
+                  <option value="enterprise75">Business RH (75 000 F)</option>
+                  <option value="enterprise200">Entreprise (200 000 F)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Tableau des Transactions */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-800/80 text-slate-400 uppercase text-[10px] font-black tracking-wider border-b border-slate-700">
+                    <tr>
+                      <th className="py-3 px-4">Date & Heure</th>
+                      <th className="py-3 px-4">Client / Contact</th>
+                      <th className="py-3 px-4">Opérateur</th>
+                      <th className="py-3 px-4">Formule</th>
+                      <th className="py-3 px-4">Montant</th>
+                      <th className="py-3 px-4">Référence & Jeton</th>
+                      <th className="py-3 px-4">Statut</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {txLoading ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center text-slate-400">
+                          <div className="flex items-center justify-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                            <span>Chargement des transactions depuis Supabase Cloud...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center text-slate-400">
+                          <p className="font-bold text-sm text-slate-300">Aucune transaction trouvée</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Les nouveaux paiements LigdiCash s'afficheront ici en temps réel.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTransactions.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3.5 px-4 whitespace-nowrap text-[11px] font-mono text-slate-400">
+                            {new Date(tx.createdAt).toLocaleString("fr-FR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-white truncate max-w-[180px]">
+                              {tx.userEmail || "Client Mobile Money"}
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-mono">
+                              {tx.phoneNumber || "—"}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
+                              {tx.provider || "ligdicash"}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-bold">
+                              {tx.planTier === "1500"
+                                ? "Essentiel"
+                                : tx.planTier === "2500"
+                                ? "Pro"
+                                : tx.planTier === "5000"
+                                ? "VIP Illimité"
+                                : tx.planTier === "cyber15"
+                                ? "Cyber 15"
+                                : tx.planTier === "enterprise30"
+                                ? "Starter RH"
+                                : tx.planTier === "enterprise75"
+                                ? "Business RH"
+                                : tx.planTier === "enterprise200"
+                                ? "Entreprise Illimitée"
+                                : tx.planTier}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="font-black text-white text-xs">
+                              {(tx.amountXof || tx.amount || 0).toLocaleString("fr-FR")} FCFA
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-mono text-[11px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-slate-300 truncate max-w-[140px]" title={tx.referenceCode}>
+                                {tx.referenceCode}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(tx.referenceCode, tx.id)}
+                                className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                                title="Copier la référence"
+                              >
+                                {copiedRef === tx.id ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                            {tx.externalToken && (
+                              <span className="text-[10px] text-slate-500 truncate max-w-[140px] block" title={tx.externalToken}>
+                                Token: {tx.externalToken.slice(0, 16)}...
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {tx.status === "completed" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-black uppercase">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                <span>Validé</span>
+                              </span>
+                            ) : tx.status === "pending" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase">
+                                <Clock className="w-3 h-3 text-amber-400" />
+                                <span>En Attente</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[10px] font-black uppercase">
+                                <AlertCircle className="w-3 h-3 text-rose-400" />
+                                <span>{tx.status}</span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Re-vérifier auprès de LigdiCash */}
+                              <button
+                                type="button"
+                                onClick={() => handleReverifyTx(tx.referenceCode, tx.externalToken)}
+                                disabled={reverifyingRef === tx.referenceCode}
+                                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer border border-slate-700"
+                                title="Interroger LigdiCash en direct pour vérifier si le client a payé"
+                              >
+                                <RefreshCw className={`w-3.5 h-3.5 ${reverifyingRef === tx.referenceCode ? "animate-spin text-emerald-400" : ""}`} />
+                              </button>
+
+                              {/* Si pending : bouton de validation manuelle rapide */}
+                              {tx.status !== "completed" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setManualRef(tx.referenceCode);
+                                    setManualEmail(tx.userEmail || "");
+                                    setManualPlan(tx.planTier);
+                                    setManualModalOpen(true);
+                                  }}
+                                  className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                                  title="Valider manuellement cette transaction et activer le compte"
+                                >
+                                  Valider
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1772,6 +2294,103 @@ export default function AdminConsolePage() {
                 Enregistrer le mot de passe
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* MODAL 3 : VALIDATION MANUELLE DE TRANSACTION MOBILE MONEY         */}
+      {/* ================================================================= */}
+      {manualModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Validation Manuelle d'un Paiement</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setManualModalOpen(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Permet au SuperAdmin de forcer l'activation immédiate d'un abonnement si un paiement Mobile Money a été confirmé hors-ligne ou par SMS opérateur.
+            </p>
+
+            <form onSubmit={handleManualValidateSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Référence Unique de Transaction <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={manualRef}
+                  onChange={(e) => setManualRef(e.target.value)}
+                  placeholder="Ex: TRX_LC_1789356609518_7e85v"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Email du Client / Compte à Débloquer <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={manualEmail}
+                  onChange={(e) => setManualEmail(e.target.value)}
+                  placeholder="client@domaine.com"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Formule à Débloquer
+                </label>
+                <select
+                  value={manualPlan}
+                  onChange={(e) => setManualPlan(e.target.value as PlanTier)}
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <optgroup label="Formules Candidats">
+                    <option value="1500">Essentiel (1 500 FCFA)</option>
+                    <option value="2500">Pro (2 500 FCFA)</option>
+                    <option value="5000">VIP Illimité (5 000 FCFA)</option>
+                  </optgroup>
+                  <optgroup label="Formules Entreprises / Recruteurs">
+                    <option value="cyber15">Cyber 15 (15 000 FCFA)</option>
+                    <option value="enterprise30">Starter RH (30 000 FCFA)</option>
+                    <option value="enterprise75">Business RH (75 000 FCFA)</option>
+                    <option value="enterprise200">Entreprise Illimitée (200 000 FCFA)</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setManualModalOpen(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/30"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Confirmer & Activer</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

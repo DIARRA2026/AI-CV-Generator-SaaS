@@ -625,6 +625,26 @@ export default function HomePage() {
         </section>
 
         {/* ========================================================================= */}
+        {/* 1-BIS. VIDÉO DE DÉMONSTRATION & PROPOSITION DE VALEUR */}
+        {/* ========================================================================= */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+          <div className="overflow-hidden rounded-3xl border border-indigo-100 bg-slate-950 shadow-2xl ring-1 ring-slate-900/10">
+            <video
+              className="aspect-video w-full"
+              controls
+              playsInline
+              preload="metadata"
+            >
+              <source
+                src="https://d2ol7oe51mr4n9.cloudfront.net/user_3ITRPXGLxqTCdbPyF8qgg1e5QR1/870cd270-4d56-4cc2-ada0-ecb8323587a2.mp4"
+                type="video/mp4"
+              />
+              Votre navigateur ne prend pas en charge la vidéo.
+            </video>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
         {/* 2. EXPOSITION & GALERIE DES MODÈLES DE CV */}
         {/* ========================================================================= */}
         <section id="exposition-modeles" className="py-10 sm:py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-200">

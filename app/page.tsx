@@ -1324,26 +1324,22 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-2">
+                <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("1500", false)}
-                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-2xl text-center text-xs transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
+                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
                   >
-                    <span>Payer 1 500 FCFA (Mobile Money / Carte)</span>
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Payer 1 500 FCFA</span>
+                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-slate-500 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-slate-700">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/15 text-[#0098d4] border border-[#1dc4fe]/30">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/15 text-[#ff7900] border border-[#ff7900]/30">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/20 text-[#997300] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#005ca9]/15 text-[#005ca9] border border-[#005ca9]/30">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">Carte</span>
                   </div>
                 </div>
               </div>
@@ -1391,27 +1387,23 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-2">
+                <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("2500", false)}
-                    className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-center text-xs shadow-xl shadow-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
+                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
-                    <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow" />
-                    <span>Payer 2 500 FCFA (Mobile Money / Carte)</span>
-                    <Crown className="w-3.5 h-3.5" />
+                    <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow shrink-0" />
+                    <span>Payer 2 500 FCFA</span>
+                    <span className="opacity-85 font-black sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Crown className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-blue-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-amber-300">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
                   </div>
                 </div>
               </div>
@@ -1459,27 +1451,23 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-2">
+                <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("5000", false)}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-2xl text-center text-xs shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
+                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
-                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
-                    <span>Payer 5 000 FCFA (Mobile Money / Carte)</span>
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
+                    <span>Payer 5 000 FCFA</span>
+                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-purple-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-pink-300">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
                   </div>
                 </div>
               </div>
@@ -1682,27 +1670,23 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-8 flex flex-col gap-2">
+                <div className="mt-8 flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise30", false)}
-                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-emerald-600/30 card-hover-lift"
+                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-emerald-600/30 card-hover-lift"
                   >
-                    <Building className="w-4 h-4" />
-                    <span>Payer 20 000 FCFA (Mobile Money / Carte)</span>
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <Building className="w-4 h-4 shrink-0" />
+                    <span>Payer 20 000 FCFA</span>
+                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-slate-400 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-teal-300">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
                   </div>
                 </div>
               </div>
@@ -1765,27 +1749,23 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-8 flex flex-col gap-2 relative z-10">
+                <div className="mt-8 flex flex-col gap-2.5 relative z-10">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise75", false)}
-                    className="w-full py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-amber-500/40 animate-cta-loop"
+                    className="w-full py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-amber-500/40 animate-cta-loop"
                   >
-                    <Sparkles className="w-4 h-4 text-slate-950" />
-                    <span>Payer 45 000 FCFA (Mobile Money / Carte)</span>
-                    <Crown className="w-3.5 h-3.5" />
+                    <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
+                    <span>Payer 45 000 FCFA</span>
+                    <span className="opacity-85 font-black sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Crown className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-indigo-200/90 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-amber-300">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
                   </div>
                 </div>
               </div>
@@ -1841,27 +1821,23 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                <div className="mt-8 flex flex-col gap-2">
+                <div className="mt-8 flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleOpenPlanPayment("enterprise200", false)}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
+                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
                   >
-                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft" />
-                    <span>Payer 100 000 FCFA (Mobile Money / Carte)</span>
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
+                    <span>Payer 100 000 FCFA</span>
+                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
+                    <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="text-[10.5px] text-slate-400 font-medium text-center flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-purple-300">LigdiCash :</span>
-                    <span>Wave</span>
-                    <span>•</span>
-                    <span>Orange</span>
-                    <span>•</span>
-                    <span>MTN</span>
-                    <span>•</span>
-                    <span>Moov</span>
-                    <span>•</span>
-                    <span>Carte</span>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
                   </div>
                 </div>
               </div>

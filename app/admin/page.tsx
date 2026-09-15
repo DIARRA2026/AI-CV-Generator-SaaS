@@ -238,7 +238,7 @@ export default function AdminConsolePage() {
     }
   };
 
-  // Re-vérifier une transaction avec LigdiCash
+  // Re-vérifier une transaction auprès de la passerelle
   const handleReverifyTx = async (referenceCode: string, token?: string) => {
     setReverifyingRef(referenceCode);
     try {
@@ -251,7 +251,7 @@ export default function AdminConsolePage() {
         showToast(res.message, "error");
       }
     } catch (e: any) {
-      showToast(e.message || "Erreur de contact LigdiCash", "error");
+      showToast(e.message || "Erreur de contact avec la passerelle", "error");
     } finally {
       setReverifyingRef(null);
     }
@@ -294,7 +294,7 @@ export default function AdminConsolePage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `moncv_transactions_ligdicash_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `moncv_transactions_mobile_money_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -865,7 +865,7 @@ export default function AdminConsolePage() {
           }`}
         >
           <CreditCard className="w-4 h-4" />
-          <span>Paiements LigdiCash ({transactions.length})</span>
+          <span>Paiements Mobile Money ({transactions.length})</span>
           {txStats.pending > 0 && (
             <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black animate-pulse">
               {txStats.pending}
@@ -1163,7 +1163,7 @@ export default function AdminConsolePage() {
         {/* ================================================================= */}
         {activeTab === "transactions" && (
           <div className="space-y-6 fade-in">
-            {/* Bannière Passerelle LigdiCash & Intégration UEMOA */}
+            {/* Bannière Passerelle Mobile Money & Intégration UEMOA */}
             <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
@@ -1172,14 +1172,14 @@ export default function AdminConsolePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-extrabold text-sm text-white">
-                      Passerelle Mobile Money LigdiCash (UEMOA)
+                      Passerelle Mobile Money (Wave, Orange, MTN, Moov)
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">
                       Direct Live Webhook
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                    Acceptation instantanée des paiements par <strong className="text-white">Orange Money, MTN MoMo, Moov Money, Wave</strong> et cartes bancaires. Les abonnements et CVs sont débloqués automatiquement à la réception du webhook.
+                    Acceptation instantanée des paiements par <strong className="text-white">Wave, Orange Money, MTN MoMo, Moov Money</strong> et cartes bancaires. Les abonnements et CVs sont débloqués automatiquement à la réception du webhook.
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400">
                     <span className="flex items-center gap-1 text-emerald-400 font-bold">
@@ -1234,7 +1234,7 @@ export default function AdminConsolePage() {
                   <span className="text-xs text-slate-400 font-bold">FCFA</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-2">
-                  Encaissé via LigdiCash
+                  Encaissé via Mobile Money
                 </p>
               </div>
 
@@ -1351,7 +1351,7 @@ export default function AdminConsolePage() {
                         <td colSpan={8} className="py-12 text-center text-slate-400">
                           <p className="font-bold text-sm text-slate-300">Aucune transaction trouvée</p>
                           <p className="text-xs text-slate-500 mt-1">
-                            Les nouveaux paiements LigdiCash s'afficheront ici en temps réel.
+                            Les nouveaux paiements Mobile Money (Wave, Orange, MTN, Moov) s'afficheront ici en temps réel.
                           </p>
                         </td>
                       </tr>
@@ -1379,7 +1379,7 @@ export default function AdminConsolePage() {
 
                           <td className="py-3.5 px-4">
                             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-                              {tx.provider || "ligdicash"}
+                              {tx.paymentMethod?.replace(/ligdicash\s*/i, "").replace(/[\(\)]/g, "").trim() || tx.provider?.toUpperCase() || "MOBILE MONEY"}
                             </span>
                           </td>
 
@@ -1455,13 +1455,13 @@ export default function AdminConsolePage() {
 
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
-                              {/* Re-vérifier auprès de LigdiCash */}
+                              {/* Re-vérifier auprès de la passerelle */}
                               <button
                                 type="button"
                                 onClick={() => handleReverifyTx(tx.referenceCode, tx.externalToken)}
                                 disabled={reverifyingRef === tx.referenceCode}
                                 className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer border border-slate-700"
-                                title="Interroger LigdiCash en direct pour vérifier si le client a payé"
+                                title="Interroger la passerelle de paiement en direct pour vérifier si le client a payé"
                               >
                                 <RefreshCw className={`w-3.5 h-3.5 ${reverifyingRef === tx.referenceCode ? "animate-spin text-emerald-400" : ""}`} />
                               </button>

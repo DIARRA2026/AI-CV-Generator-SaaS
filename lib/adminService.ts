@@ -789,18 +789,18 @@ export class AdminService {
           const completed = (txs || []).filter((t: any) => t.status === "completed").length;
           const pending = (txs || []).filter((t: any) => t.status === "pending").length;
           results.push({
-            id: "diag-ligdicash",
-            title: "Passerelle LigdiCash Mobile Money (UEMOA)",
+            id: "diag-mobile-money",
+            title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
             category: "payments",
             status: "healthy",
-            message: `Passerelle opérationnelle (Orange Money, MTN MoMo, Moov, Wave). ${completed} paiement(s) validé(s), ${pending} en attente.`,
+            message: `Passerelle opérationnelle (Wave, Orange Money, MTN MoMo, Moov). ${completed} paiement(s) validé(s), ${pending} en attente.`,
             lastRunAt: now,
             affectedCount: pending,
           });
         } else {
           results.push({
-            id: "diag-ligdicash",
-            title: "Passerelle LigdiCash Mobile Money (UEMOA)",
+            id: "diag-mobile-money",
+            title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
             category: "payments",
             status: "warning",
             message: `Table des transactions : ${txErr.message}`,
@@ -809,8 +809,8 @@ export class AdminService {
         }
       } else {
         results.push({
-          id: "diag-ligdicash",
-          title: "Passerelle LigdiCash Mobile Money (UEMOA)",
+          id: "diag-mobile-money",
+          title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
           category: "payments",
           status: "healthy",
           message: "Passerelle Mobile Money active avec webhook sécurisé.",
@@ -819,11 +819,11 @@ export class AdminService {
       }
     } catch (e: any) {
       results.push({
-        id: "diag-ligdicash",
-        title: "Passerelle LigdiCash Mobile Money (UEMOA)",
+        id: "diag-mobile-money",
+        title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
         category: "payments",
         status: "critical",
-        message: `Erreur vérification passerelle LigdiCash : ${e.message}`,
+        message: `Erreur vérification passerelle Mobile Money : ${e.message}`,
         lastRunAt: now,
       });
     }

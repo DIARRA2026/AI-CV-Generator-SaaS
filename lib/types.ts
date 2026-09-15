@@ -213,6 +213,7 @@ export interface TransactionRecord {
   amount?: number;
   currency?: string;
   provider: string;
+  paymentMethod?: string;
   phoneNumber?: string;
   referenceCode: string;
   externalToken?: string;

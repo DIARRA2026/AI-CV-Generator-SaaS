@@ -3,13 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { X, Check, ShieldCheck, Sparkles, Smartphone, CreditCard, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users, ExternalLink } from "lucide-react";
+import { X, Check, ShieldCheck, Sparkles, Smartphone, RefreshCw, CheckCircle2, Crown, Globe, FileText, Lock, Building, Users } from "lucide-react";
 import { StorageManager } from "@/lib/storage";
-import { registerPaymentSuccess } from "@/lib/license-manager";
 import { PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
-import { SupabaseService } from "@/lib/supabaseService";
-import { getWavePaymentUrl, getWavePlanConfig, hasWavePayment } from "@/config/payments";
 
 // ─── Configuration unique de toutes les offres ───────────────────────────────
 type PlanCategory = "particulier" | "entreprise";
@@ -26,7 +23,6 @@ interface PlanConfig {
   desc: string;
   features: string[];
   highlight: boolean;
-  // Confirmation post-paiement
   confirmTitle: string;
   confirmDesc: string;
   confirmGradient: string;
@@ -64,7 +60,7 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     price: "2 500 FCFA",
     priceNumber: "2 500",
     badge: "Recommandé ★",
-    badgeColor: "bg-amber-500 text-white shadow-xs",
+    badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs font-black",
     highlight: true,
     desc: "La formule complète pour réussir ses recrutements avec lettre et demande.",
     features: [
@@ -86,7 +82,7 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     price: "5 000 FCFA",
     priceNumber: "5 000",
     badge: "Prestige VIP",
-    badgeColor: "bg-purple-100 text-purple-800 border-purple-200",
+    badgeColor: "bg-purple-100 text-purple-800 border-purple-200 font-black",
     highlight: false,
     desc: "Pour cadres et consultants : vitrine web moderne avec QR Code recruteur.",
     features: [
@@ -101,7 +97,7 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     confirmBorder: "border-purple-200",
     confirmTextColor: "text-purple-700",
   },
-  // ── Entreprise / B2B (Les 3 Offres Officielles Conformes à l'Image) ──
+  // ── Entreprise / B2B ──
   {
     id: "enterprise30",
     category: "entreprise",
@@ -110,7 +106,7 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     priceNumber: "20 000",
     perProfile: "~667 F / profil",
     badge: "30 Candidats",
-    badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    badgeColor: "bg-teal-100 text-teal-800 border-teal-200 font-bold",
     highlight: false,
     desc: "Idéal pour petites structures, startups & promotions de 20-30 apprenants.",
     features: [
@@ -133,8 +129,8 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     price: "45 000 FCFA",
     priceNumber: "45 000",
     perProfile: "600 F / profil",
-    badge: "Recommandé ★",
-    badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs",
+    badge: "Recommandé RH ★",
+    badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs font-black",
     highlight: true,
     desc: "La formule reine pour cabinets de recrutement, agences d'intérim & DRH actives.",
     features: [
@@ -159,7 +155,7 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
     priceNumber: "100 000",
     perProfile: "500 F / profil (-67%)",
     badge: "Volume Élite",
-    badgeColor: "bg-purple-100 text-purple-800 border-purple-200",
+    badgeColor: "bg-purple-100 text-purple-800 border-purple-200 font-bold",
     highlight: false,
     desc: "Pour grandes entreprises, ONG internationales, universités & réseaux de cybercafés.",
     features: [
@@ -178,16 +174,66 @@ const ALL_PLANS: (Omit<PlanConfig, "icon">)[] = [
   },
 ];
 
-const PLAN_ICONS: Record<PlanTier, React.ReactNode> = {
-  "free": <Sparkles className="w-4 h-4" />,
-  "1500": <Sparkles className="w-4 h-4" />,
-  "2500": <Crown className="w-4 h-4" />,
-  "5000": <Globe className="w-4 h-4" />,
-  "cyber15": <FileText className="w-4 h-4" />,
-  "enterprise30": <Building className="w-4 h-4" />,
-  "enterprise75": <Users className="w-4 h-4" />,
-  "enterprise200": <Crown className="w-4 h-4" />,
-};
+// ─── Opérateurs de paiement officiels ─────────────────────────────────────────
+type PaymentOperatorId = "wave" | "orange" | "mtn" | "moov" | "card";
+
+interface PaymentOperator {
+  id: PaymentOperatorId;
+  name: string;
+  tag: string;
+  badgeText: string;
+  badgeStyle: string;
+  accentBorder: string;
+  activeBg: string;
+}
+
+const PAYMENT_OPERATORS: PaymentOperator[] = [
+  {
+    id: "wave",
+    name: "Wave",
+    tag: "0% frais",
+    badgeText: "Wave",
+    badgeStyle: "bg-[#1dc4fe] text-white",
+    accentBorder: "border-[#1dc4fe]",
+    activeBg: "bg-[#1dc4fe]/10 text-slate-900 border-[#1dc4fe]",
+  },
+  {
+    id: "orange",
+    name: "Orange Money",
+    tag: "Instantané",
+    badgeText: "Orange Money",
+    badgeStyle: "bg-[#ff7900] text-white",
+    accentBorder: "border-[#ff7900]",
+    activeBg: "bg-[#ff7900]/10 text-slate-900 border-[#ff7900]",
+  },
+  {
+    id: "mtn",
+    name: "MTN MoMo",
+    tag: "Instantané",
+    badgeText: "MTN MoMo",
+    badgeStyle: "bg-[#ffcc00] text-slate-950 font-black",
+    accentBorder: "border-[#ffcc00]",
+    activeBg: "bg-[#ffcc00]/15 text-slate-900 border-[#ffcc00]",
+  },
+  {
+    id: "moov",
+    name: "Moov Money",
+    tag: "Instantané",
+    badgeText: "Moov Money",
+    badgeStyle: "bg-[#005ca9] text-white",
+    accentBorder: "border-[#005ca9]",
+    activeBg: "bg-[#005ca9]/10 text-slate-900 border-[#005ca9]",
+  },
+  {
+    id: "card",
+    name: "Carte Bancaire",
+    tag: "Visa / Master",
+    badgeText: "Carte Bancaire",
+    badgeStyle: "bg-slate-900 text-white",
+    accentBorder: "border-slate-900",
+    activeBg: "bg-slate-100 text-slate-900 border-slate-900",
+  },
+];
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
@@ -208,22 +254,20 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 }) => {
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>(defaultPlan);
-  const [paymentMethod, setPaymentMethod] = useState<"wave" | "orange" | "mtn" | "card">("wave");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentOperatorId>("wave");
   const [phoneNumber, setPhoneNumber] = useState("+225 07 ");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [planTab, setPlanTab] = useState<PlanCategory>("particulier");
-  const [waveOpened, setWaveOpened] = useState(Boolean(initialWaveOpened));
-  const { t, dict, isRTL } = useTranslation();
+  const { dict } = useTranslation();
   const currentUser = StorageManager.getUser();
 
   useEffect(() => {
     if (isOpen && defaultPlan) {
       setSelectedPlan(defaultPlan);
       setPlanTab(ALL_PLANS.find((p) => p.id === defaultPlan)?.category || "particulier");
-      setWaveOpened(Boolean(initialWaveOpened));
     }
-  }, [isOpen, defaultPlan, initialWaveOpened]);
+  }, [isOpen, defaultPlan]);
 
   const handleFinishAndNavigate = useCallback(() => {
     const isEnterprisePlan = selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15";
@@ -241,7 +285,6 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
     }
   }, [selectedPlan, onSuccess, onClose, router]);
 
-  // Redirection automatique vers l'espace entreprise ou candidat après paiement validé
   useEffect(() => {
     if (isDone) {
       const timer = setTimeout(() => {
@@ -253,36 +296,18 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
   if (!isOpen) return null;
 
-  // ── Helpers ──
   const currentPlan = ALL_PLANS.find((p) => p.id === selectedPlan) || ALL_PLANS[1];
+  const currentOperator = PAYMENT_OPERATORS.find((op) => op.id === paymentMethod) || PAYMENT_OPERATORS[0];
   const visiblePlans = ALL_PLANS.filter((p) => p.category === planTab);
-  const waveCheckoutUrl = getWavePaymentUrl(selectedPlan);
 
   const handleTabSwitch = (tab: PlanCategory) => {
     setPlanTab(tab);
-    setWaveOpened(false);
     const defaultForTab = ALL_PLANS.find((p) => p.category === tab && p.highlight) || ALL_PLANS.find((p) => p.category === tab);
     if (defaultForTab) setSelectedPlan(defaultForTab.id);
   };
 
   const handleSelectPlan = (planId: PlanTier) => {
     setSelectedPlan(planId);
-    setWaveOpened(false);
-  };
-
-  const handleSelectPaymentMethod = (pm: "wave" | "orange" | "mtn" | "card") => {
-    setPaymentMethod(pm);
-    if (pm !== "wave") {
-      setWaveOpened(false);
-    }
-  };
-
-  const handleOpenWaveUrl = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    if (waveCheckoutUrl) {
-      window.open(waveCheckoutUrl, "_blank", "noopener,noreferrer");
-      setWaveOpened(true);
-    }
   };
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -311,42 +336,39 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
           customerLastName: activeUser.lastName || "MonCV",
           customerPhone: phoneNumber.trim(),
           companyName: activeUser.business?.companyName,
+          operator: paymentMethod,
         }),
       });
 
       const data = await response.json();
 
       if (data.success && data.checkoutUrl) {
-        // Enregistrement préventif de la transaction en attente dans le stockage local
         StorageManager.setPlanTier(selectedPlan, {
           status: "pending",
-          paymentMethod: `LigdiCash (${paymentMethod.toUpperCase()})`,
+          paymentMethod: `${currentOperator.name} Mobile Money`,
           phoneNumber: phoneNumber.trim(),
           transactionRef: data.transactionRef,
         });
 
-        // Redirection vers l'interface de paiement LigdiCash (ou écran de simulation si sandbox)
         window.location.href = data.checkoutUrl;
         return;
       }
 
-      setErrorMessage(data.message || "Échec d'initialisation du paiement LigdiCash.");
+      setErrorMessage(data.message || "Échec d'initialisation du paiement sécurisé.");
       setIsProcessing(false);
     } catch (err: any) {
-      console.error("Erreur checkout LigdiCash :", err);
+      console.error("Erreur checkout paiement :", err);
       setErrorMessage(err.message || "Impossible d'établir la connexion avec le serveur de paiement.");
       setIsProcessing(false);
     }
   };
 
-  // ─── Rendu ─────────────────────────────────────────────────────────────────
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md fade-in overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md fade-in overflow-hidden">
       <div className="bg-white w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[94vh] sm:max-h-[90vh] overflow-hidden transform transition-all">
         
         {/* ── En-tête Fixe ── */}
-        <div className="px-5 py-4 sm:px-6 sm:py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 backdrop-blur-md shrink-0">
+        <div className="px-5 py-4 sm:px-6 sm:py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/95 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2.5 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl shadow-md shadow-blue-600/20 shrink-0">
               <Crown className="w-5 h-5" />
@@ -354,15 +376,15 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-black text-slate-900 text-base sm:text-lg leading-tight">
-                  Débloquer MonCV.ai
+                  Choisir votre Formule
                 </h3>
                 <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase rounded-full border border-emerald-200 shrink-0 inline-flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  100% Sécurisé
+                  Paiement 100% Sécurisé
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5 font-medium truncate">
-                Paiement unique sans abonnement • Déblocage instantané
+                Wave • Orange Money • MTN MoMo • Moov • Carte
               </p>
             </div>
           </div>
@@ -376,7 +398,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
           </button>
         </div>
 
-        {/* ── Onglets Particulier / Entreprise Fixes (Toujours visibles en haut) ── */}
+        {/* ── Onglets Particulier / Entreprise Fixes ── */}
         {!isDone && (
           <div className="px-5 py-3 sm:px-6 bg-slate-100/70 border-b border-slate-200/70 shrink-0">
             <div className="flex bg-slate-200/80 p-1 rounded-2xl gap-1">
@@ -430,7 +452,6 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               </p>
             </div>
 
-            {/* Confirmation dynamique */}
             <div className={`p-4 sm:p-5 bg-gradient-to-r ${currentPlan.confirmGradient} border ${currentPlan.confirmBorder} rounded-2xl text-left space-y-1.5 shadow-xs`}>
               <div className={`flex items-center gap-2 font-black text-xs sm:text-sm ${currentPlan.confirmTextColor}`}>
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -482,98 +503,82 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
           </div>
         ) : (
           <form id="mobile-money-form" onSubmit={handlePay} className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 space-y-6">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
               
-              {/* ── Section 1 : Sélection de l'offre ── */}
+              {/* ── Section 1 : Sélection Responsive des Formules ── */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">1</span>
-                    <span>Sélectionnez votre pack {planTab === "entreprise" ? "Entreprise" : "Particulier"} :</span>
+                    <span>Formule {planTab === "entreprise" ? "Entreprise" : "Particulier"} :</span>
                   </label>
                   <span className="text-[11px] font-semibold text-slate-500">
-                    {planTab === "entreprise" ? "Facture normalisée OHADA incluse" : "Paiement unique sans abonnement"}
+                    {planTab === "entreprise" ? "Facture normalisée OHADA" : "Paiement unique sans abonnement"}
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                {/* Grille de boutons des formules optimisée & responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                   {visiblePlans.map((p) => {
                     const isSel = selectedPlan === p.id;
                     return (
                       <div
                         key={p.id}
                         onClick={() => handleSelectPlan(p.id)}
-                        className={`w-full p-4 rounded-2xl border-2 text-left transition-all relative cursor-pointer ${
+                        className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all relative cursor-pointer flex flex-col justify-between ${
                           isSel
-                            ? "border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/20 shadow-md"
+                            ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-md scale-[1.01]"
                             : p.highlight
-                            ? "border-amber-300 bg-amber-50/20 hover:border-amber-400"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? "border-amber-300 bg-amber-50/20 hover:border-amber-400 hover:bg-amber-50/40"
+                            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                         }`}
                       >
-                        {/* Ligne 1 : Nom + Badge + Prix + Radio */}
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 min-w-0 flex-1">
-                            <div
-                              className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${
-                                isSel
-                                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                                  : "bg-slate-100 text-slate-700 border-slate-200"
-                              }`}
-                            >
-                              {PLAN_ICONS[p.id]}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="font-black text-slate-900 text-sm leading-tight">
-                                  {p.name}
-                                </h4>
-                                {p.badge && (
-                                  <span
-                                    className={`text-[9.5px] font-black uppercase px-2.5 py-0.5 rounded-full border whitespace-nowrap ${
-                                      p.badgeColor || "bg-slate-100 text-slate-700 border-slate-200"
-                                    }`}
-                                  >
-                                    {p.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-600 font-medium mt-1 leading-snug">
-                                {p.desc}
-                              </p>
-                            </div>
-                          </div>
+                        <div>
+                          {/* Badge + Radio */}
+                          <div className="flex items-center justify-between gap-1 mb-2">
+                            {p.badge ? (
+                              <span
+                                className={`text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                                  p.badgeColor || "bg-slate-100 text-slate-700 border-slate-200"
+                                }`}
+                              >
+                                {p.badge}
+                              </span>
+                            ) : <span />}
 
-                          {/* Prix & Bouton Radio */}
-                          <div className="text-right shrink-0 flex items-center gap-3 pl-2">
-                            <div>
-                              <div className="font-black text-slate-900 text-sm sm:text-base leading-none">
-                                {p.price}
-                              </div>
-                              {p.perProfile && (
-                                <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200/60 inline-block mt-1">
-                                  {p.perProfile}
-                                </span>
-                              )}
-                            </div>
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                                 isSel
                                   ? "border-blue-600 bg-blue-600 text-white shadow-xs"
                                   : "border-slate-300 bg-white"
                               }`}
                             >
-                              {isSel && <Check className="w-3 h-3 stroke-[3]" />}
+                              {isSel && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                             </div>
+                          </div>
+
+                          {/* Titre & Prix */}
+                          <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug">
+                            {p.name}
+                          </h4>
+                          <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                            <span className="font-black text-slate-950 text-base sm:text-lg leading-tight">
+                              {p.price}
+                            </span>
+                            {p.perProfile && (
+                              <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200/60">
+                                {p.perProfile}
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        {/* Ligne 2 : Avantages bien rangés en grille/puces claires */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600">
-                          {p.features.map((feat, idx) => (
+                        {/* Avantages succincts */}
+                        <div className="mt-2.5 pt-2 border-t border-slate-200/60 space-y-1 text-[11px] text-slate-600">
+                          {p.features.slice(0, 2).map((feat, idx) => (
                             <div key={idx} className="flex items-center gap-1.5 min-w-0">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              <span className="font-medium text-slate-700 truncate">{feat}</span>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span className="font-medium text-slate-700 truncate text-[10.5px]">{feat}</span>
                             </div>
                           ))}
                         </div>
@@ -583,46 +588,40 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 </div>
               </div>
 
-              {/* ── Section 2 : Mode de règlement LigdiCash ── */}
+              {/* ── Section 2 : Sélection du Moyen de Paiement ── */}
               <div className="space-y-2.5 pt-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">2</span>
-                    <span>Opérateur ou moyen de paiement :</span>
+                    <span>Choisissez votre moyen de paiement :</span>
                   </label>
-                  <span className="text-[10.5px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                    Passerelle Officielle LigdiCash
+                  <span className="text-[10.5px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                    Sélection directe
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {([
-                    { id: "wave", name: "Wave", fee: "0% frais", bg: "bg-[#1dc4fe] text-white" },
-                    { id: "orange", name: "Orange Money", fee: "Instantané", bg: "bg-[#ff7900] text-white" },
-                    { id: "mtn", name: "MTN MoMo", fee: "Instantané", bg: "bg-[#ffcc00] text-slate-950" },
-                    { id: "moov", name: "Moov Money", fee: "Instantané", bg: "bg-[#005ca9] text-white" },
-                    { id: "card", name: "Carte Bancaire", fee: "Visa / Mastercard", bg: "bg-slate-900 text-white" },
-                  ] as const).map((pm) => {
-                    const isSel = paymentMethod === (pm.id as any);
+                  {PAYMENT_OPERATORS.map((op) => {
+                    const isSel = paymentMethod === op.id;
                     return (
                       <button
-                        key={pm.id}
+                        key={op.id}
                         type="button"
-                        onClick={() => handleSelectPaymentMethod(pm.id as any)}
-                        className={`p-2.5 rounded-2xl text-xs font-bold text-center border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer relative ${
+                        onClick={() => setPaymentMethod(op.id)}
+                        className={`p-2.5 sm:p-3 rounded-2xl text-xs font-bold text-center border-2 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer relative active:scale-95 ${
                           isSel
-                            ? "border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? `${op.activeBg} ring-2 ring-blue-500/20 shadow-sm font-black`
+                            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                         }`}
                       >
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${pm.bg}`}>
-                          {pm.name}
+                        <span className={`px-2.5 py-0.5 rounded-lg text-[10.5px] font-black leading-tight shadow-2xs ${op.badgeStyle}`}>
+                          {op.badgeText}
                         </span>
-                        <span className="text-[9.5px] text-slate-500 font-medium">
-                          {pm.fee}
+                        <span className="text-[10px] text-slate-500 font-semibold">
+                          {op.tag}
                         </span>
                         {isSel && (
-                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold">
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-xs">
                             ✓
                           </span>
                         )}
@@ -640,13 +639,13 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                       <Users className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-slate-500 text-[10.5px] block font-semibold">Abonnement associé au compte</span>
+                      <span className="text-slate-500 text-[10.5px] block font-semibold">Abonnement lié au compte</span>
                       <span className="text-slate-900 font-bold truncate block">{currentUser.email}</span>
                     </div>
                   </div>
                   <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-full border border-emerald-300 shrink-0 inline-flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    Authentifié
+                    Vérifié
                   </span>
                 </div>
               ) : (
@@ -657,10 +656,10 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
               )}
 
               {/* ── Section 3 : Numéro de téléphone Mobile Money ── */}
-              <div className="space-y-2 pt-1">
+              <div className="space-y-2 pt-0.5">
                 <label className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                   <span className="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px] font-black">3</span>
-                  <span>Numéro de téléphone Mobile Money (pré-remplissage facture) :</span>
+                  <span>Numéro de téléphone Mobile Money :</span>
                 </label>
                 <div className="relative">
                   <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -674,7 +673,7 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                 </div>
                 <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium mt-1">
                   <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>Paiement sécurisé agrégé par LigdiCash (UEMOA : CI, BF, SN, BJ, TG, ML, NE).</span>
+                  <span>Compatible Wave, Orange Money, MTN MoMo, Moov Money et Cartes bancaires (UEMOA).</span>
                 </p>
               </div>
 
@@ -688,12 +687,12 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
 
             </div>
 
-            {/* ── Pied de validation Fixe ── */}
+            {/* ── Bouton de validation Responsive & Professionnel ── */}
             <div className="p-4 sm:p-5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 space-y-2.5 shadow-xl">
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="w-full py-3.5 sm:py-4 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer animate-cta-loop bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/25"
+                className="w-full py-3.5 sm:py-4 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer active:scale-[0.99] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/25"
               >
                 {isProcessing ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -701,14 +700,14 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
                   <ShieldCheck className="w-4 h-4" />
                 )}
                 {isProcessing
-                  ? "Initialisation du paiement LigdiCash..."
-                  : `Payer ${currentPlan.price} avec LigdiCash (Mobile Money / Carte) →`}
+                  ? "Connexion sécurisée en cours..."
+                  : `Payer ${currentPlan.price} avec ${currentOperator.name} →`}
               </button>
 
-              <div className="flex items-center justify-center gap-3 text-[10.5px] text-slate-500 font-medium">
+              <div className="flex items-center justify-center gap-3 text-[10.5px] text-slate-500 font-medium flex-wrap">
                 <span className="flex items-center gap-1">
                   <Lock className="w-3 h-3 text-slate-400" />
-                  <span>Paiement LigdiCash 100% sécurisé</span>
+                  <span>Paiement 100% sécurisé</span>
                 </span>
                 <span>•</span>
                 <span>Déblocage instantané</span>

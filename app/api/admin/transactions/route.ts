@@ -99,6 +99,7 @@ export async function GET(request: NextRequest) {
         amountXof: tx.amount_xof || tx.amount || 0,
         currency: tx.currency || "FCFA",
         provider: tx.provider || "ligdicash",
+        paymentMethod: tx.payment_method || tx.provider || "Mobile Money",
         phoneNumber: tx.phone_number || "—",
         referenceCode: tx.reference_code,
         externalToken: tx.external_token,

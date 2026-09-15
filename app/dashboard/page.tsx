@@ -149,7 +149,7 @@ export default function DashboardPage() {
                 planTier: activePlan,
                 amount: data.amount || 0,
                 currency: "FCFA",
-                paymentMethod: "LigdiCash Mobile Money",
+                paymentMethod: "Mobile Money (Wave / Orange / MTN / Moov)",
                 transactionRef: ref,
                 subscribedAt: new Date().toISOString(),
                 expiresAt: null,

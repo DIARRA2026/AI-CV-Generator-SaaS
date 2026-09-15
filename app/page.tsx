@@ -49,6 +49,10 @@ import {
   Scale,
   Smartphone,
   X,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
 } from "lucide-react";
 
 const COLOR_PALETTE = [
@@ -80,7 +84,38 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLandingExplicit, setIsLandingExplicit] = useState(false);
   const [showConfirmedBanner, setShowConfirmedBanner] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const toggleVideoPlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsVideoPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsVideoPlaying(false);
+      }
+    }
+  };
+
+  const toggleVideoMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      setIsVideoMuted(nextMuted);
+    }
+  };
   const { t, dict, isRTL, language } = useTranslation();
 
   const templateGallery = useMemo(() => [
@@ -574,14 +609,20 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Vidéo de démonstration & proposition de valeur (L'IA en action) */}
-            <div className="mt-10 sm:mt-12 max-w-5xl mx-auto">
-              <div className="overflow-hidden rounded-3xl border border-indigo-100/90 bg-slate-950 shadow-2xl ring-1 ring-slate-900/10">
+            {/* Vidéo de démonstration & proposition de valeur (Autoplay sans traits façon Farata) */}
+            <div className="mt-8 sm:mt-12 max-w-5xl mx-auto">
+              <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-950 shadow-2xl shadow-slate-950/25">
                 <video
-                  className="aspect-video w-full shadow-inner"
-                  controls
+                  ref={videoRef}
+                  className="aspect-video w-full object-cover block cursor-pointer"
+                  autoPlay
+                  muted
+                  loop
                   playsInline
-                  preload="metadata"
+                  preload="auto"
+                  onClick={toggleVideoPlay}
+                  onPlay={() => setIsVideoPlaying(true)}
+                  onPause={() => setIsVideoPlaying(false)}
                 >
                   <source
                     src="/video-demo.mp4"
@@ -593,6 +634,38 @@ export default function HomePage() {
                   />
                   Votre navigateur ne prend pas en charge la vidéo.
                 </video>
+
+                {/* Bouton Play au centre si la vidéo est mise en pause */}
+                {!isVideoPlaying && (
+                  <div
+                    onClick={toggleVideoPlay}
+                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px] cursor-pointer transition-all"
+                  >
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform">
+                      <Play className="w-7 h-7 sm:w-8 sm:h-8 ml-1 fill-current" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Bouton de contrôle audio discret et élégant (Activer / Couper le son) */}
+                <button
+                  type="button"
+                  onClick={toggleVideoMute}
+                  className="absolute bottom-3.5 right-3.5 sm:bottom-5 sm:right-5 z-20 inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-lg hover:scale-105 active:scale-95"
+                  title={isVideoMuted ? "Activer le son" : "Couper le son"}
+                >
+                  {isVideoMuted ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-slate-300" />
+                      <span className="text-[11px] font-medium">Activer le son</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                      <span className="text-[11px] font-medium text-emerald-300">Son activé</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 

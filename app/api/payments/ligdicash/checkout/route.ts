@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       companyName,
     } = body;
 
-    const cleanEmail = (userEmail || "").toLowerCase().trim();
+    const cleanEmail = (userEmail || body?.customerEmail || "").toLowerCase().trim();
     if (!cleanEmail || !planTier) {
       return NextResponse.json(
         { success: false, message: "L'adresse email et la formule choisie sont obligatoires." },

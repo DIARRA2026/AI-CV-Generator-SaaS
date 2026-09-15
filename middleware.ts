@@ -38,6 +38,7 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
+    "media-src 'self' https://*.cloudfront.net blob: data:",
     "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
@@ -50,7 +51,9 @@ export function middleware(request: NextRequest) {
   if (previewPassword) {
     const isPreviewExcluded =
       pathname.startsWith("/preview-access") ||
-      pathname.startsWith("/api/");
+      pathname.startsWith("/api/") ||
+      pathname.endsWith(".mp4") ||
+      pathname.endsWith(".webm");
 
     if (!isPreviewExcluded) {
       const previewCookie = request.cookies.get("moncv_preview_auth")?.value;
@@ -110,8 +113,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - images, icons (.png, .jpg, .svg, etc.)
+     * - images, icons, videos (.png, .jpg, .svg, .mp4, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ogg)$).*)",
   ],
 };

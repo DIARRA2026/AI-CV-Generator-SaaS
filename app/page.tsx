@@ -574,6 +574,28 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Vidéo de démonstration & proposition de valeur (L'IA en action) */}
+            <div className="mt-10 sm:mt-12 max-w-5xl mx-auto">
+              <div className="overflow-hidden rounded-3xl border border-indigo-100/90 bg-slate-950 shadow-2xl ring-1 ring-slate-900/10">
+                <video
+                  className="aspect-video w-full shadow-inner"
+                  controls
+                  playsInline
+                  preload="metadata"
+                >
+                  <source
+                    src="/video-demo.mp4"
+                    type="video/mp4"
+                  />
+                  <source
+                    src="https://d2ol7oe51mr4n9.cloudfront.net/user_3ITRPXGLxqTCdbPyF8qgg1e5QR1/870cd270-4d56-4cc2-ada0-ecb8323587a2.mp4"
+                    type="video/mp4"
+                  />
+                  Votre navigateur ne prend pas en charge la vidéo.
+                </video>
+              </div>
+            </div>
+
             {/* Bandeau métriques de confiance */}
             <div className="mt-12 max-w-4xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -621,26 +643,6 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 1-BIS. VIDÉO DE DÉMONSTRATION & PROPOSITION DE VALEUR */}
-        {/* ========================================================================= */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
-          <div className="overflow-hidden rounded-3xl border border-indigo-100 bg-slate-950 shadow-2xl ring-1 ring-slate-900/10">
-            <video
-              className="aspect-video w-full"
-              controls
-              playsInline
-              preload="metadata"
-            >
-              <source
-                src="https://d2ol7oe51mr4n9.cloudfront.net/user_3ITRPXGLxqTCdbPyF8qgg1e5QR1/870cd270-4d56-4cc2-ada0-ecb8323587a2.mp4"
-                type="video/mp4"
-              />
-              Votre navigateur ne prend pas en charge la vidéo.
-            </video>
           </div>
         </section>
 

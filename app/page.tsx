@@ -1426,7 +1426,6 @@ export default function HomePage() {
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
                   >
                     <span>Payer 1 500 FCFA</span>
-                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -1490,7 +1489,6 @@ export default function HomePage() {
                   >
                     <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow shrink-0" />
                     <span>Payer 2 500 FCFA</span>
-                    <span className="opacity-85 font-black sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Crown className="w-4 h-4 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -1554,7 +1552,6 @@ export default function HomePage() {
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
                     <span>Payer 5 000 FCFA</span>
-                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -1773,7 +1770,6 @@ export default function HomePage() {
                   >
                     <Building className="w-4 h-4 shrink-0" />
                     <span>Payer 20 000 FCFA</span>
-                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -1852,7 +1848,6 @@ export default function HomePage() {
                   >
                     <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
                     <span>Payer 45 000 FCFA</span>
-                    <span className="opacity-85 font-black sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Crown className="w-4 h-4 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -1924,7 +1919,6 @@ export default function HomePage() {
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
                     <span>Payer 100 000 FCFA</span>
-                    <span className="opacity-90 font-medium sm:inline hidden text-[11px]">• Wave, Orange, MTN</span>
                     <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">

@@ -46,13 +46,17 @@ async function runTests() {
   console.log('\n=== TEST 2: AUTHENTIFICATION ADMIN & SÉCURITÉ ===');
   let adminToken = '';
   await test('Auth SuperAdmin avec Clé Maître (/api/admin/auth)', async () => {
+    const passkey = process.env.ADMIN_MASTER_PASSKEY;
+    if (!passkey) {
+      return { skipped: true, reason: 'ADMIN_MASTER_PASSKEY non configuré' };
+    }
     const r = await fetch(baseUrl + '/api/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'login',
-        passkey: 'INNOVA#2026@MonCV-SuperVault$Secure987!',
-        email: 'innovagroup225@gmail.com'
+        passkey,
+        email: process.env.ADMIN_ALLOWED_EMAILS?.split(',')[0] || 'innovagroup225@gmail.com'
       })
     });
     const data = await r.json();

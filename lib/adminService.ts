@@ -204,30 +204,6 @@ export class AdminService {
       };
     } catch (e: any) {
       console.warn("Erreur réseau auth admin :", e);
-      // Repli de secours pour assurer l'accès aux passphrases maîtres reconnues
-      const trimmed = keyOrPassword.trim();
-      const knownMasterKeys = [
-        "INNOVA#2026@MonCV-SuperVault$Secure987!",
-        "Innova2026-SuperVault-SecuredMaster-Key987!",
-        "INNOVA-SUPERADMIN-2026",
-        "MonCV2026Admin!",
-        "InnovaBackup2026-SecuredPassKey!",
-        "Admin2026!",
-      ];
-      if (knownMasterKeys.includes(trimmed)) {
-        const targetEmail = (email || SYSTEM_ADMIN_EMAIL).toLowerCase().trim();
-        const sessionData = {
-          authenticated: true,
-          email: targetEmail,
-          role: "superadmin" as UserRole,
-          token: `offline-token-${Date.now()}`,
-          loggedAt: new Date().toISOString(),
-        };
-        localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-        sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-        window.dispatchEvent(new Event("storage"));
-        return { success: true, message: "Accès SuperAdmin validé avec succès (Mode résilient)." };
-      }
       return {
         success: false,
         message: "Erreur de communication avec le serveur d'authentification sécurisé.",

@@ -1,58 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { LigdiCashClient } from "@/lib/ligdicash";
 import { getPaymentPlanConfig } from "@/config/payments";
 import { PlanTier } from "@/lib/types";
+import { verifyAdminRequest } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Validation du jeton de session SuperAdmin (HMAC SHA-256)
- */
-function verifyAdminRequest(request: NextRequest): boolean {
-  try {
-    const authHeader = request.headers.get("authorization");
-    const cookieToken = request.cookies.get("moncv_admin_token")?.value;
-    const token = (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null) || cookieToken;
-
-    if (!token) return false;
-
-    const secret =
-      process.env.ADMIN_SECRET_KEY?.trim() ||
-      "b8f3d4a2c91e057f8623b49e1a75c60238d9f1e4a7c2b5d80361e94f72a5b8c1";
-
-    const decoded = Buffer.from(token, "base64url").toString("utf-8");
-    const parts = decoded.split(":");
-    if (parts.length !== 3) return false;
-
-    const [email, timestampStr, hmac] = parts;
-    const timestamp = parseInt(timestampStr, 10);
-
-    // 24 heures de validité
-    if (Date.now() - timestamp > 24 * 60 * 60 * 1000) return false;
-
-    const expectedHmac = crypto
-      .createHmac("sha256", secret)
-      .update(`${email}:${timestampStr}`)
-      .digest("hex");
-
-    return crypto.timingSafeEqual(
-      Buffer.from(hmac, "hex"),
-      Buffer.from(expectedHmac, "hex")
-    );
-  } catch {
-    return false;
-  }
-}
 
 /**
  * GET /api/admin/transactions
  * Récupère l'intégralité des transactions et abonnements enregistrés dans Supabase
  */
 export async function GET(request: NextRequest) {
-  if (!verifyAdminRequest(request)) {
-    return NextResponse.json({ success: false, message: "Accès non autorisé" }, { status: 401 });
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, message: auth.error || "Accès non autorisé" },
+      { status: auth.statusCode || 401 }
+    );
   }
 
   if (!supabaseAdmin) {
@@ -150,8 +115,12 @@ export async function GET(request: NextRequest) {
  * Actions administrateur : re-vérification LigdiCash ou validation manuelle forcée
  */
 export async function POST(request: NextRequest) {
-  if (!verifyAdminRequest(request)) {
-    return NextResponse.json({ success: false, message: "Accès non autorisé" }, { status: 401 });
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, message: auth.error || "Accès non autorisé" },
+      { status: auth.statusCode || 401 }
+    );
   }
 
   if (!supabaseAdmin) {

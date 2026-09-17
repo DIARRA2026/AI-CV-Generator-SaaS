@@ -114,58 +114,120 @@ ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Politiques Profiles
-CREATE POLICY "Les utilisateurs peuvent voir leur profil" 
-  ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Lecture profils propriétaire" 
+  ON public.profiles FOR SELECT USING (auth.uid() = id OR auth.role() = 'service_role');
 
-CREATE POLICY "Les utilisateurs peuvent modifier leur profil" 
-  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Création profil utilisateur" 
+  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id OR auth.role() = 'service_role');
 
-CREATE POLICY "Les utilisateurs peuvent créer leur profil" 
-  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Mise à jour profil utilisateur" 
+  ON public.profiles FOR UPDATE USING (auth.uid() = id OR auth.role() = 'service_role');
+
+-- Déclencheur anti-usurpation de plan_tier sur profiles
+CREATE OR REPLACE FUNCTION public.protect_profile_plan_tier()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+    IF NEW.plan_tier IS DISTINCT FROM OLD.plan_tier THEN
+      RAISE EXCEPTION 'Modification non autorisée du plan_tier.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_plan_tier ON public.profiles;
+CREATE TRIGGER trg_protect_profile_plan_tier
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_profile_plan_tier();
 
 -- Politiques Resumes
-CREATE POLICY "Les utilisateurs gèrent leurs propres CVs" 
-  ON public.resumes FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Lecture CVs publics et propriétaires"
+  ON public.resumes FOR SELECT
+  USING (
+    is_public = true
+    OR (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR auth.role() = 'service_role'
+  );
 
-CREATE POLICY "Tout le monde peut voir un CV public via son slug" 
-  ON public.resumes FOR SELECT USING (is_public = true);
+CREATE POLICY "Insertion CVs propriétaire"
+  ON public.resumes FOR INSERT
+  WITH CHECK (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR auth.role() = 'service_role'
+  );
+
+CREATE POLICY "Mise à jour CVs propriétaire"
+  ON public.resumes FOR UPDATE
+  USING (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR auth.role() = 'service_role'
+  )
+  WITH CHECK (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR auth.role() = 'service_role'
+  );
+
+CREATE POLICY "Suppression CVs propriétaire"
+  ON public.resumes FOR DELETE
+  USING (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR auth.role() = 'service_role'
+  );
 
 -- Politiques Portfolios
 CREATE POLICY "Les utilisateurs gèrent leurs propres portfolios" 
-  ON public.portfolios FOR ALL USING (auth.uid() = user_id);
+  ON public.portfolios FOR ALL USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 CREATE POLICY "Tout le monde peut voir un portfolio publié" 
-  ON public.portfolios FOR SELECT USING (is_published = true);
+  ON public.portfolios FOR SELECT USING (is_published = true OR auth.uid() = user_id OR auth.role() = 'service_role');
 
 -- Politiques Lettres de Motivation & Demandes d'Emploi
 CREATE POLICY "Isolation stricte des lettres de motivation" 
-  ON public.cover_letters FOR ALL USING (auth.uid() = user_id);
+  ON public.cover_letters FOR ALL USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 CREATE POLICY "Isolation stricte des demandes d'emploi" 
-  ON public.job_applications FOR ALL USING (auth.uid() = user_id);
+  ON public.job_applications FOR ALL USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 -- Politiques Transactions
-CREATE POLICY "Les utilisateurs voient leurs transactions" 
-  ON public.transactions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Lecture transactions propriétaire" 
+  ON public.transactions FOR SELECT 
+  USING ((auth.uid() IS NOT NULL AND auth.uid() = user_id) OR auth.role() = 'service_role');
 
-CREATE POLICY "Insertion de transactions autorisée" 
-  ON public.transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Insertion transactions contrôlée" 
+  ON public.transactions FOR INSERT 
+  WITH CHECK ((auth.uid() IS NOT NULL AND auth.uid() = user_id AND status = 'pending') OR auth.role() = 'service_role');
+
+CREATE POLICY "Mise à jour transactions réservée au backend"
+  ON public.transactions FOR UPDATE
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
 
 -- Politiques Subscriptions
-CREATE POLICY "Les utilisateurs consultent leurs abonnements"
+CREATE POLICY "Lecture souscriptions propriétaire et service"
   ON public.subscriptions FOR SELECT
-  USING (auth.uid() = user_id OR user_email = (SELECT email FROM auth.users WHERE id = auth.uid()));
+  USING (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+    OR (auth.jwt() ->> 'email' IS NOT NULL AND user_email = (auth.jwt() ->> 'email'))
+    OR auth.role() = 'service_role'
+  );
 
-CREATE POLICY "Insertion de souscription autorisée"
+CREATE POLICY "Insertion souscription sécurisée"
   ON public.subscriptions FOR INSERT
-  WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+  WITH CHECK (
+    (auth.uid() IS NOT NULL AND auth.uid() = user_id AND status = 'pending')
+    OR auth.role() = 'service_role'
+  );
 
-CREATE POLICY "Mise à jour souscription autorisée"
+CREATE POLICY "Mise à jour souscription réservée au backend"
   ON public.subscriptions FOR UPDATE
-  USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM public.profiles 
-    WHERE id = auth.uid() AND (plan_tier = 'enterprise200' OR email IN ('innovagroup225@gmail.com', 'admin@moncv.ai'))
-  ));
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
 
 -- =========================================================================
 -- DÉCLENCHEUR (TRIGGER) POUR LA CRÉATION AUTOMATIQUE DU PROFIL LORS DU SIGNUP

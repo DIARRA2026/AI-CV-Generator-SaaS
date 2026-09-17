@@ -3,22 +3,42 @@ import { LigdiCashClient } from "@/lib/ligdicash";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getPaymentPlanConfig } from "@/config/payments";
 import { PlanTier } from "@/lib/types";
+import { safeCompare } from "@/lib/adminAuth";
 
 /**
  * MONCV.AI — WEBHOOK OFFICIEL LIGDICASH
  * 
  * Documentation : https://developers.ligdicash.com/api-paiement/callback/securisation
  * Pattern de Re-Vérification :
- * 1. Extraction du transaction_id depuis custom_data
- * 2. Contrôle d'idempotence (éviter les doubles activations)
- * 3. Re-vérification obligatoire auprès de l'API LigdiCash via le token stocké
- * 4. Activation pérenne de l'abonnement et du profil Supabase
+ * 1. Validation de la signature secrète (si configurée)
+ * 2. Extraction du transaction_id depuis custom_data
+ * 3. Contrôle d'idempotence (éviter les doubles activations)
+ * 4. Re-vérification obligatoire auprès de l'API LigdiCash via le token stocké
+ * 5. Activation pérenne de l'abonnement et du profil Supabase
  */
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    // 0. Vérification cryptographique de la signature secrète du webhook (si configurée)
+    const webhookSecret = process.env.LIGDICASH_WEBHOOK_SECRET?.trim();
+    if (webhookSecret) {
+      const incomingSecret =
+        request.headers.get("x-ligdicash-signature") ||
+        request.headers.get("x-webhook-signature") ||
+        request.headers.get("x-signature") ||
+        request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+        "";
+
+      if (!incomingSecret || !safeCompare(incomingSecret, webhookSecret)) {
+        console.warn("Signature de webhook LigdiCash non valide ou absente.");
+        return NextResponse.json(
+          { status: "error", message: "Signature secrète de notification non reconnue." },
+          { status: 401 }
+        );
+      }
+    }
     let payload: any = {};
 
     // LigdiCash peut envoyer les données en JSON ou en application/x-www-form-urlencoded

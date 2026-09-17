@@ -897,9 +897,15 @@ export class SupabaseService {
     // 2. Appel de la route API serveur Next.js pour persistance PostgreSQL Supabase
     try {
       if (typeof window !== "undefined") {
+        const localUser = StorageManager.getUser();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (localUser?.token) {
+          headers["Authorization"] = `Bearer ${localUser.token}`;
+        }
+
         const res = await fetch("/api/resumes", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             resume: resumeWithMetadata,
             userEmail: resolvedEmail,
@@ -971,9 +977,15 @@ export class SupabaseService {
     // 1. Interroger la route API serveur
     try {
       if (typeof window !== "undefined") {
+        const localUser = StorageManager.getUser();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (localUser?.token) {
+          headers["Authorization"] = `Bearer ${localUser.token}`;
+        }
+
         const res = await fetch(`/api/resumes/${encodeURIComponent(slug)}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers,
         });
 
         if (res.ok) {
@@ -1447,7 +1459,12 @@ export class SupabaseService {
       try {
         await supabase.from("resumes").delete().eq("id", id);
         if (typeof window !== "undefined") {
-          fetch(`/api/resumes?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+          const localUser = StorageManager.getUser();
+          const headers: Record<string, string> = {};
+          if (localUser?.token) {
+            headers["Authorization"] = `Bearer ${localUser.token}`;
+          }
+          fetch(`/api/resumes?id=${encodeURIComponent(id)}`, { method: "DELETE", headers }).catch(() => {});
         }
       } catch (e) {
         console.warn("Erreur suppression cloud CV:", e);

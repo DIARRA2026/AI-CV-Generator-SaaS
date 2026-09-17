@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getServerAuthUser } from "@/lib/serverAuth";
 import { ResumeData } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 /**
- * API ROUTE HANDLER FULL-STACK : /api/resumes
- * Gère la persistance cloud PostgreSQL (Supabase) pour les CVs
+ * API ROUTE HANDLER SÉCURISÉ : /api/resumes
+ * Protection stricte anti-IDOR, contrôle d'accès propriétaire et rôles administratifs
  */
 
 // GET /api/resumes?email=... ou /api/resumes?id=...
 export async function GET(request: NextRequest) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
-      return NextResponse.json({ success: false, message: "Supabase non configuré" }, { status: 503 });
+    if (!supabaseAdmin) {
+      return NextResponse.json({ success: false, message: "Service de données indisponible" }, { status: 503 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -19,23 +22,49 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id");
     const slug = searchParams.get("slug");
 
-    // Recherche par ID ou Slug
+    // 1. Recherche spécifique par ID ou Slug
     if (id || slug) {
-      const query = supabase.from("resumes").select("*");
+      const query = supabaseAdmin.from("resumes").select("*");
       if (id) query.eq("id", id);
       else if (slug) query.eq("slug", slug);
 
-      const { data, error } = await query.single();
+      const { data, error } = await query.maybeSingle();
       if (error || !data) {
         return NextResponse.json({ success: false, message: "CV introuvable" }, { status: 404 });
+      }
+
+      // Si le CV est privé, contrôle strict de propriété
+      if (!data.is_public) {
+        const auth = await getServerAuthUser(request);
+        const isOwner =
+          auth.authenticated &&
+          (auth.isAdmin ||
+            (auth.user?.email && auth.user.email === data.user_email?.toLowerCase().trim()) ||
+            (auth.user?.id && auth.user.id === data.user_id));
+
+        if (!isOwner) {
+          return NextResponse.json({ success: false, message: "Ce CV est privé" }, { status: 403 });
+        }
       }
 
       return NextResponse.json({ success: true, resume: data.resume_data, record: data });
     }
 
-    // Recherche par email
+    // 2. Recherche par email (Protection IDOR : Seul le propriétaire ou le superadmin peut lister ses CVs)
     if (email) {
-      const { data, error } = await supabase
+      const auth = await getServerAuthUser(request);
+      const isAuthorized =
+        auth.authenticated &&
+        (auth.isAdmin || (auth.user?.email && auth.user.email === email));
+
+      if (!isAuthorized) {
+        return NextResponse.json(
+          { success: false, message: "Accès refusé aux CVs de cet utilisateur" },
+          { status: 403 }
+        );
+      }
+
+      const { data, error } = await supabaseAdmin
         .from("resumes")
         .select("*")
         .eq("user_email", email)
@@ -49,8 +78,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, resumes: list, count: list.length });
     }
 
-    // Par défaut, retourner les CVs publics récents
-    const { data, error } = await supabase
+    // 3. Par défaut : retourner uniquement les CVs marqués publics
+    const { data, error } = await supabaseAdmin
       .from("resumes")
       .select("*")
       .eq("is_public", true)
@@ -69,25 +98,55 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/resumes - Sauvegarde / Upsert complet du CV dans Supabase Cloud
+// POST /api/resumes - Sauvegarde / Mise à jour sécurisée du CV (Anti-IDOR)
 export async function POST(request: NextRequest) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
-      return NextResponse.json({ success: false, message: "Supabase non configuré" }, { status: 503 });
+    if (!supabaseAdmin) {
+      return NextResponse.json({ success: false, message: "Service de données indisponible" }, { status: 503 });
     }
 
+    const auth = await getServerAuthUser(request);
     const body = await request.json();
     const resume = body?.resume as ResumeData;
-    const userEmail = (body?.userEmail || resume?.userEmail || resume?.personal?.email || "").toLowerCase().trim();
+    let userEmail = (body?.userEmail || resume?.userEmail || resume?.personal?.email || "").toLowerCase().trim();
 
     if (!resume || !resume.id) {
       return NextResponse.json({ success: false, message: "Données de CV invalides ou ID manquant" }, { status: 400 });
     }
 
-    // 1. Déterminer le user_id si un profil correspondant existe dans Supabase
-    let userId: string | null = null;
-    if (userEmail) {
-      const { data: profile } = await supabase
+    // Contrôle d'existence préalable pour prévenir l'écrasement malveillant (IDOR)
+    const { data: existing } = await supabaseAdmin
+      .from("resumes")
+      .select("id, user_id, user_email")
+      .eq("id", resume.id)
+      .maybeSingle();
+
+    if (existing) {
+      const isOwner =
+        auth.authenticated &&
+        (auth.isAdmin ||
+          (auth.user?.email && auth.user.email === existing.user_email?.toLowerCase().trim()) ||
+          (auth.user?.id && auth.user.id === existing.user_id));
+
+      if (!isOwner) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Accès refusé : vous n'avez pas l'autorisation de modifier ce CV existant.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Déterminer l'identité officielle liée
+    let userId: string | null = auth.authenticated && !auth.isAdmin ? auth.user?.id || null : null;
+    if (auth.authenticated && !auth.isAdmin && auth.user?.email) {
+      userEmail = auth.user.email;
+    }
+
+    if (!userId && userEmail) {
+      const { data: profile } = await supabaseAdmin
         .from("profiles")
         .select("id")
         .eq("email", userEmail)
@@ -114,15 +173,16 @@ export async function POST(request: NextRequest) {
         userEmail: userEmail || resume.userEmail,
         updatedAt: nowIso,
       },
-      ats_score: 85,
-      is_public: true,
+      ats_score: typeof (body?.atsScore || (resume as any)?.atsScore) === "number"
+        ? (body?.atsScore || (resume as any)?.atsScore)
+        : 85,
+      is_public: body?.isPublic !== undefined ? Boolean(body.isPublic) : (resume as any)?.isPublic !== false,
       updated_at: nowIso,
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabaseAdmin
       .from("resumes")
-      .upsert(payload, { onConflict: "id" })
-      .select();
+      .upsert(payload, { onConflict: "id" });
 
     if (error) {
       console.error("Erreur Supabase upsert resumes:", error);
@@ -131,7 +191,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "CV synchronisé avec succès sur le Cloud",
+      message: "CV synchronisé avec succès sur le Cloud sécurisé",
       syncedAt: nowIso,
       resume: payload.resume_data,
     });
@@ -141,11 +201,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE /api/resumes?id=...
+// DELETE /api/resumes?id=... (Anti-IDOR)
 export async function DELETE(request: NextRequest) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
-      return NextResponse.json({ success: false, message: "Supabase non configuré" }, { status: 503 });
+    if (!supabaseAdmin) {
+      return NextResponse.json({ success: false, message: "Service de données indisponible" }, { status: 503 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -155,12 +215,40 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "ID manquant" }, { status: 400 });
     }
 
-    const { error } = await supabase.from("resumes").delete().eq("id", id);
+    // Récupérer le CV cible pour vérifier la propriété
+    const { data: existing } = await supabaseAdmin
+      .from("resumes")
+      .select("id, user_id, user_email")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ success: true, message: "CV déjà supprimé ou introuvable" });
+    }
+
+    const auth = await getServerAuthUser(request);
+    const isAuthorized =
+      auth.authenticated &&
+      (auth.isAdmin ||
+        (auth.user?.email && auth.user.email === existing.user_email?.toLowerCase().trim()) ||
+        (auth.user?.id && auth.user.id === existing.user_id));
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Suppression non autorisée : vous n'êtes pas le propriétaire de ce document.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const { error } = await supabaseAdmin.from("resumes").delete().eq("id", id);
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "CV supprimé du cloud" });
+    return NextResponse.json({ success: true, message: "CV supprimé du cloud avec succès" });
   } catch (error: any) {
     console.error("Erreur DELETE /api/resumes:", error);
     return NextResponse.json({ success: false, message: error?.message || "Erreur interne" }, { status: 500 });

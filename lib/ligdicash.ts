@@ -83,16 +83,27 @@ export class LigdiCashClient {
       appUrl,
     } = params;
 
-    // Mode simulation / bac à sable si les identifiants ne sont pas encore configurés
+    // Mode simulation / bac à sable uniquement hors production avec activation explicite
     if (!this.isConfigured()) {
-      console.warn("LigdiCash non configuré ou clés de test : activation du mode bac à sable.");
-      const mockToken = `MOCK_LC_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const simulatedUrl = `${appUrl}/dashboard?payment=success&ref=${transactionRef}&simulated=true&token=${mockToken}`;
+      const isProd = process.env.NODE_ENV === "production";
+      const allowMock = !isProd && process.env.ENABLE_MOCK_PAYMENTS === "true";
+
+      if (allowMock) {
+        console.warn("LigdiCash non configuré : simulation locale active (MODE DEV/TEST).");
+        const mockToken = `MOCK_LC_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const simulatedUrl = `${appUrl}/dashboard?payment=success&ref=${transactionRef}&simulated=true&token=${mockToken}`;
+        return {
+          success: true,
+          checkoutUrl: simulatedUrl,
+          invoiceToken: mockToken,
+          message: "Facture simulée créée avec succès (Mode Sandbox Dev).",
+        };
+      }
+
+      console.error("Passerelle de paiement LigdiCash non configurée dans l'environnement.");
       return {
-        success: true,
-        checkoutUrl: simulatedUrl,
-        invoiceToken: mockToken,
-        message: "Facture simulée créée avec succès (Mode Sandbox).",
+        success: false,
+        message: "La passerelle de paiement n'est pas encore configurée sur ce serveur.",
       };
     }
 
@@ -189,13 +200,29 @@ export class LigdiCashClient {
       return { success: false, status: "error" };
     }
 
-    // Gestion du token de simulation sandbox
-    if (invoiceToken.startsWith("MOCK_LC_") || !this.isConfigured()) {
+    // Sécurité stricte : En production, interdiction absolue des tokens simulés
+    const isProd = process.env.NODE_ENV === "production";
+    const allowMock = !isProd && process.env.ENABLE_MOCK_PAYMENTS === "true";
+
+    if (invoiceToken.startsWith("MOCK_LC_")) {
+      if (allowMock) {
+        return {
+          success: true,
+          status: "completed",
+          amount: 0,
+          operatorName: "LIGDICASH MOCK (Wave/Orange/MTN)",
+        };
+      }
       return {
-        success: true,
-        status: "completed",
-        amount: 0,
-        operatorName: "LIGDICASH MOCK (Wave/Orange/MTN)",
+        success: false,
+        status: "notcompleted",
+      };
+    }
+
+    if (!this.isConfigured()) {
+      return {
+        success: false,
+        status: "error",
       };
     }
 

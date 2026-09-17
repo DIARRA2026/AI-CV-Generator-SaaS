@@ -70,31 +70,31 @@ export function getAllowedProfilesCount(plan?: PlanTier): number {
  * Portfolios Web VIP) sont 100% OFFERTES et incluses.
  */
 export function isEnterpriseFormulaActive(resume?: ResumeData): boolean {
-  // 1. Vérifier si le CV lui-même est rattaché à un pack entreprise
+  const isEnterprisePlan = (p?: string): boolean =>
+    p === "enterprise30" || p === "enterprise75" || p === "enterprise200" || p === "cyber15";
+
+  // 1. Vérifier si le CV lui-même est rattaché à un pack entreprise avec transaction de paiement
   const plan = resume?.planTier;
-  if (
-    plan === "enterprise30" ||
-    plan === "enterprise75" ||
-    plan === "enterprise200" ||
-    plan === "cyber15"
-  ) {
+  if (isEnterprisePlan(plan) && (resume?.license?.transactionRef || resume?.isPremium)) {
     return true;
   }
 
-  // 2. Vérifier si la session courante ou le profil entreprise est actif
+  // 2. Vérifier si la session courante ou le profil entreprise possède une souscription active
   try {
     if (typeof window !== "undefined") {
-      if (StorageManager.isBusinessAccount()) {
+      const user = StorageManager.getUser();
+      const userEmail = (user?.email || "").toLowerCase().trim();
+      if (!userEmail) return false;
+
+      const sub = StorageManager.getUserSubscription(userEmail);
+      if (sub && (sub.status === "active" || sub.transactionRef) && isEnterprisePlan(sub.planTier)) {
         return true;
       }
-      const user = StorageManager.getUser();
-      const userPlan = user?.planTier;
+
       if (
-        user?.accountType === "business" ||
-        userPlan === "enterprise30" ||
-        userPlan === "enterprise75" ||
-        userPlan === "enterprise200" ||
-        userPlan === "cyber15"
+        user &&
+        isEnterprisePlan(user.planTier) &&
+        (user.subscription?.status === "active" || user.subscription?.transactionRef)
       ) {
         return true;
       }
@@ -121,9 +121,15 @@ export function isIdentityUnlocked(resume: ResumeData): boolean {
   const currentKey = getIdentityKey(resume);
   const allowedMax = getAllowedProfilesCount(resume.planTier);
 
-  // Rétrocompatibilité : si le CV a été payé avant l'introduction de l'objet license
+  // Rétrocompatibilité contrôlée : si le CV a été payé avant l'introduction de l'objet license,
+  // vérifier la présence d'une souscription ou d'une transaction associée
   if (!resume.license) {
-    return true;
+    const userEmail = (resume.userEmail || (typeof window !== "undefined" ? StorageManager.getUser()?.email : "") || "").toLowerCase().trim();
+    const sub = userEmail && typeof window !== "undefined" ? StorageManager.getUserSubscription(userEmail) : null;
+    if (sub && (sub.status === "active" || sub.transactionRef)) {
+      return true;
+    }
+    return Boolean(resume.isPremium && resume.planTier);
   }
 
   const unlocked = resume.license.unlockedIdentities || [];

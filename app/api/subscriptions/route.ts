@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getServerAuthUser } from "@/lib/serverAuth";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * POST /api/subscriptions
+ * Enregistre une intention de souscription (Statut PENDING par défaut).
+ * Seul un SuperAdmin authentifié peut forcer le statut 'active'.
+ * Les activations standards sont opérées exclusivement par le Webhook de paiement.
+ */
 export async function POST(request: NextRequest) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { success: false, message: "Supabase non configuré" },
+        { success: false, message: "Service de données indisponible" },
         { status: 503 }
       );
     }
 
-    const body = await request.json();
+    const auth = await getServerAuthUser(request);
+    const body = await request.json().catch(() => ({}));
     const {
       email,
       userId,
@@ -32,6 +42,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Protection anti-contournement de paiement :
+    // Interdiction stricte aux clients d'injecter le statut "active"
+    const requestedStatus = (body.status || "").toLowerCase().trim();
+    if (requestedStatus === "active" && !auth.isAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Action non autorisée. L'activation d'un abonnement est réservée au webhook de paiement validé ou aux administrateurs.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const subStatus = auth.isAdmin && requestedStatus === "active" ? "active" : "pending";
+
     const isEnterprise =
       planTier === "enterprise30" ||
       planTier === "enterprise75" ||
@@ -41,30 +66,41 @@ export async function POST(request: NextRequest) {
     const resolvedAccountType = accountType || (isEnterprise ? "business" : "candidate");
     const nowIso = new Date().toISOString();
 
-    // 1. Mettre à jour public.profiles
-    const updatePayload: any = {
-      plan_tier: planTier,
-      account_type: resolvedAccountType,
-      updated_at: nowIso,
-    };
-    if (companyName) updatePayload.company_name = companyName;
-    if (phoneNumber) updatePayload.phone = phoneNumber;
-
+    // 1. Mise à jour du profil : SEUL un admin authentifié ou un webhook peut changer le plan_tier
     let targetUserId = userId;
-    if (targetUserId && /^[0-9a-f-]{36}$/i.test(targetUserId)) {
-      await supabase.from("profiles").update(updatePayload).eq("id", targetUserId);
-    } else {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", cleanEmail)
-        .maybeSingle();
+    if (auth.isAdmin && subStatus === "active") {
+      const updatePayload: any = {
+        plan_tier: planTier,
+        account_type: resolvedAccountType,
+        updated_at: nowIso,
+      };
+      if (companyName) updatePayload.company_name = companyName;
+      if (phoneNumber) updatePayload.phone = phoneNumber;
 
-      if (profile?.id) {
-        targetUserId = profile.id;
-        await supabase.from("profiles").update(updatePayload).eq("id", profile.id);
+      if (targetUserId && /^[0-9a-f-]{36}$/i.test(targetUserId)) {
+        await supabaseAdmin.from("profiles").update(updatePayload).eq("id", targetUserId);
       } else {
-        await supabase.from("profiles").update(updatePayload).eq("email", cleanEmail);
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("email", cleanEmail)
+          .maybeSingle();
+
+        if (profile?.id) {
+          targetUserId = profile.id;
+          await supabaseAdmin.from("profiles").update(updatePayload).eq("id", profile.id);
+        } else {
+          await supabaseAdmin.from("profiles").update(updatePayload).eq("email", cleanEmail);
+        }
+      }
+    } else {
+      // Pour les requêtes utilisateurs, on met uniquement à jour les infos non sensibles (téléphone, entreprise)
+      const safeProfileUpdate: any = { updated_at: nowIso };
+      if (companyName) safeProfileUpdate.company_name = companyName;
+      if (phoneNumber) safeProfileUpdate.phone = phoneNumber;
+
+      if (targetUserId && /^[0-9a-f-]{36}$/i.test(targetUserId)) {
+        await supabaseAdmin.from("profiles").update(safeProfileUpdate).eq("id", targetUserId);
       }
     }
 
@@ -84,8 +120,7 @@ export async function POST(request: NextRequest) {
     else if (pLower.includes("card") || pLower.includes("carte")) provider = "card";
     else if (pLower.includes("wave")) provider = "wave";
 
-    // 2. Enregistrer dans la table public.subscriptions (Liaison officielle compte ↔ abonnement)
-    const subStatus = body.status || "pending";
+    // 2. Enregistrement dans public.subscriptions
     const subRecordPayload: any = {
       user_email: cleanEmail,
       plan_tier: planTier,
@@ -110,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const { error: subErr } = await supabase
+      const { error: subErr } = await supabaseAdmin
         .from("subscriptions")
         .upsert(subRecordPayload, { onConflict: "transaction_ref" });
       if (subErr) {
@@ -120,7 +155,7 @@ export async function POST(request: NextRequest) {
       console.warn("Erreur insertion subscriptions:", subCatchErr);
     }
 
-    // 3. Enregistrer la transaction dans public.transactions
+    // 3. Enregistrement dans public.transactions
     const txPayload: any = {
       plan_tier: planTier,
       amount_xof: amount || 0,
@@ -133,14 +168,16 @@ export async function POST(request: NextRequest) {
       txPayload.user_id = targetUserId;
     }
 
-    const { error: txError } = await supabase.from("transactions").insert(txPayload);
+    const { error: txError } = await supabaseAdmin.from("transactions").insert(txPayload);
     if (txError) {
       console.warn("Avertissement insertion transaction:", txError.message);
     }
 
     return NextResponse.json({
       success: true,
-      message: "Souscription enregistrée avec succès dans Supabase Cloud",
+      message: subStatus === "active"
+        ? "Souscription activée avec succès par l'administrateur."
+        : "Intention de souscription enregistrée en attente de paiement.",
       planTier,
       status: subStatus,
       accountType: resolvedAccountType,
@@ -154,20 +191,39 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * GET /api/subscriptions
+ * Consultation sécurisée des souscriptions (Propriétaire ou SuperAdmin exclusivement)
+ */
 export async function GET(request: NextRequest) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { success: false, message: "Supabase non configuré" },
+        { success: false, message: "Service de données indisponible" },
         { status: 503 }
       );
     }
 
+    const auth = await getServerAuthUser(request);
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email")?.toLowerCase().trim();
     const userId = searchParams.get("userId");
 
-    let query = supabase.from("subscriptions").select("*").order("created_at", { ascending: false });
+    // Contrôle d'autorisation strict
+    const isAuthorized =
+      auth.authenticated &&
+      (auth.isAdmin ||
+        (email && auth.user?.email === email) ||
+        (userId && auth.user?.id === userId));
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { success: false, message: "Accès refusé aux données de souscription" },
+        { status: 403 }
+      );
+    }
+
+    let query = supabaseAdmin.from("subscriptions").select("*").order("created_at", { ascending: false });
 
     if (userId && /^[0-9a-f-]{36}$/i.test(userId)) {
       if (email) {

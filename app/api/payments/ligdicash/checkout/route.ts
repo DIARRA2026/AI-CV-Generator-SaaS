@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { LigdiCashClient } from "@/lib/ligdicash";
 import { getPaymentPlanConfig } from "@/config/payments";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
-    const transactionRef = `TRX_LC_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const transactionRef = `TRX_LC_${crypto.randomUUID()}`;
 
     // 1. Appel API LigdiCash pour générer la facture et l'URL de redirection
     const invoiceResult = await LigdiCashClient.createInvoice({

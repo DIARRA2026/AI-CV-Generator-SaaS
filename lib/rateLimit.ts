@@ -60,6 +60,22 @@ export function checkRateLimit(
   const now = Date.now();
   const record = rateLimitStore.get(key);
 
+  const MAX_STORE_SIZE = 5000;
+  if (rateLimitStore.size > MAX_STORE_SIZE) {
+    cleanupExpiredRateLimits();
+    if (rateLimitStore.size > MAX_STORE_SIZE) {
+      const keysToDelete: string[] = [];
+      rateLimitStore.forEach((_, k) => {
+        if (keysToDelete.length < 1000) {
+          keysToDelete.push(k);
+        }
+      });
+      for (const k of keysToDelete) {
+        rateLimitStore.delete(k);
+      }
+    }
+  }
+
   // 1. Première tentative
   if (!record) {
     rateLimitStore.set(key, {

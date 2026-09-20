@@ -1,18 +1,15 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const DEFAULT_SUPABASE_URL = "https://otgxrewddogacbsgteyz.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90Z3hyZXdkZG9nYWNic2d0ZXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjY3ODIsImV4cCI6MjEwNDA0Mjc4Mn0.CiEQ_Q567aEKcyj1hOwnavnvPvrwtchucVrusoUwVlI";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
 
 export const isSupabaseConfigured = (): boolean => {
   return (
     typeof supabaseUrl === "string" &&
-    supabaseUrl.trim().length > 0 &&
+    supabaseUrl.length > 0 &&
     supabaseUrl.startsWith("http") &&
     typeof supabaseAnonKey === "string" &&
-    supabaseAnonKey.trim().length > 0
+    supabaseAnonKey.length > 0
   );
 };
 
@@ -58,9 +55,6 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured()
       },
       global: {
         fetch: resilientFetch,
-        headers: {
-          "x-application-name": "moncv-saas",
-        },
       },
     })
   : null;

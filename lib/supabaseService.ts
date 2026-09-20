@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
-import { StorageManager, UserSession, RegisteredUser } from "./storage";
+import { StorageManager, UserSession, RegisteredUser, hashLocalPassword } from "./storage";
 import { ResumeData, PlanTier, AccountType, BusinessProfile, UserSubscriptionInfo } from "./types";
 
 export interface CloudAuthResponse {
@@ -748,14 +748,14 @@ export class SupabaseService {
             users[uIdx] = {
               ...users[uIdx],
               id: data.user.id,
-              passwordHash: password || users[uIdx].passwordHash,
+              passwordHash: password ? hashLocalPassword(password) : users[uIdx].passwordHash,
               ...userSession,
             };
           } else {
             users.push({
               id: data.user.id,
               email: userSession.email,
-              passwordHash: password,
+              passwordHash: hashLocalPassword(password),
               accountType: userSession.accountType,
               firstName: userSession.firstName || "",
               lastName: userSession.lastName || "",

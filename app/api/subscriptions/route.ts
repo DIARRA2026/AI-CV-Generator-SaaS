@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getServerAuthUser } from "@/lib/serverAuth";
 
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       status: subStatus,
       payment_method: paymentMethod || "Wave Mobile Money (CI)",
       phone_number: phoneNumber || null,
-      transaction_ref: transactionRef || `WAVE_${Date.now()}`,
+      transaction_ref: transactionRef || `SUB_${crypto.randomUUID()}`,
       allowed_candidates: allowedCandidates,
       metadata: {
         accountType: resolvedAccountType,
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
       amount_xof: amount || 0,
       provider,
       phone_number: phoneNumber || null,
-      reference_code: transactionRef || `TRX_${Date.now()}`,
+      reference_code: transactionRef || `TRX_${crypto.randomUUID()}`,
       status: subStatus === "active" ? "completed" : "pending",
     };
     if (targetUserId && /^[0-9a-f-]{36}$/i.test(targetUserId)) {

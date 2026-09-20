@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { LigdiCashClient } from "@/lib/ligdicash";
 import { getPaymentPlanConfig } from "@/config/payments";
 import { PlanTier } from "@/lib/types";
 import { verifyAdminRequest } from "@/lib/adminAuth";
@@ -131,39 +130,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, referenceCode, token, userEmail, planTier } = body;
 
-    // A. Re-vérifier une transaction auprès de l'API LigdiCash
+    // A. Re-vérifier / valider une transaction (Mode ouvert gratuit)
     if (action === "reverify") {
       if (!token && !referenceCode) {
         return NextResponse.json({ success: false, message: "Token ou Référence manquante" }, { status: 400 });
       }
 
-      let statusResult: any = null;
+      // Mettre à jour la transaction dans Supabase en statut completed
+      const filterClause = token && referenceCode 
+        ? `reference_code.eq.${referenceCode},external_token.eq.${token}`
+        : (referenceCode ? `reference_code.eq.${referenceCode}` : `external_token.eq.${token}`);
 
-      if (token) {
-        statusResult = await LigdiCashClient.confirmInvoice(token);
-      }
-
-      if (!statusResult || !statusResult.status) {
-        return NextResponse.json({
-          success: false,
-          message: "Impossible d'obtenir le statut auprès de LigdiCash pour ce jeton.",
-        });
-      }
-
-      const isPaid = statusResult.status.toLowerCase() === "completed";
-      const newStatus = isPaid ? "completed" : statusResult.status.toLowerCase();
-
-      // Mettre à jour la transaction dans Supabase
       await supabaseAdmin
         .from("transactions")
         .update({
-          status: newStatus,
+          status: "completed",
           updated_at: new Date().toISOString(),
         })
-        .or(`reference_code.eq.${referenceCode},external_token.eq.${token}`);
+        .or(filterClause);
 
-      // Si payé, activer l'abonnement
-      if (isPaid) {
+      if (referenceCode) {
         await supabaseAdmin
           .from("subscriptions")
           .update({
@@ -176,12 +162,9 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        status: newStatus,
-        isPaid,
-        details: statusResult,
-        message: isPaid
-          ? "Paiement confirmé avec succès par LigdiCash ! Abonnement activé."
-          : `Statut actuel retourné par LigdiCash : ${newStatus}`,
+        status: "completed",
+        isPaid: true,
+        message: "Transaction confirmée avec succès. Accès complet actif.",
       });
     }
 
@@ -216,7 +199,7 @@ export async function POST(request: NextRequest) {
             amount: planAmount,
             currency: "FCFA",
             status: "active",
-            payment_method: "LigdiCash (Validation Manuelle SuperAdmin)",
+            payment_method: "Validation Manuelle SuperAdmin",
             allowed_candidates: planAllowedCandidates,
             activated_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

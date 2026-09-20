@@ -191,22 +191,19 @@ export default function TermsPage() {
           <section id="art5" className="space-y-3 pt-4 border-t border-slate-200">
             <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
               <span className="text-blue-600 font-mono">Article 5.</span>
-              <span>Tarification & Modalités de Paiement Mobile Money</span>
+              <span>Accès Gratuit & Modalités d'Utilisation</span>
             </h2>
             <p>
-              MonCV.ai propose une formule gratuite de découverte ainsi que des packs payants sans abonnement caché (paiement unique à l'acte) :
+              MonCV.ai propose l'ensemble de ses fonctionnalités en libre accès gratuit :
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-              <li><strong>Pack Découverte (0 FCFA) :</strong> Permet de tester le questionnaire IA et de visualiser le rendu du CV. Téléchargement PDF désactivé.</li>
-              <li><strong>Pack Essentiel (1 500 FCFA) :</strong> Téléchargement illimité du CV en PDF HD sans aucun filigrane.</li>
-              <li><strong>Pack Pro Recommandé (2 500 FCFA) :</strong> Inclut le CV PDF HD, la Demande d'Emploi officielle (PDF + Word) et la Lettre de motivation IA.</li>
-              <li><strong>Pack VIP & Portfolio (5 000 FCFA) :</strong> Comprend l'intégralité des outils, le Portfolio Web interactif en ligne, les exports multi-formats et le support prioritaire.</li>
+              <li><strong>Création & Édition :</strong> Accès illimité à l'assistant IA pas à pas et aux 6 modèles de CV professionnels.</li>
+              <li><strong>Export PDF Haute Définition :</strong> Téléchargement direct sans filigrane, format vectoriel A4 optimisé ATS.</li>
+              <li><strong>Demande d'Emploi & Lettre IA :</strong> Génération de documents officiels au format PDF et Word sans frais.</li>
+              <li><strong>Portfolio en Ligne :</strong> Page web personnelle et QR Code de partage public.</li>
             </ul>
             <p className="pt-2">
-              <strong>Moyens de Paiement :</strong> Les transactions sont opérées de façon hautement sécurisée via les passerelles de Mobile Money leaders en Afrique (Wave, Orange Money, MTN Mobile Money, Moov Money) ainsi que par carte bancaire.
-            </p>
-            <p className="text-[11px] text-slate-500 italic">
-              Conformément à la législation sur le commerce électronique, s'agissant de contenus numériques fournis immédiatement après paiement, l'utilisateur accepte expressément que l'exécution commence dès la validation du paiement et renonce à son droit de rétractation après génération des documents.
+              <strong>Accès Gratuit :</strong> Aucun moyen de paiement, carte bancaire ou Mobile Money n'est requis pour générer et télécharger vos documents.
             </p>
           </section>
 

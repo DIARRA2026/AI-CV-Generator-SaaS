@@ -771,17 +771,17 @@ export class AdminService {
           const pending = (txs || []).filter((t: any) => t.status === "pending").length;
           results.push({
             id: "diag-mobile-money",
-            title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
+            title: "Système d'Accès & Souscriptions (Mode 100% Gratuit)",
             category: "payments",
             status: "healthy",
-            message: `Passerelle opérationnelle (Wave, Orange Money, MTN MoMo, Moov). ${completed} paiement(s) validé(s), ${pending} en attente.`,
+            message: `Accès libre actif. ${completed} souscription(s) enregistrée(s).`,
             lastRunAt: now,
             affectedCount: pending,
           });
         } else {
           results.push({
             id: "diag-mobile-money",
-            title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
+            title: "Système d'Accès & Souscriptions (Mode 100% Gratuit)",
             category: "payments",
             status: "warning",
             message: `Table des transactions : ${txErr.message}`,
@@ -791,20 +791,20 @@ export class AdminService {
       } else {
         results.push({
           id: "diag-mobile-money",
-          title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
+          title: "Système d'Accès & Souscriptions (Mode 100% Gratuit)",
           category: "payments",
           status: "healthy",
-          message: "Passerelle Mobile Money active avec webhook sécurisé.",
+          message: "Mode accès libre et gratuit opérationnel.",
           lastRunAt: now,
         });
       }
     } catch (e: any) {
       results.push({
         id: "diag-mobile-money",
-        title: "Passerelle Mobile Money (Wave, Orange, MTN, Moov)",
+        title: "Système d'Accès & Souscriptions (Mode 100% Gratuit)",
         category: "payments",
         status: "critical",
-        message: `Erreur vérification passerelle Mobile Money : ${e.message}`,
+        message: `Erreur vérification : ${e.message}`,
         lastRunAt: now,
       });
     }

@@ -233,26 +233,16 @@ export default function CreateCVPage() {
   const planTier = isEnterpriseActive ? "5000" : (resumeData.planTier || (resumeData.isPremium ? "2500" : "free"));
   const licenseStatus = getLicenseStatus(resumeData);
 
-  // Ouverture Lettre IA (Inclus dès la formule Entreprise ou Pack Pro 2500 FCFA & VIP 5000 FCFA)
+  // Ouverture Lettre IA (100% Offert et Débloqué)
   const handleOpenCoverLetter = () => {
     requireAuth("coverLetter", () => {
-      if (!isEnterpriseActive && (planTier === "free" || planTier === "1500")) {
-        setPaymentDefaultPlan("2500");
-        setIsPaymentOpen(true);
-        return;
-      }
       setIsCoverLetterOpen(true);
     });
   };
 
-  // Ouverture Demande d'emploi (Inclus dès la formule Entreprise ou Pack Pro 2500 FCFA & VIP 5000 FCFA)
+  // Ouverture Demande d'emploi (100% Offert et Débloqué)
   const handleOpenJobApplication = () => {
     requireAuth("jobApplication", () => {
-      if (!isEnterpriseActive && (planTier === "free" || planTier === "1500")) {
-        setPaymentDefaultPlan("2500");
-        setIsPaymentOpen(true);
-        return;
-      }
       setIsJobApplicationOpen(true);
     });
   };

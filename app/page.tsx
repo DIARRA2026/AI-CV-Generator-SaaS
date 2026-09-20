@@ -12,7 +12,6 @@ import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { getWavePaymentUrl } from "@/config/payments";
 import {
   Sparkles,
   ArrowRight,
@@ -252,24 +251,17 @@ export default function HomePage() {
     setIsAuthOpen(true);
   };
 
-  const handleOpenPlanPayment = (plan: PlanTier, waveDirectOpened: boolean = false) => {
-    if (typeof window !== "undefined" && !StorageManager.isLoggedIn()) {
-      StorageManager.setPendingCheckoutPlan(plan, waveDirectOpened);
+  const handleOpenPlanPayment = (plan: PlanTier) => {
+    if (typeof window !== "undefined") {
+      StorageManager.setPlanTier(plan, {
+        status: "active",
+        paymentMethod: "Accès Libre & Gratuit",
+      });
       const isBiz = plan.startsWith("enterprise") || plan === "cyber15";
-      setAuthAccountType(isBiz ? "business" : "candidate");
-      setAuthDefaultPlan(plan);
-      setIsAuthOpen(true);
-      return;
-    }
-
-    setSelectedPlanPrice(plan);
-    setIsPaymentWaveOpened(waveDirectOpened);
-    setIsPaymentOpen(true);
-
-    if (waveDirectOpened) {
-      const waveUrl = getWavePaymentUrl(plan);
-      if (waveUrl && typeof window !== "undefined") {
-        window.open(waveUrl, "_blank", "noopener,noreferrer");
+      if (isBiz) {
+        router.push("/dashboard?tab=business");
+      } else {
+        router.push("/create");
       }
     }
   };
@@ -305,7 +297,7 @@ export default function HomePage() {
       if (pending) {
         StorageManager.clearPendingCheckoutPlan();
         setTimeout(() => {
-          handleOpenPlanPayment(pending.plan, pending.isWave);
+          handleOpenPlanPayment(pending.plan);
         }, 400);
       }
     };
@@ -1422,19 +1414,12 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("1500", false)}
+                    onClick={() => handleOpenPlanPayment("1500")}
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
                   >
-                    <span>Payer 1 500 FCFA</span>
+                    <span>Créer mon CV Gratuitement</span>
                     <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/15 text-[#0098d4] border border-[#1dc4fe]/30">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/15 text-[#ff7900] border border-[#ff7900]/30">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/20 text-[#997300] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#005ca9]/15 text-[#005ca9] border border-[#005ca9]/30">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">Carte</span>
-                  </div>
                 </div>
               </div>
 
@@ -1484,20 +1469,13 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("2500", false)}
+                    onClick={() => handleOpenPlanPayment("2500")}
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
                     <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow shrink-0" />
-                    <span>Payer 2 500 FCFA</span>
+                    <span>Choisir Candidature Pro (Offert)</span>
                     <Crown className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
-                  </div>
                 </div>
               </div>
 
@@ -1547,20 +1525,13 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-col gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("5000", false)}
+                    onClick={() => handleOpenPlanPayment("5000")}
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
-                    <span>Payer 5 000 FCFA</span>
+                    <span>Choisir Pack VIP & Portfolio (Offert)</span>
                     <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1765,20 +1736,13 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise30", false)}
+                    onClick={() => handleOpenPlanPayment("enterprise30")}
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-emerald-600/30 card-hover-lift"
                   >
                     <Building className="w-4 h-4 shrink-0" />
-                    <span>Payer 20 000 FCFA</span>
+                    <span>Activer Starter PME (Offert)</span>
                     <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
-                  </div>
                 </div>
               </div>
 
@@ -1843,20 +1807,13 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2.5 relative z-10">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise75", false)}
+                    onClick={() => handleOpenPlanPayment("enterprise75")}
                     className="w-full py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-amber-500/40 animate-cta-loop"
                   >
                     <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
-                    <span>Payer 45 000 FCFA</span>
+                    <span>Activer Business Pro (Offert)</span>
                     <Crown className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
-                  </div>
                 </div>
               </div>
 
@@ -1914,20 +1871,13 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise200", false)}
+                    onClick={() => handleOpenPlanPayment("enterprise200")}
                     className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
                   >
                     <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
-                    <span>Payer 100 000 FCFA</span>
+                    <span>Activer Entreprise Premium (Offert)</span>
                     <Sparkles className="w-4 h-4 shrink-0" />
                   </button>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#1dc4fe]/25 text-[#70dcff] border border-[#1dc4fe]/40">Wave</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ff7900]/25 text-[#ffa85c] border border-[#ff7900]/40">Orange Money</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ffcc00]/25 text-[#ffe680] border border-[#ffcc00]/40">MTN MoMo</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0088ff]/25 text-[#60b5ff] border border-[#0088ff]/40">Moov</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">Carte</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -2264,18 +2214,15 @@ export default function HomePage() {
             ? chosenPlan
             : null;
 
-          const shouldOpenWave = pending ? pending.isWave : Boolean(targetPlan);
-
           if (targetPlan) {
-            setSelectedPlanPrice(targetPlan);
-            setIsPaymentWaveOpened(shouldOpenWave);
-            setIsPaymentOpen(true);
-
-            if (shouldOpenWave) {
-              const waveUrl = getWavePaymentUrl(targetPlan);
-              if (waveUrl && typeof window !== "undefined") {
-                window.open(waveUrl, "_blank", "noopener,noreferrer");
-              }
+            StorageManager.setPlanTier(targetPlan, {
+              status: "active",
+              paymentMethod: "Accès Libre & Gratuit",
+            });
+            if (isBiz) {
+              router.push("/dashboard?tab=business");
+            } else {
+              router.push("/create");
             }
           } else {
             if (isBiz) {

@@ -845,7 +845,7 @@ export class StorageManager {
         amount: details?.amount || defaultAmount,
         currency: details?.currency || "FCFA",
         status: details?.status || "pending",
-        paymentMethod: details?.paymentMethod || "Mobile Money (Wave / Orange / MTN)",
+        paymentMethod: details?.paymentMethod || "Accès Gratuit MonCV.ai",
         phoneNumber: details?.phoneNumber || user?.phone,
         transactionRef: details?.transactionRef || `TRX-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,
         subscribedAt: new Date().toISOString(),

@@ -1159,11 +1159,11 @@ export default function AdminConsolePage() {
         )}
 
         {/* ================================================================= */}
-        {/* ONGLET NOUVEAU : PAIEMENTS & TRANSACTIONS LIGDICASH MOBILE MONEY  */}
+        {/* ONGLET : HISTORIQUE DES TRANSACTIONS & SOUSCRIPTIONS              */}
         {/* ================================================================= */}
         {activeTab === "transactions" && (
           <div className="space-y-6 fade-in">
-            {/* Bannière Passerelle Mobile Money & Intégration UEMOA */}
+            {/* Bannière Historique des Transactions */}
             <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
@@ -1172,23 +1172,15 @@ export default function AdminConsolePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-extrabold text-sm text-white">
-                      Passerelle Mobile Money (Wave, Orange, MTN, Moov)
+                      Historique des Accès & Souscriptions
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">
-                      Direct Live Webhook
+                      Accès Libre 100%
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                    Acceptation instantanée des paiements par <strong className="text-white">Wave, Orange Money, MTN MoMo, Moov Money</strong> et cartes bancaires. Les abonnements et CVs sont débloqués automatiquement à la réception du webhook.
+                    L'ensemble des fonctionnalités de MonCV.ai est désormais disponible en accès libre gratuit. Ce tableau récapitule l'historique des activations et souscriptions.
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400">
-                    <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                      ● Webhook actif :
-                    </span>
-                    <code className="bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 text-slate-300">
-                      /api/webhooks/ligdicash
-                    </code>
-                  </div>
                 </div>
               </div>
 

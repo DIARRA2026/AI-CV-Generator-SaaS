@@ -107,51 +107,17 @@ export function isEnterpriseFormulaActive(resume?: ResumeData): boolean {
 /**
  * Vérifie si l'identité actuelle du CV est déverrouillée et en règle
  * pour un téléchargement immédiat et sans filigrane.
+ * (Accès 100% libre et gratuit — Passerelles de paiement retirées)
  */
-export function isIdentityUnlocked(resume: ResumeData): boolean {
-  // FORMULE ENTREPRISE : Toutes les offres personnelles sont 100% offertes et débloquées
-  if (isEnterpriseFormulaActive(resume)) {
-    return true;
-  }
-
-  if (!resume.isPremium || !resume.planTier || resume.planTier === "free") {
-    return false;
-  }
-
-  const currentKey = getIdentityKey(resume);
-  const allowedMax = getAllowedProfilesCount(resume.planTier);
-
-  // Rétrocompatibilité contrôlée : si le CV a été payé avant l'introduction de l'objet license,
-  // vérifier la présence d'une souscription ou d'une transaction associée
-  if (!resume.license) {
-    const userEmail = (resume.userEmail || (typeof window !== "undefined" ? StorageManager.getUser()?.email : "") || "").toLowerCase().trim();
-    const sub = userEmail && typeof window !== "undefined" ? StorageManager.getUserSubscription(userEmail) : null;
-    if (sub && (sub.status === "active" || sub.transactionRef)) {
-      return true;
-    }
-    return Boolean(resume.isPremium && resume.planTier);
-  }
-
-  const unlocked = resume.license.unlockedIdentities || [];
-
-  // Si l'identité actuelle figure déjà dans les identités déverrouillées
-  if (unlocked.includes(currentKey)) {
-    return true;
-  }
-
-  // Si le quota de profils de la formule n'est pas encore atteint, on autorise
-  if (unlocked.length < allowedMax) {
-    return true;
-  }
-
-  return false;
+export function isIdentityUnlocked(_resume?: ResumeData): boolean {
+  return true;
 }
 
 /**
  * Détermine si le CV peut être téléchargé en PDF et Word sans filigrane
  */
-export function canDownloadWithoutWatermark(resume: ResumeData): boolean {
-  return isIdentityUnlocked(resume);
+export function canDownloadWithoutWatermark(_resume?: ResumeData): boolean {
+  return true;
 }
 
 /**
@@ -221,16 +187,16 @@ export function getLicenseStatus(resume: ResumeData) {
       );
 
   return {
-    isUnlocked,
-    isPremium: isEnterprise || (!!resume.isPremium && plan !== "free"),
+    isUnlocked: true,
+    isPremium: true,
     isEnterprise,
     planTier: plan,
     currentKey,
     candidateDisplayName,
     primaryDisplayName,
     usedSlots,
-    allowedSlots,
-    availableSlots: isEnterprise ? 9999 : Math.max(0, allowedSlots - usedSlots),
-    isNameChangedFromPrimary,
+    allowedSlots: 9999,
+    availableSlots: 9999,
+    isNameChangedFromPrimary: false,
   };
 }

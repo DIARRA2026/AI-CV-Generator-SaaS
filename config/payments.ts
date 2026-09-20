@@ -1,13 +1,9 @@
 /**
- * MONCV.AI — CONFIGURATION CENTRALISÉE DES PAIEMENTS (LIGDICASH & MOBILE MONEY)
+ * MONCV.AI — CONFIGURATION DES FORMULES & ACCÈS CANDIDATS / ENTREPRISES
  * 
- * Passerelle Principale : LIGDICASH (UEMOA - Côte d'Ivoire, Burkina Faso, Sénégal, Mali, Bénin, Togo)
- * Opérateurs pris en charge : Orange Money, MTN MoMo, Moov Money, Wave, Carte Bancaire
- * Devise officielle : FCFA (XOF)
- * 
- * RÔLE DU FICHIER :
- * Point unique de vérité pour tous les paramètres tarifaires et de facturation.
- * Garantit l'immuabilité absolue des montants pour empêcher toute falsification côté client.
+ * Mode Actuel : 100% LIBRE & GRATUIT
+ * Les passerelles de paiement (LigdiCash, Wave) ont été désactivées.
+ * Tous les modèles, lettres de motivation IA et fonctionnalités sont débloqués.
  */
 
 import { PlanTier } from "@/lib/types";
@@ -172,49 +168,27 @@ export function getPlanAmount(planId: PlanTier | string): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COMPATIBILITÉ ANTÉRIEURE WAVE (Adaptateur transparent)
+// PASSERELLES DE PAIEMENT DÉSACTIVÉES (ACCÈS 100% LIBRE ET GRATUIT)
 // ─────────────────────────────────────────────────────────────────────────────
 export const WAVE_PAYMENT_CONFIG: Record<PlanTier, WavePaymentPlan | null> = {
-  "1500": {
-    ...PAYMENT_PLANS["1500"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=1500",
-  },
-  "2500": {
-    ...PAYMENT_PLANS["2500"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=2500",
-  },
-  "5000": {
-    ...PAYMENT_PLANS["5000"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=5000",
-  },
-  "enterprise30": {
-    ...PAYMENT_PLANS["enterprise30"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=20000",
-  },
-  "enterprise75": {
-    ...PAYMENT_PLANS["enterprise75"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=45000",
-  },
-  "enterprise200": {
-    ...PAYMENT_PLANS["enterprise200"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=100000",
-  },
-  "cyber15": {
-    ...PAYMENT_PLANS["cyber15"]!,
-    paymentUrl: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=10000",
-  },
+  "1500": null,
+  "2500": null,
+  "5000": null,
+  "enterprise30": null,
+  "enterprise75": null,
+  "enterprise200": null,
+  "cyber15": null,
   "free": null,
 };
 
-export function getWavePaymentUrl(planId: PlanTier | string): string | null {
-  const plan = WAVE_PAYMENT_CONFIG[planId as PlanTier];
-  return plan ? plan.paymentUrl : null;
+export function getWavePaymentUrl(_planId: PlanTier | string): string | null {
+  return null;
 }
 
-export function getWavePlanConfig(planId: PlanTier | string): WavePaymentPlan | null {
-  return WAVE_PAYMENT_CONFIG[planId as PlanTier] || null;
+export function getWavePlanConfig(_planId: PlanTier | string): WavePaymentPlan | null {
+  return null;
 }
 
-export function hasWavePayment(planId: PlanTier | string): boolean {
-  return Boolean(getWavePaymentUrl(planId));
+export function hasWavePayment(_planId: PlanTier | string): boolean {
+  return false;
 }

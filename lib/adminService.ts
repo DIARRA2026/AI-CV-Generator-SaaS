@@ -281,8 +281,13 @@ export class AdminService {
       const logs = this.getAuditLogs();
       const currentAdmin = this.getAdminSession()?.email || SYSTEM_ADMIN_EMAIL;
 
+      const logId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? `log-${crypto.randomUUID()}`
+          : `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
       const newLog: AdminAuditLog = {
-        id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        id: logId,
         timestamp: new Date().toISOString(),
         adminEmail: currentAdmin,
         action,

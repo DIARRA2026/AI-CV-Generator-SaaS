@@ -168,10 +168,15 @@ export function registerPaymentSuccess(
   const existingUnlocked = resume.license?.unlockedIdentities || [];
   const updatedUnlocked = Array.from(new Set([...existingUnlocked, currentKey]));
 
+  const secureRef =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? `TRX_LC_${crypto.randomUUID()}`
+      : `TRX_LC_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+
   const license: LicenseAccess = {
     planTier: plan,
     paidAt: new Date().toISOString(),
-    transactionRef: transactionRef || `WAVE_${Date.now()}`,
+    transactionRef: transactionRef || secureRef,
     allowedProfilesCount: Math.max(allowedCount, updatedUnlocked.length),
     unlockedIdentities: updatedUnlocked,
     primaryIdentity: resume.license?.primaryIdentity || currentKey,

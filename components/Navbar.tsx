@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles, FileText, LayoutDashboard, Crown, User, LogOut,
-  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe, Building, CheckCircle2
+  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe, Building, CheckCircle2, Zap
 } from "lucide-react";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
@@ -68,6 +68,32 @@ export const Navbar: React.FC<NavbarProps> = ({
     update();
     window.addEventListener("storage", update);
     return () => window.removeEventListener("storage", update);
+  }, []);
+
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [creditNearestExpiry, setCreditNearestExpiry] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const res = await fetch("/api/credits");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.summary) {
+            setCreditBalance(data.summary.balance ?? 0);
+            setCreditNearestExpiry(data.summary.nearest_expiry ?? null);
+          }
+        }
+      } catch {}
+    };
+
+    fetchCredits();
+    window.addEventListener("moncv_credits_updated", fetchCredits);
+    window.addEventListener("storage", fetchCredits);
+    return () => {
+      window.removeEventListener("moncv_credits_updated", fetchCredits);
+      window.removeEventListener("storage", fetchCredits);
+    };
   }, []);
 
   const isBusiness = isMounted && (isBusinessState || currentUser?.accountType === "business");
@@ -298,6 +324,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               </>
             )}
 
+            {/* Lien Tarifs */}
+            <Link
+              href="/tarifs"
+              className="hidden md:flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              title="Consulter les packs de crédits prépayés"
+            >
+              <span>Tarifs</span>
+            </Link>
+
+            {/* Badge Crédits IA */}
+            <Link
+              href="/credits"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-amber-900 bg-amber-50 hover:bg-amber-100/90 border border-amber-300/80 rounded-xl transition-all cursor-pointer btn-press shadow-xs"
+              title={
+                creditNearestExpiry
+                  ? `Solde : ${creditBalance ?? 0} crédits (Expire le ${new Date(creditNearestExpiry).toLocaleDateString("fr-FR")})`
+                  : `Solde : ${creditBalance ?? 0} crédits disponibles`
+              }
+            >
+              <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
+              <span>{creditBalance !== null ? `${creditBalance} crédits` : "Crédits IA"}</span>
+            </Link>
+
             {/* Sélecteur de Langue Desktop */}
             <LanguageSelector variant="navbar" />
 
@@ -445,19 +494,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <span>{dict.nav.myCvs}</span>
                     </button>
 
-                    {onOpenPayment && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          onOpenPayment("2500");
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-amber-600 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
-                      >
-                        <Crown className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>{dict.nav.billing}</span>
-                      </button>
-                    )}
+                    <Link
+                      href="/credits"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-amber-200/60"
+                    >
+                      <Zap className="w-4 h-4 fill-amber-500 text-amber-600 shrink-0" />
+                      <span>Mes Crédits ({creditBalance !== null ? creditBalance : 0})</span>
+                    </Link>
+
+                    <Link
+                      href="/tarifs"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                    >
+                      <Crown className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Recharger des crédits Wave</span>
+                    </Link>
 
                     <div className="h-px bg-slate-100 my-1" />
 
@@ -834,6 +887,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </>
               )}
+
+              {/* Mes Crédits IA & Tarifs Mobile */}
+              <Link
+                href="/credits"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200"
+              >
+                <div className="flex items-center gap-3">
+                  <Zap className="w-4 h-4 fill-amber-500 text-amber-600" />
+                  <span>Mes Crédits IA</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black">
+                  {creditBalance !== null ? `${creditBalance} crédits` : "0 crédit"}
+                </span>
+              </Link>
+
+              <Link
+                href="/tarifs"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
+              >
+                <Crown className="w-4 h-4 text-slate-500" />
+                <span>Packs de Crédits & Tarifs</span>
+              </Link>
 
               <Link
                 href="/#modeles"

@@ -67,7 +67,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 Partager votre CV & Portfolio
               </h3>
               <p className="text-xs text-slate-500">
-                {resumeData.isPremium ? "Abonnement Pro • Portfolio Web Actif" : "Formule Gratuite • Aperçu CV A4"}
+                {resumeData.isPremium ? "Pack Pro • Portfolio Web Actif" : "Formule Découverte • Aperçu CV A4"}
               </p>
             </div>
           </div>

@@ -276,3 +276,85 @@ export interface SystemHealthStatus {
   maintenanceMode: boolean;
   lastCheckedAt: string;
 }
+
+// =========================================================================
+// SYSTÈME DE CRÉDITS PRÉPAYÉS & PAIEMENT WAVE SANS ABONNEMENT
+// =========================================================================
+
+export type CreditPackCode = "decouverte" | "essentiel" | "evolution" | "carriere";
+
+export interface CreditPack {
+  code: CreditPackCode;
+  label: string;
+  priceFcfa: number;
+  credits: number;
+  validityDays: number | null; // null = permanent
+  unitPriceFcfa: number;
+  waveLink: string | null;
+  active: boolean;
+  features?: string[];
+  recommended?: boolean;
+  badge?: string;
+  description?: string;
+}
+
+export type CreditSource = "offert" | "achat" | "migration" | "bonus";
+
+export interface CreditBatch {
+  id: string;
+  userId: string;
+  creditsInitial: number;
+  creditsRemaining: number;
+  source: CreditSource;
+  packCode: CreditPackCode | null;
+  purchasedAt: string;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export type CreditActionType =
+  | "welcome_gift"
+  | "purchase"
+  | "cv_generate"
+  | "cv_rewrite"
+  | "cover_letter"
+  | "ats_adaptation"
+  | "english_version"
+  | "pro_photo"
+  | "refund"
+  | "migration";
+
+export interface CreditLedgerEntry {
+  id: string;
+  userId: string;
+  batchId?: string | null;
+  action: CreditActionType | string;
+  delta: number;
+  balanceAfter: number;
+  ref?: string | null;
+  createdAt: string;
+}
+
+export type PaymentClaimStatus = "pending" | "approved" | "rejected";
+
+export interface PaymentClaim {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  packCode: CreditPackCode;
+  amountFcfa: number;
+  waveReference: string;
+  screenshotUrl?: string | null;
+  status: PaymentClaimStatus;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+}
+
+export interface UserCreditSummary {
+  balance: number;
+  nearestExpiry: string | null;
+  activeBatchesCount: number;
+}
+

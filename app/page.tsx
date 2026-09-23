@@ -2129,6 +2129,9 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-center">
+              <Link href="/tarifs" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
+                Packs & Tarifs
+              </Link>
               <Link href="/terms" className="text-slate-600 hover:text-blue-600 transition-colors py-1">
                 {dict.footer.terms}
               </Link>

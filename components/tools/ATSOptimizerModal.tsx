@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { ResumeData, ATSAnalysisResult } from "@/lib/types";
 import { ATSEngine } from "@/lib/ats-engine";
-import { X, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Wand2, ArrowRight } from "lucide-react";
+import { X, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Wand2, ArrowRight, Zap } from "lucide-react";
+import { CreditActionConfirmModal } from "./CreditActionConfirmModal";
+import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
+import { CREDIT_ACTIONS_COST } from "@/config/payments";
 
 interface ATSOptimizerModalProps {
   isOpen: boolean;
@@ -23,11 +26,25 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<ATSAnalysisResult | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleAnalyze = async () => {
+  const handlePromptAnalyze = async () => {
     if (!jobText.trim()) return;
+    try {
+      const res = await fetch("/api/credits");
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentBalance(data.summary?.balance ?? 0);
+      }
+    } catch {}
+    setIsConfirmOpen(true);
+  };
+
+  const handleExecuteAnalyze = async () => {
     setIsAnalyzing(true);
     try {
       const res = await fetch("/api/ai/generate", {
@@ -43,6 +60,10 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
         const json = await res.json();
         if (json.success && json.data) {
           setResult(json.data);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("moncv_credits_updated"));
+          }
+          setIsConfirmOpen(false);
           setIsAnalyzing(false);
           return;
         }
@@ -52,6 +73,10 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
     }
     const res = ATSEngine.analyze(resumeData, jobText);
     setResult(res);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("moncv_credits_updated"));
+    }
+    setIsConfirmOpen(false);
     setIsAnalyzing(false);
   };
 
@@ -110,16 +135,16 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
             />
             <button
               type="button"
-              onClick={handleAnalyze}
+              onClick={handlePromptAnalyze}
               disabled={isAnalyzing || !jobText.trim()}
-              className="mt-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all"
+              className="mt-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
             >
               {isAnalyzing ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <Wand2 className="w-4 h-4" />
               )}
-              {isAnalyzing ? "Analyse sémantique en cours..." : "Lancer l'audit de compatibilité"}
+              {isAnalyzing ? "Analyse sémantique en cours..." : `Lancer l'audit de compatibilité ATS (${CREDIT_ACTIONS_COST.ats_adaptation} crédits)`}
             </button>
           </div>
 
@@ -222,6 +247,30 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal Confirmation Crédits */}
+      <CreditActionConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleExecuteAnalyze}
+        actionCost={CREDIT_ACTIONS_COST.ats_adaptation}
+        actionLabel="Audit et Score de Compatibilité ATS IA"
+        actionDescription="Analyse approfondie de votre CV par l'intelligence artificielle face aux exigences du poste et optimisation des mots-clés."
+        currentBalance={currentBalance}
+        onOpenRecharge={() => setIsWaveModalOpen(true)}
+        isGenerating={isAnalyzing}
+      />
+
+      {/* Modal Recharge Wave */}
+      <WavePaymentClaimModal
+        isOpen={isWaveModalOpen}
+        onClose={() => setIsWaveModalOpen(false)}
+        onClaimSubmitted={() => {
+          fetch("/api/credits")
+            .then((r) => r.json())
+            .then((d) => setCurrentBalance(d.summary?.balance ?? 0));
+        }}
+      />
     </div>
   );
 };

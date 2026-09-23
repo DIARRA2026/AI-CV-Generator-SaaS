@@ -43,6 +43,7 @@ import {
   CreditCard,
   Copy,
   Check,
+  Zap,
 } from "lucide-react";
 import { StorageManager, RegisteredUser, UserSession } from "@/lib/storage";
 import {
@@ -54,6 +55,7 @@ import {
   TransactionRecord,
 } from "@/lib/types";
 import { AdminService } from "@/lib/adminService";
+import { AdminWaveClaimsTab } from "@/components/admin/AdminWaveClaimsTab";
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -90,7 +92,7 @@ export default function AdminConsolePage() {
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<
-    "overview" | "users" | "business" | "transactions" | "diagnostics" | "maintenance"
+    "overview" | "claims" | "users" | "business" | "transactions" | "diagnostics" | "maintenance"
   >("overview");
 
   // Données
@@ -854,6 +856,19 @@ export default function AdminConsolePage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("claims")}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "claims"
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-black"
+              : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+          }`}
+        >
+          <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+          <span>Paiements Wave & Réclamations</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => {
             setActiveTab("transactions");
             if (transactions.length === 0) loadTransactions();
@@ -934,6 +949,13 @@ export default function AdminConsolePage() {
 
       {/* Contenu Principal */}
       <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        {/* ================================================================= */}
+        {/* ONGLET RÉCLAMATIONS WAVE & CRÉDITS */}
+        {/* ================================================================= */}
+        {activeTab === "claims" && (
+          <AdminWaveClaimsTab onNotify={(text, type) => showToast(text, type)} />
+        )}
+
         {/* ================================================================= */}
         {/* ONGLET 1 : VUE D'ENSEMBLE & MÉTRIQUES CLÉS */}
         {/* ================================================================= */}

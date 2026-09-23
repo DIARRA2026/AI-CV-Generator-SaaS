@@ -5,7 +5,10 @@ import jsPDF from "jspdf";
 import { ResumeData } from "@/lib/types";
 import { CVEngine } from "@/lib/cv-engine";
 import { downloadCoverLetterDocx } from "@/lib/letter-docx-export";
-import { X, Sparkles, Copy, Check, Download, RefreshCw, Wand2, FileText, ChevronDown } from "lucide-react";
+import { X, Sparkles, Copy, Check, Download, RefreshCw, Wand2, FileText, ChevronDown, Zap } from "lucide-react";
+import { CreditActionConfirmModal } from "./CreditActionConfirmModal";
+import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
+import { CREDIT_ACTIONS_COST } from "@/config/payments";
 
 interface CoverLetterModalProps {
   isOpen: boolean;
@@ -24,16 +27,63 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleGenerate = () => {
+  const handlePromptGenerate = async () => {
+    try {
+      const res = await fetch("/api/credits");
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentBalance(data.summary?.balance ?? 0);
+      }
+    } catch {}
+    setIsConfirmOpen(true);
+  };
+
+  const handleExecuteGenerate = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      const generated = CVEngine.generateCoverLetter(resumeData, targetJob, targetCompany);
-      setLetterContent(generated);
-      setIsGenerating(false);
-    }, 450);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "cover_letter",
+          targetJob,
+          targetCompany,
+          resumeData,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const content = typeof json.data === "string" ? json.data : json.data.letter || "";
+          if (content) {
+            setLetterContent(content);
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("moncv_credits_updated"));
+            }
+            setIsConfirmOpen(false);
+            setIsGenerating(false);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Repli sur moteur IA local:", e);
+    }
+
+    const generated = CVEngine.generateCoverLetter(resumeData, targetJob, targetCompany);
+    setLetterContent(generated);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("moncv_credits_updated"));
+    }
+    setIsConfirmOpen(false);
+    setIsGenerating(false);
   };
 
   const handleCopy = () => {
@@ -148,12 +198,12 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
 
           <button
             type="button"
-            onClick={handleGenerate}
+            onClick={handlePromptGenerate}
             disabled={isGenerating}
             className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
           >
             {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-            {isGenerating ? "Rédaction de votre lettre..." : "Générer la lettre de motivation avec l'IA"}
+            {isGenerating ? "Rédaction de votre lettre..." : `Générer la lettre de motivation avec l'IA (${CREDIT_ACTIONS_COST.cover_letter} crédits)`}
           </button>
 
           {letterContent ? (
@@ -233,6 +283,30 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal Confirmation Crédits */}
+      <CreditActionConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleExecuteGenerate}
+        actionCost={CREDIT_ACTIONS_COST.cover_letter}
+        actionLabel="Rédaction de Lettre de Motivation IA"
+        actionDescription={`Génération complète et personnalisée pour le poste de ${targetJob} chez ${targetCompany}.`}
+        currentBalance={currentBalance}
+        onOpenRecharge={() => setIsWaveModalOpen(true)}
+        isGenerating={isGenerating}
+      />
+
+      {/* Modal Recharge Wave */}
+      <WavePaymentClaimModal
+        isOpen={isWaveModalOpen}
+        onClose={() => setIsWaveModalOpen(false)}
+        onClaimSubmitted={() => {
+          fetch("/api/credits")
+            .then((r) => r.json())
+            .then((d) => setCurrentBalance(d.summary?.balance ?? 0));
+        }}
+      />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles, FileText, LayoutDashboard, Crown, User, LogOut,
-  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe, Building, CheckCircle2, Zap
+  Settings, ChevronDown, ShieldCheck, Menu, X, Compass, DollarSign, Globe, Building, CheckCircle2, Zap, ArrowRight
 } from "lucide-react";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
@@ -205,9 +205,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden sm:flex items-center gap-2.5 sm:gap-3">
-            {isEditorPage ? (
+          {/* 1. Centre : Liens de navigation Desktop épurés et aérés */}
+          {isEditorPage ? (
+            <div className="hidden md:flex items-center">
               <button
                 type="button"
                 onClick={() => {
@@ -244,7 +244,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </>
                 )}
               </button>
-            ) : isEnterprisePage ? (
+            </div>
+          ) : isEnterprisePage ? (
+            <div className="hidden md:flex items-center">
               <button
                 type="button"
                 onClick={handleCandidatePoolClick}
@@ -259,397 +261,297 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 )}
               </button>
-            ) : (
-              <>
-                {isBusiness ? (
-                  <button
-                    type="button"
-                    onClick={handleCandidatePoolClick}
-                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-800 bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 rounded-xl transition-all cursor-pointer btn-press shadow-xs hover:shadow-sm"
-                    title="Accéder à l'Espace Entreprise & Vivier RH"
-                  >
-                    <Building className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>{dict.nav.candidatePool}</span>
-                    {effectiveCandidateCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-400/60 text-[10px] font-black">
-                    {effectiveCandidateCount}
-                  </span>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleMesCvsClick}
-                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
-                  >
-                    <LayoutDashboard className="w-4 h-4 text-slate-500" />
-                    <span>{dict.nav.myCvs}</span>
-                  </button>
-                )}
+            </div>
+          ) : (
+            <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+              <Link
+                href="/#modeles"
+                className="px-3 py-1.5 text-xs lg:text-sm font-semibold text-slate-600 hover:text-blue-600 hover:bg-slate-100/80 rounded-xl transition-colors"
+              >
+                {dict.hero.modelsButton || "Modèles"}
+              </Link>
 
-                {currentUser && (
-                  <button
-                    type="button"
-                    onClick={handleNewCvClick}
-                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer btn-press"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>{dict.nav.newCv}</span>
-                  </button>
-                )}
+              <Link
+                href="/tarifs"
+                className="px-3 py-1.5 text-xs lg:text-sm font-semibold text-slate-600 hover:text-blue-600 hover:bg-slate-100/80 rounded-xl transition-colors"
+              >
+                Tarifs
+              </Link>
 
+              <Link
+                href="/portfolio"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs lg:text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/60 rounded-xl transition-colors"
+              >
+                <span>{dict.nav.portfolioWeb}</span>
+                <span className="px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-700 text-[9px] font-black uppercase">
+                  VIP
+                </span>
+              </Link>
+
+              {(!currentUser || !isBusiness) ? (
                 <Link
-                  href="/portfolio"
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 rounded-xl transition-all cursor-pointer btn-press border border-indigo-100"
+                  href="/#business"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs lg:text-sm font-semibold text-slate-600 hover:text-amber-800 hover:bg-amber-50/60 rounded-xl transition-colors"
                 >
-                  <Globe className="w-4 h-4 text-indigo-600" />
-                  <span>{dict.nav.portfolioWeb}</span>
-                  <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
-                    {dict.nav.vip}
+                  <span>{dict.nav.enterprise}</span>
+                  <span className="px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[9px] font-black uppercase">
+                    B2B
                   </span>
                 </Link>
-
-                {(!currentUser || !isBusiness) && (
-                  <Link
-                    href="/#business"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100/90 rounded-xl transition-all cursor-pointer btn-press border border-amber-200/80"
-                  >
-                    <Building className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{dict.nav.enterprise}</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-amber-600 text-white text-[9px] font-black uppercase">
-                      {dict.nav.b2b}
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCandidatePoolClick}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs lg:text-sm font-bold text-amber-800 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Building className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>{dict.nav.candidatePool}</span>
+                  {effectiveCandidateCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 text-[10px] font-black">
+                      {effectiveCandidateCount}
                     </span>
-                  </Link>
-                )}
-              </>
+                  )}
+                </button>
+              )}
+            </nav>
+          )}
+
+          {/* 2. Droite : Actions Desktop organisées et hiérarchisées */}
+          <div className="hidden md:flex items-center gap-2 lg:gap-2.5">
+            {/* Badge Crédits IA si utilisateur connecté */}
+            {currentUser && (
+              <Link
+                href="/credits"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-black text-amber-900 bg-amber-50 hover:bg-amber-100/90 border border-amber-300/80 rounded-xl transition-all cursor-pointer btn-press shadow-2xs"
+                title={
+                  creditNearestExpiry
+                    ? `Solde : ${creditBalance ?? 0} crédits (Expire le ${new Date(creditNearestExpiry).toLocaleDateString("fr-FR")})`
+                    : `Solde : ${creditBalance ?? 0} crédits disponibles`
+                }
+              >
+                <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
+                <span>{creditBalance !== null ? `${creditBalance} crédits` : "Crédits"}</span>
+              </Link>
             )}
-
-            {/* Lien Tarifs */}
-            <Link
-              href="/tarifs"
-              className="hidden md:flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
-              title="Consulter les packs de crédits prépayés"
-            >
-              <span>Tarifs</span>
-            </Link>
-
-            {/* Badge Crédits IA */}
-            <Link
-              href="/credits"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-amber-900 bg-amber-50 hover:bg-amber-100/90 border border-amber-300/80 rounded-xl transition-all cursor-pointer btn-press shadow-xs"
-              title={
-                creditNearestExpiry
-                  ? `Solde : ${creditBalance ?? 0} crédits (Expire le ${new Date(creditNearestExpiry).toLocaleDateString("fr-FR")})`
-                  : `Solde : ${creditBalance ?? 0} crédits disponibles`
-              }
-            >
-              <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
-              <span>{creditBalance !== null ? `${creditBalance} crédits` : "Crédits IA"}</span>
-            </Link>
 
             {/* Sélecteur de Langue Desktop */}
             <LanguageSelector variant="navbar" />
 
             {!currentUser ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onOpenAuth) {
-                    onOpenAuth();
-                  } else {
-                    setAuthMode("login");
-                    setIsAuthOpen(true);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 bg-slate-100 hover:bg-blue-50/80 border border-slate-200/90 hover:border-blue-200 rounded-xl transition-all cursor-pointer btn-press shadow-xs"
-                title="Se connecter ou créer un compte"
-              >
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                <span>{dict.nav.loginRegister}</span>
-              </button>
-            ) : null}
-
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/90 rounded-xl transition-all cursor-pointer shadow-xs btn-press"
-                title="Console d'Administration Globale"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                <span>{dict.nav.adminConsole}</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase">
-                  Admin
-                </span>
-              </Link>
-            )}
-
-            {currentUser ? (
-              <div className="relative pl-1" id="user-profile-menu">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs btn-press"
-                  title="Paramètres et options du compte"
+                  onClick={() => {
+                    if (onOpenAuth) {
+                      onOpenAuth();
+                    } else {
+                      setAuthMode("login");
+                      setIsAuthOpen(true);
+                    }
+                  }}
+                  className="px-3 py-2 text-xs lg:text-sm font-semibold text-slate-700 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
+                  title="Se connecter"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[11px] flex items-center justify-center shrink-0">
-                    {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
-                  </div>
-                  <span className="font-bold text-slate-900">
-                    {currentUser.firstName || currentUser.email?.split("@")[0] || "Mon Profil"}
-                  </span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
-                      isProfileMenuOpen ? "rotate-180" : ""
-                    }`}
-                  />
+                  {dict.auth.loginTab || "Connexion"}
                 </button>
 
+                <button
+                  type="button"
+                  onClick={handleNewCvClick}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs lg:text-sm rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer btn-press"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>Créer mon CV</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleMesCvsClick}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-bold text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer btn-press"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                  <span>{dict.nav.myCvs}</span>
+                </button>
+
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/90 rounded-xl transition-all cursor-pointer shadow-2xs btn-press"
+                    title="Console d'Administration Globale"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
                 {/* Menu Déroulant Profil & Paramètres Desktop */}
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 fade-in space-y-1">
-                    <div className="px-3 py-2.5 bg-slate-50 rounded-xl space-y-1 border border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-xs truncate">
-                          {currentUser.firstName} {currentUser.lastName || ""}
-                        </span>
-                        <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                          {currentUser.planTier === "enterprise200"
-                            ? "Entreprise 200"
-                            : currentUser.planTier === "enterprise75"
-                            ? "Business 75"
-                            : currentUser.planTier === "enterprise30"
-                            ? "Starter 30"
-                            : currentUser.planTier === "cyber15"
-                            ? "Cyber 15"
-                            : currentUser.planTier === "5000"
-                            ? "VIP"
-                            : currentUser.planTier === "2500"
-                            ? "Pro"
-                            : currentUser.planTier === "1500"
-                            ? "Essentiel"
-                            : currentUser.accountType === "business"
-                            ? "Recruteur"
-                            : "Gratuit"}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 truncate font-medium">
-                        {currentUser.business?.companyName ? `${currentUser.business.companyName} • ` : ""}{currentUser.email}
-                      </p>
+                <div className="relative pl-0.5" id="user-profile-menu">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs btn-press"
+                    title="Paramètres et options du compte"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[11px] flex items-center justify-center shrink-0">
+                      {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
                     </div>
+                    <span className="font-bold text-slate-900 max-w-[120px] truncate">
+                      {currentUser.firstName || currentUser.email?.split("@")[0] || "Mon Profil"}
+                    </span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
+                        isProfileMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="w-full px-3 py-2 text-left text-xs font-bold text-purple-800 bg-purple-50/70 hover:bg-purple-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-purple-200/60"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
-                        <span>Console Super Admin</span>
-                        <span className="ml-auto text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-600 text-white">
-                          Admin
-                        </span>
-                      </Link>
-                    )}
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 fade-in space-y-1">
+                      <div className="px-3 py-2.5 bg-slate-50 rounded-xl space-y-1 border border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-xs truncate">
+                            {currentUser.firstName} {currentUser.lastName || ""}
+                          </span>
+                          <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                            ⚡ {creditBalance !== null ? `${creditBalance} crédits` : "Crédits"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate font-medium">
+                          {currentUser.business?.companyName ? `${currentUser.business.companyName} • ` : ""}{currentUser.email}
+                        </p>
+                      </div>
 
-                    {isBusiness && (
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="w-full px-3 py-2 text-left text-xs font-bold text-purple-800 bg-purple-50/70 hover:bg-purple-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-purple-200/60"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
+                          <span>Console Super Admin</span>
+                          <span className="ml-auto text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-600 text-white">
+                            Admin
+                          </span>
+                        </Link>
+                      )}
+
+                      {isBusiness && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            setIsProfileMenuOpen(false);
+                            handleCandidatePoolClick(e);
+                          }}
+                          className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                        >
+                          <Building className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>{dict.nav.candidatePool}</span>
+                          {effectiveCandidateCount > 0 && (
+                            <span className="ml-auto px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-300 text-[10px] font-black">
+                              {effectiveCandidateCount}
+                            </span>
+                          )}
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={(e) => {
                           setIsProfileMenuOpen(false);
-                          handleCandidatePoolClick(e);
+                          handleMesCvsClick(e);
                         }}
-                        className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                        className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                       >
-                        <Building className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>{dict.nav.candidatePool}</span>
-                        {effectiveCandidateCount > 0 && (
-                          <span className="ml-auto px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-900 border border-amber-300 text-[10px] font-black">
-                            {effectiveCandidateCount}
-                          </span>
-                        )}
+                        <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
+                        <span>{dict.nav.myCvs}</span>
                       </button>
-                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        setIsSettingsModalOpen(true);
-                      }}
-                      className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
-                    >
-                      <Settings className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>{dict.nav.settings}</span>
-                    </button>
+                      <Link
+                        href="/credits"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-amber-200/60"
+                      >
+                        <Zap className="w-4 h-4 fill-amber-500 text-amber-600 shrink-0" />
+                        <span>Mes Crédits ({creditBalance !== null ? creditBalance : 0})</span>
+                      </Link>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        setIsProfileMenuOpen(false);
-                        handleMesCvsClick(e);
-                      }}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
-                    >
-                      <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
-                      <span>{dict.nav.myCvs}</span>
-                    </button>
+                      <Link
+                        href="/tarifs"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                      >
+                        <Crown className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>Recharger des crédits Wave</span>
+                      </Link>
 
-                    <Link
-                      href="/credits"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full px-3 py-2 text-left text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/90 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press border border-amber-200/60"
-                    >
-                      <Zap className="w-4 h-4 fill-amber-500 text-amber-600 shrink-0" />
-                      <span>Mes Crédits ({creditBalance !== null ? creditBalance : 0})</span>
-                    </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          setIsSettingsModalOpen(true);
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                      >
+                        <Settings className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>{dict.nav.settings}</span>
+                      </button>
 
-                    <Link
-                      href="/tarifs"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
-                    >
-                      <Crown className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Recharger des crédits Wave</span>
-                    </Link>
+                      <div className="h-px bg-slate-100 my-1" />
 
-                    <div className="h-px bg-slate-100 my-1" />
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
-                    >
-                      <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>{dict.nav.logout}</span>
-                    </button>
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span>{dict.nav.logout}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : null}
-
-            {/* Bouton de statut formule / mise à niveau intelligent */}
-            {currentUser?.accountType === "business" ||
-            currentUser?.planTier === "enterprise30" ||
-            currentUser?.planTier === "enterprise75" ||
-            currentUser?.planTier === "enterprise200" ||
-            currentUser?.planTier === "cyber15" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer btn-press"
-                title="Formule Entreprise active : toutes les offres personnelles sont incluses"
-              >
-                <Crown className="w-3.5 h-3.5 text-amber-300" />
-                <span>{dict.nav.enterprise}</span>
-              </button>
-            ) : currentUser?.planTier === "5000" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-purple-600/20 transition-all cursor-pointer btn-press"
-                title="Pack VIP & Portfolio Web actif"
-              >
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span>Pack VIP</span>
-              </button>
-            ) : currentUser?.planTier === "2500" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all cursor-pointer btn-press"
-                title="Pack Candidature Pro actif"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-                <span>Pack Pro</span>
-              </button>
-            ) : currentUser?.planTier === "1500" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer btn-press"
-                title="Pack Essentiel actif"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Pack Essentiel</span>
-              </button>
-            ) : onOpenPayment ? (
-              <button
-                type="button"
-                onClick={() => onOpenPayment()}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer btn-press"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span>{dict.nav.upgradePremium}</span>
-              </button>
-            ) : null}
+            )}
           </div>
 
-          {/* Mobile Action Controls (< 640px) - Protégé contre tout débordement ou rognage d'écran */}
-          <div className="flex sm:hidden items-center gap-1.5 shrink-0 pl-1 pr-0.5">
-            {currentUser?.accountType === "business" ||
-            currentUser?.planTier === "enterprise30" ||
-            currentUser?.planTier === "enterprise75" ||
-            currentUser?.planTier === "enterprise200" ||
-            currentUser?.planTier === "cyber15" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1.5 bg-emerald-600 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
-              >
-                <Crown className="w-3 h-3 text-amber-300" />
-                <span>Entreprise</span>
-              </button>
-            ) : currentUser?.planTier === "5000" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1.5 bg-purple-600 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
-              >
-                <Crown className="w-3 h-3 text-amber-400" />
-                <span>VIP</span>
-              </button>
-            ) : currentUser?.planTier === "2500" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1.5 bg-blue-600 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
-              >
-                <span>Pro</span>
-              </button>
-            ) : currentUser?.planTier === "1500" ? (
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1.5 bg-slate-700 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
-              >
-                <span>Essentiel</span>
-              </button>
-            ) : onOpenPayment ? (
-              <button
-                type="button"
-                onClick={() => onOpenPayment()}
-                className="flex items-center gap-1 px-2 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-[10.5px] shadow-xs cursor-pointer btn-press shrink-0"
-              >
-                <Crown className="w-3 h-3" />
-                <span>Premium</span>
-              </button>
-            ) : null}
+          {/* 3. Droite : Actions Mobile (< 768px `md:hidden`) - Sans débordement ni encombrement */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            {currentUser ? (
+              <>
+                <Link
+                  href="/credits"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-900 font-black text-xs rounded-xl shadow-2xs"
+                  title="Solde de crédits"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
+                  <span>{creditBalance !== null ? creditBalance : 0}</span>
+                </Link>
 
-            {currentUser && (
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center cursor-pointer btn-press shadow-xs shrink-0"
+                  title="Mon Profil"
+                >
+                  {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center cursor-pointer btn-press shadow-xs shrink-0"
-                title="Mon Profil"
+                onClick={handleNewCvClick}
+                className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 flex items-center gap-1 cursor-pointer btn-press"
               >
-                {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>Créer un CV</span>
               </button>
             )}
 
-            {/* Bouton Burger Mobile - Dimensions garanties et entièrement visible sans être coupé */}
+            {/* Bouton Burger Mobile */}
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
@@ -715,15 +617,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] font-bold text-slate-500">{dict.nav.currentPlanLabel}</span>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                      {currentUser.planTier === "5000"
-                        ? "VIP Illimité"
-                        : currentUser.planTier === "2500"
-                        ? "Pro (Recommandé)"
-                        : currentUser.planTier === "1500"
-                        ? "Essentiel"
-                        : "Gratuit"}
+                    <span className="text-[10px] font-bold text-slate-500">Solde crédits</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                      ⚡ {creditBalance !== null ? `${creditBalance} crédits` : "0 crédit"}
                     </span>
                   </div>
                 </div>
@@ -794,29 +690,79 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               ) : (
                 <>
-                  <button
-                    onClick={(e) => {
-                      setIsMobileDrawerOpen(false);
-                      handleMesCvsClick(e);
-                    }}
-                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
-                  >
-                    <LayoutDashboard className="w-4 h-4 text-slate-500" />
-                    <span>{dict.nav.myCvs}</span>
-                  </button>
-
-                  {currentUser && (
+                  {!currentUser ? (
                     <button
                       onClick={(e) => {
                         setIsMobileDrawerOpen(false);
                         handleNewCvClick(e);
                       }}
-                      className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs cursor-pointer btn-press"
+                      className="w-full flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs cursor-pointer btn-press shadow-md shadow-blue-500/20 mb-3"
                     >
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <span>{dict.nav.newCv}</span>
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Créer mon CV en ligne</span>
                     </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          setIsMobileDrawerOpen(false);
+                          handleNewCvClick(e);
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs cursor-pointer btn-press"
+                      >
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <span>{dict.nav.newCv}</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          setIsMobileDrawerOpen(false);
+                          handleMesCvsClick(e);
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                        <span>{dict.nav.myCvs}</span>
+                      </button>
+
+                      <Link
+                        href="/credits"
+                        onClick={() => setIsMobileDrawerOpen(false)}
+                        className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Zap className="w-4 h-4 fill-amber-500 text-amber-600" />
+                          <span>Mes Crédits IA</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black">
+                          {creditBalance !== null ? `${creditBalance} crédits` : "0 crédit"}
+                        </span>
+                      </Link>
+                    </>
                   )}
+
+                  <Link
+                    href="/#modeles"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
+                  >
+                    <Compass className="w-4 h-4 text-slate-500" />
+                    <span>{dict.hero.modelsButton || "Modèles de CV"}</span>
+                  </Link>
+
+                  <Link
+                    href="/tarifs"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                      <span>Tarifs & Packs Wave</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Sans abonnement
+                    </span>
+                  </Link>
 
                   <Link
                     href="/portfolio"
@@ -888,39 +834,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </>
               )}
 
-              {/* Mes Crédits IA & Tarifs Mobile */}
-              <Link
-                href="/credits"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200"
-              >
-                <div className="flex items-center gap-3">
-                  <Zap className="w-4 h-4 fill-amber-500 text-amber-600" />
-                  <span>Mes Crédits IA</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black">
-                  {creditBalance !== null ? `${creditBalance} crédits` : "0 crédit"}
-                </span>
-              </Link>
-
-              <Link
-                href="/tarifs"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
-              >
-                <Crown className="w-4 h-4 text-slate-500" />
-                <span>Packs de Crédits & Tarifs</span>
-              </Link>
-
-              <Link
-                href="/#modeles"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer btn-press"
-              >
-                <Compass className="w-4 h-4 text-slate-500" />
-                <span>{dict.nav.templateGallery}</span>
-              </Link>
-
               <Link
                 href="/contact"
                 onClick={() => setIsMobileDrawerOpen(false)}
@@ -949,19 +862,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <Settings className="w-4 h-4 text-slate-500" />
                   <span>{dict.nav.settings}</span>
-                </button>
-              )}
-
-              {onOpenPayment && (
-                <button
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    onOpenPayment("2500");
-                  }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs cursor-pointer btn-press shadow-xs mt-2"
-                >
-                  <Crown className="w-4 h-4" />
-                  <span>{dict.nav.upgradePremium}</span>
                 </button>
               )}
             </div>

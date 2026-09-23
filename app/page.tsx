@@ -714,7 +714,7 @@ export default function HomePage() {
         {/* ========================================================================= */}
         {/* 2. EXPOSITION & GALERIE DES MODÈLES DE CV */}
         {/* ========================================================================= */}
-        <section id="exposition-modeles" className="py-10 sm:py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-200">
+        <section id="modeles" className="py-10 sm:py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-3xl mx-auto mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-2 border border-blue-100">

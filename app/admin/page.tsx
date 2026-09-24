@@ -953,7 +953,27 @@ export default function AdminConsolePage() {
         {/* ONGLET RÉCLAMATIONS WAVE & CRÉDITS */}
         {/* ================================================================= */}
         {activeTab === "claims" && (
-          <AdminWaveClaimsTab onNotify={(text, type) => showToast(text, type)} />
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-blue-400" />
+                  Console dédiée aux validations de paiements Mobile Money
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Gestion plein écran avec émission automatique de factures normalisées OHADA.
+                </p>
+              </div>
+              <Link
+                href="/admin/paiements"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs inline-flex items-center gap-1.5 transition shrink-0"
+              >
+                Ouvrir /admin/paiements
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <AdminWaveClaimsTab onNotify={(text, type) => showToast(text, type)} />
+          </div>
         )}
 
         {/* ================================================================= */}

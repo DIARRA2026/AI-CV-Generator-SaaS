@@ -452,3 +452,22 @@ export interface OrganizationMember {
   fullName?: string;
 }
 
+export interface Invoice {
+  id: string;
+  numero: string;
+  claimId?: string | null;
+  compteId: string;
+  compteType: CompteType;
+  clientNom: string;
+  clientEmail?: string | null;
+  clientRccm?: string | null;
+  clientIfu?: string | null;
+  packSlug: string;
+  packNom: string;
+  credits: number;
+  montantFcfa: number;
+  pdfUrl?: string | null;
+  creeLe: string;
+}
+
+

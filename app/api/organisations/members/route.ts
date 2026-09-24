@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthUser } from "@/lib/serverAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -53,18 +53,19 @@ export async function GET(request: NextRequest) {
     const userIds = (members || []).map((m) => m.user_id);
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name")
+      .select("id, email, first_name, last_name")
       .in("id", userIds);
 
     const enrichedMembers = (members || []).map((m) => {
       const p = (profiles || []).find((pr) => pr.id === m.user_id);
+      const computedName = [p?.first_name, p?.last_name].filter(Boolean).join(" ");
       return {
         orgId: m.org_id,
         userId: m.user_id,
         role: m.role,
         creeLe: m.cree_le,
         email: p?.email || "Inconnu",
-        fullName: p?.full_name || p?.email?.split("@")[0] || "Membre",
+        fullName: computedName || p?.email?.split("@")[0] || "Membre",
       };
     });
 

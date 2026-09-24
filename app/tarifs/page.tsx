@@ -1,27 +1,48 @@
-"use client";
+﻿"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { CREDIT_PACKS_ARRAY, CREDIT_ACTIONS_COST, CreditPack } from "@/config/payments";
+import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack } from "@/config/payments";
 import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
 import {
-  Zap, Check, ShieldCheck, Sparkles, HelpCircle,
-  Clock, ArrowRight, Download, FileText, CheckCircle2, Lock, ExternalLink
+  Zap, Check, ShieldCheck, Sparkles, Building2, User,
+  Clock, ArrowRight, Download, FileText, CheckCircle2, Phone, ExternalLink
 } from "lucide-react";
 
 export default function TarifsPage() {
-  const [selectedPackCode, setSelectedPackCode] = useState<string>("evolution");
+  const [activeTab, setActiveTab] = useState<"particuliers" | "entreprises">("particuliers");
+  const [selectedPackCode, setSelectedPackCode] = useState<string>("carriere");
   const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash === "#entreprises") {
+        setActiveTab("entreprises");
+      } else if (hash === "#particuliers") {
+        setActiveTab("particuliers");
+      }
+    }
+  }, []);
+
+  const handleTabChange = (tab: "particuliers" | "entreprises") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      window.location.hash = tab;
+    }
+  };
+
   const handleSelectPack = (pack: CreditPack) => {
-    if (pack.priceFcfa === 0) return;
-    setSelectedPackCode(pack.code);
+    if (pack.prixFcfa === 0) return;
+    setSelectedPackCode(pack.slug);
     setIsWaveModalOpen(true);
   };
 
+  const currentPacks = activeTab === "particuliers" ? PACKS_B2C_ARRAY : PACKS_B2B_ARRAY;
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20 w-full space-y-16">
@@ -29,16 +50,16 @@ export default function TarifsPage() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 fill-blue-600" />
-            Packs de crédits prépayés — Sans engagement
+            Crédits prépayés — Aucun abonnement — Règlement Wave
           </div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
-            Tarifs transparents, <br />
+            Tarifs clairs et transparents en FCFA <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500">
-              payez uniquement ce que vous utilisez
+              pour candidats et organisations
             </span>
           </h1>
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
-            Choisissez votre pack de crédits avec une durée de validité généreuse et réglez en toute simplicité par Wave. Zéro engagement, zéro prélèvement surprise.
+            Rechargez vos crédits en toute liberté avec Wave ou Orange Money. Validité 12 mois, zéro prélèvement récurrent, facture normalisée OHADA délivrée sur chaque achat.
           </p>
         </div>
 
@@ -53,7 +74,7 @@ export default function TarifsPage() {
                 Téléchargements PDF & Word 100% Gratuits & Illimités
               </p>
               <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                L'édition manuelle de vos CV et l'export sans filigrane restent totalement gratuits à vie (0 crédit).
+                La création manuelle, l édition et les exports sans filigrane restent toujours gratuits (0 crédit).
               </p>
             </div>
           </div>
@@ -66,80 +87,101 @@ export default function TarifsPage() {
           </Link>
         </div>
 
+        {/* 2 Tabs Switcher */}
+        <div className="flex justify-center">
+          <div className="inline-flex p-1.5 rounded-2xl bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/60 dark:border-slate-700">
+            <button
+              onClick={() => handleTabChange("particuliers")}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
+                activeTab === "particuliers"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-md shadow-slate-900/5"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <User className="w-4 h-4" />
+              Candidats & Particuliers
+            </button>
+            <button
+              onClick={() => handleTabChange("entreprises")}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
+                activeTab === "entreprises"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              Entreprises & Établissements
+              <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">
+                Tarifs de gros
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Credit Packs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CREDIT_PACKS_ARRAY.map((pack) => {
-            const isFree = pack.priceFcfa === 0;
-            const isPopular = pack.recommended;
-            const isBestValue = pack.code === "carriere";
+          {currentPacks.map((pack) => {
+            const isFree = pack.prixFcfa === 0;
+            const isHighlighted = pack.misEnAvant;
+            const unitPrice = pack.prixFcfa > 0 ? (pack.prixFcfa / pack.credits).toFixed(2).replace(".", ",") : "Offert";
 
             return (
               <div
-                key={pack.code}
+                key={pack.slug}
                 className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-7 transition-all duration-300 ${
-                  isPopular
+                  isHighlighted
                     ? "bg-white dark:bg-slate-900 border-2 border-blue-600 dark:border-blue-500 shadow-xl shadow-blue-500/10 scale-105 z-10"
-                    : isBestValue
-                    ? "bg-white dark:bg-slate-900 border-2 border-indigo-500/60 dark:border-indigo-400/50 shadow-lg"
                     : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md"
                 }`}
               >
-                {/* Badges */}
-                {isPopular && (
+                {isHighlighted && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-black tracking-wider uppercase shadow-md">
-                    Le plus populaire
-                  </div>
-                )}
-                {isBestValue && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[11px] font-black tracking-wider uppercase shadow-md">
-                    Meilleur rapport
+                    Recommandé
                   </div>
                 )}
 
                 <div className="space-y-5">
-                  {/* Top info */}
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                      {pack.label}
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                      {pack.nom}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[32px]">
-                      {pack.description}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 min-h-[32px]">
+                      {pack.cible}
                     </p>
                   </div>
 
-                  {/* Pricing */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="space-y-1 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                        {isFree ? "0" : pack.priceFcfa.toLocaleString("fr-FR")}
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                        {pack.prixFcfa === 0 ? "0 FCFA" : `${pack.prixFcfa.toLocaleString("fr-FR")} F`}
                       </span>
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                        FCFA
+                      {pack.prixFcfa > 0 && <span className="text-xs text-slate-400 font-semibold">CFA</span>}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">
+                        {pack.credits.toLocaleString("fr-FR")} crédits
+                      </span>
+                      <span className="text-slate-400 text-[11px]">
+                        {pack.prixFcfa > 0 ? `${unitPrice} F / crédit` : "Inscription"}
                       </span>
                     </div>
 
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 fill-blue-600" />
-                        {pack.credits} crédits
-                      </span>
-                      {pack.unitPriceFcfa > 0 && (
-                        <span className="text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-medium">
-                          {pack.unitPriceFcfa} F / crédit
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{pack.validiteMois ? `Validité : ${pack.validiteMois} mois` : "Validité permanente"}</span>
+                      {pack.sieges && (
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400 ml-auto">
+                          {pack.sieges} siège{pack.sieges > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
-
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Validité : <strong className="text-slate-700 dark:text-slate-300">{pack.validityDays ? `${pack.validityDays} jours` : "Illimité"}</strong></span>
-                    </div>
                   </div>
 
-                  {/* Highlights */}
+                  {/* Avantages */}
                   <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
-                    {(pack.features || []).map((feat, i) => (
-                      <li key={i} className="flex items-start gap-2">
+                    {pack.avantages.map((feat, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                         <span>{feat}</span>
                       </li>
@@ -147,28 +189,37 @@ export default function TarifsPage() {
                   </ul>
                 </div>
 
-                {/* Action button */}
-                <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {/* CTA */}
+                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
                   {isFree ? (
                     <Link
                       href="/create"
-                      className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-xs flex items-center justify-center gap-2 transition"
+                      className="w-full py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 font-bold text-xs text-slate-900 dark:text-white transition flex items-center justify-center gap-2"
                     >
                       Commencer gratuitement
                       <ArrowRight className="w-4 h-4" />
                     </Link>
+                  ) : pack.slug === "licence_etablissement" ? (
+                    <a
+                      href="https://wa.me/2250700510524?text=Bonjour,%20je%20souhaite%20obtenir%20un%20devis%20pour%20la%20Licence%20Etablissement%20MonCV.ai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-400" />
+                      Demander un devis sur mesure
+                    </a>
                   ) : (
                     <button
-                      type="button"
                       onClick={() => handleSelectPack(pack)}
-                      className={`w-full py-3 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition ${
-                        isPopular
-                          ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25"
-                          : "bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                      className={`w-full py-3 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer ${
+                        isHighlighted
+                          ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
+                          : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                       }`}
                     >
-                      <span>Acheter avec Wave</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      Acheter par Wave
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -177,162 +228,94 @@ export default function TarifsPage() {
           })}
         </div>
 
-        {/* Action Cost Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Grille tarifaire par fonctionnalité
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Une clarté absolue : chaque action IA a un coût fixé en crédits, débité uniquement si l'IA produit votre résultat.
-            </p>
+        {/* Table of Action Costs (§1.1) */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-5">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                Barème officiel d utilisation des crédits
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Chaque action IA consomme un montant fixe de crédits. Vos crédits ne sont débités QUE si la génération réussit.
+              </p>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold shrink-0">
+              Exports PDF & Word : 0 crédit garanti
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-                  <th className="py-3 px-4">Fonctionnalité</th>
-                  <th className="py-3 px-4">Détails</th>
-                  <th className="py-3 px-4 text-right">Coût</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    Génération & Réécriture CV IA
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                    Reformulation percutante de vos expériences et compétences
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full text-xs">
-                      <Zap className="w-3.5 h-3.5 fill-amber-500" />
-                      {CREDIT_ACTIONS_COST.cv_generate} crédits
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    Lettre de motivation IA
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                    Rédaction personnalisée et argumentée pour le poste visé
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full text-xs">
-                      <Zap className="w-3.5 h-3.5 fill-amber-500" />
-                      {CREDIT_ACTIONS_COST.cover_letter} crédits
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    Adaptation & Score ATS
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                    Analyse des mots-clés et compatibilité avec les logiciels recruteurs
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full text-xs">
-                      <Zap className="w-3.5 h-3.5 fill-amber-500" />
-                      {CREDIT_ACTIONS_COST.ats_analysis} crédits
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    Traduction CV en Anglais
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                    Traduction professionnelle avec terminologie RH anglophone
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full text-xs">
-                      <Zap className="w-3.5 h-3.5 fill-amber-500" />
-                      {CREDIT_ACTIONS_COST.translate_en} crédits
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                    Photo de profil Professionnelle IA
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                    Détourage studio et mise en valeur professionnelle
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full text-xs">
-                      <Zap className="w-3.5 h-3.5 fill-amber-500" />
-                      {CREDIT_ACTIONS_COST.pro_photo} crédits
-                    </span>
-                  </td>
-                </tr>
-
-                {/* Free features row */}
-                <tr className="bg-emerald-50/60 dark:bg-emerald-950/20 font-medium">
-                  <td className="py-3.5 px-4 font-bold text-emerald-800 dark:text-emerald-300">
-                    Création manuelle, Édition & Exports (PDF / DOCX)
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-emerald-700 dark:text-emerald-400">
-                    Tous les modèles, aperçu en direct, téléchargements illimités sans filigrane
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full text-xs">
-                      0 crédit (GRATUIT)
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: "Génération / Réécriture CV complet IA", cost: "10 crédits", desc: "Refonte intégrale avec accroche, missions et compétences clés" },
+              { label: "Lettre de motivation personnalisée IA", cost: "5 crédits", desc: "Rédigée sur mesure selon l offre d emploi et l entreprise visée" },
+              { label: "Analyse & Optimisation Score ATS", cost: "5 crédits", desc: "Audit de conformité avec les mots-clés des recruteurs" },
+              { label: "Traduction du CV en Anglais professionnel", cost: "8 crédits", desc: "Traduction adaptée aux standards internationaux" },
+              { label: "Photo de profil professionnelle IA", cost: "25 crédits", desc: "Optimisation studio HD et recadrage recruteur certifié" },
+              { label: "Export PDF & Word sans filigrane", cost: "0 crédit (Gratuit)", desc: "Téléchargements illimités à vie de tous vos CV créés", highlight: true },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+                  item.highlight
+                    ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60"
+                    : "bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800"
+                }`}
+              >
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                    {item.label}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-full font-black text-xs shrink-0 whitespace-nowrap ${
+                    item.highlight
+                      ? "bg-emerald-600 text-white"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                  }`}
+                >
+                  {item.cost}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Guarantees Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-              <ShieldCheck className="w-6 h-6" />
+        {/* Commercial Guarantees */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto font-black text-lg">
+              🌊
             </div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">
-              Garantie Zéro Débit
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Si l'IA rencontre un incident de connexion ou ne produit pas le résultat attendu, aucun crédit n'est prélevé. Tout débit accidentel est remboursé.
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Paiement Mobile Money Sécurisé</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Payez instantanément par Wave ou Orange Money depuis votre téléphone sans frais cachés.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
-              <Clock className="w-6 h-6" />
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">
-              Consommation FIFO
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Le système utilise automatiquement en priorité les crédits qui expirent le plus tôt, préservant ainsi la durée de validité de vos recharges récentes.
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Facture Normalisée OHADA</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Toutes vos recharges émettent une facture conforme avec numéro séquentiel et coordonnées légales.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-              <Lock className="w-6 h-6" />
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">
-              Zéro Prélèvement Surprise
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Aucun prélèvement automatique récurrent. Vous achetez exactement le pack dont vous avez besoin quand vous en avez besoin via Wave.
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Validité Longue Durée (12 mois)</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Vos crédits restent valides pendant un an entier. Utilisez-les à votre rythme au fil de vos candidatures.
             </p>
           </div>
         </div>
       </main>
 
-      {/* Modal Wave Claim */}
       <WavePaymentClaimModal
         isOpen={isWaveModalOpen}
         onClose={() => setIsWaveModalOpen(false)}

@@ -49,7 +49,27 @@ export default function RootLayout({
   return (
     <html lang="fr" className="scroll-smooth" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600 selection:text-white" suppressHydrationWarning>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          {children}
+          <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 text-center text-xs text-slate-500 space-y-2 print:hidden">
+            <p className="font-semibold text-slate-700 dark:text-slate-300">
+              MonCV.ai — Une solution développée et éditée par <span className="font-bold text-slate-900 dark:text-white">INNOVA GROUP SARL</span>
+            </p>
+            <p className="text-[11px] text-slate-400">
+              RCCM : CI-ABJ-03-2024-B12-04892 · IFU : 2400000X · Abidjan, Côte d Ivoire · Tél / WhatsApp : +225 07 00 51 05 24
+            </p>
+            <div className="flex justify-center items-center gap-4 text-[11px] pt-1">
+              <a href="/terms" className="hover:underline">Conditions Générales d Utilisation</a>
+              <span>·</span>
+              <a href="/terms" className="hover:underline">Mentions Légales & OHADA</a>
+              <span>·</span>
+              <a href="/contact" className="hover:underline">Support & Facturation</a>
+            </div>
+            <p className="text-[10px] text-slate-400 pt-1">
+              © {new Date().getFullYear()} INNOVA GROUP. Tous droits réservés. Règlements sécurisés en Mobile Money.
+            </p>
+          </footer>
+        </LanguageProvider>
       </body>
     </html>
   );

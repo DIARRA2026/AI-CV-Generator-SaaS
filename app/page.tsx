@@ -15,6 +15,10 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack, CREDIT_ACTIONS_COST } from "@/config/payments";
 import { LandingPricingSection } from "@/components/landing/LandingPricingSection";
 import { LandingBusinessSection } from "@/components/landing/LandingBusinessSection";
+import { LANDING_DEMO_PROFILES, DemoProfileConfig } from "@/lib/landingDemoResumes";
+import { LandingResumePreview } from "@/components/landing/LandingResumePreview";
+import { LandingResumeModal } from "@/components/landing/LandingResumeModal";
+import { TemplateId } from "@/lib/types";
 import {
   Sparkles,
   ArrowRight,
@@ -76,6 +80,7 @@ export default function HomePage() {
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
   const [authDefaultPlan, setAuthDefaultPlan] = useState<PlanTier>("free");
   const [activeTemplate, setActiveTemplate] = useState("modern");
+  const [previewModalProfile, setPreviewModalProfile] = useState<DemoProfileConfig | null>(null);
   const [activeColor, setActiveColor] = useState("#2563eb");
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
@@ -228,16 +233,11 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [isAutoPlay, templateGallery]);
 
-  const handleStartCreation = () => {
+  const handleStartCreation = (templateIdOrEvent?: string | React.MouseEvent) => {
+    const chosen = (typeof templateIdOrEvent === "string" && templateIdOrEvent) ? templateIdOrEvent : activeTemplate || "modern";
     if (typeof window !== "undefined") {
-      if (StorageManager.isLoggedIn()) {
-        if (StorageManager.isBusinessAccount()) {
-          router.push("/dashboard?tab=business");
-        } else {
-          router.push("/dashboard");
-        }
-        return;
-      }
+      router.push(`/create?template=${chosen}`);
+      return;
     }
     setAuthAccountType("candidate");
     setAuthDefaultPlan("free");
@@ -732,104 +732,82 @@ export default function HomePage() {
 
             {/* Grille d'exposition visuelle 6 Modèles */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {templateGallery.map((tpl) => (
-                <div
-                  key={tpl.id}
-                  className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
-                >
-                  <div className="p-5 bg-slate-50/80 border-b border-slate-100 relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800">
-                        {tpl.tag}
-                      </span>
-                      <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        <span>{tpl.rating}</span>
+              {templateGallery.map((tpl) => {
+                const demoProfile = LANDING_DEMO_PROFILES[tpl.id as TemplateId] || LANDING_DEMO_PROFILES.modern;
+                return (
+                  <div
+                    key={tpl.id}
+                    className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
+                  >
+                    <div className="p-4 sm:p-5 bg-slate-50/80 border-b border-slate-100 relative overflow-hidden">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800">
+                          {tpl.tag}
+                        </span>
+                        <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          <span>{tpl.rating}</span>
+                        </div>
+                      </div>
+
+                      {/* Aperçu Réel du Modèle avec Données Fictives */}
+                      <LandingResumePreview
+                        profile={demoProfile}
+                        onOpenPreview={(p) => setPreviewModalProfile(p)}
+                        onSelectTemplate={(tplId) => handleStartCreation(tplId)}
+                      />
+
+                      {/* Badge Profil Fictif Réel */}
+                      <div className="mt-2.5 px-3 py-1.5 bg-white rounded-xl border border-slate-200/80 text-[11px] flex items-center justify-between shadow-xs">
+                        <div className="truncate">
+                          <span className="text-slate-400 font-medium">Profil : </span>
+                          <span className="font-bold text-slate-800">{demoProfile.candidateName}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md truncate max-w-[130px]">
+                          {demoProfile.companyHeadline}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 h-48 overflow-hidden relative group-hover:scale-[1.02] transition-transform">
-                      <div
-                        className="h-10 rounded-xl p-2 flex items-center justify-between text-white mb-2.5"
-                        style={{ backgroundColor: tpl.accent }}
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-black text-slate-900">
+                            {dict.liveDemo.templatePrefix} {tpl.name}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewModalProfile(demoProfile)}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Zoom A4</span>
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          {tpl.desc}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-medium text-slate-400">{dict.gallery.recommendedFor}</span>
+                        <span className="text-[11px] font-bold text-blue-700 text-right truncate max-w-[160px]">
+                          {tpl.idealFor}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleStartCreation(tpl.id)}
+                        className="w-full py-2.5 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs group-hover:bg-blue-600 group-hover:text-white"
                       >
-                        <div className="space-y-0.5">
-                          <div className="w-16 h-2 bg-white/90 rounded" />
-                          <div className="w-24 h-1.5 bg-white/70 rounded" />
-                        </div>
-                        <div className="w-6 h-6 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-[9px] font-black">
-                          CV
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <div className="w-1/3 space-y-1.5 border-r border-slate-100 pr-1.5">
-                            <div className="w-10 h-1.5 bg-slate-400 rounded" />
-                            <div className="w-full h-1 bg-slate-200 rounded" />
-                            <div className="w-4/5 h-1 bg-slate-200 rounded" />
-                            <div className="w-12 h-1.5 bg-slate-400 rounded mt-2" />
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              <span className="w-6 h-2 rounded bg-blue-50 border border-blue-200" />
-                              <span className="w-8 h-2 rounded bg-blue-50 border border-blue-200" />
-                            </div>
-                          </div>
-                          <div className="w-2/3 space-y-1.5">
-                            <div className="w-16 h-1.5 bg-slate-700 rounded" />
-                            <div className="w-full h-1 bg-slate-200 rounded" />
-                            <div className="w-5/6 h-1 bg-slate-200 rounded" />
-                            <div className="w-14 h-1.5 bg-slate-700 rounded mt-2" />
-                            <div className="w-full h-1 bg-slate-200 rounded" />
-                            <div className="w-3/4 h-1 bg-slate-200 rounded" />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 backdrop-blur-[2px] flex items-center justify-center transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTemplate(tpl.id);
-                            const el = document.getElementById("demo-interactive");
-                            el?.scrollIntoView({ behavior: "smooth" });
-                          }}
-                          className="px-4 py-2 bg-white text-slate-900 font-bold rounded-xl text-xs shadow-lg hover:bg-blue-600 hover:text-white transition-all flex items-center gap-1.5"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{dict.gallery.testThisModel}</span>
-                        </button>
-                      </div>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>{dict.gallery.customizeThisModel}</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <h3 className="text-lg font-black text-slate-900">
-                        {dict.liveDemo.templatePrefix} {tpl.name}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                        {tpl.desc}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] font-medium text-slate-400">{dict.gallery.recommendedFor}</span>
-                      <span className="text-[11px] font-bold text-blue-700 text-right truncate max-w-[160px]">
-                        {tpl.idealFor}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleStartCreation}
-                      className="w-full py-2.5 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <Wand2 className="w-3.5 h-3.5" />
-                      <span>{dict.gallery.customizeThisModel}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -953,77 +931,88 @@ export default function HomePage() {
               </div>
 
               <div className="lg:col-span-7 flex justify-center">
-                <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-700/80 overflow-hidden relative transform hover:-translate-y-1.5 transition-all duration-300 group">
-                  <div
-                    className="p-6 text-white transition-colors duration-500 relative"
-                    style={{ backgroundColor: activeColor }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[9.5px] font-bold uppercase tracking-widest opacity-90">
-                          {dict.liveDemo.demoProfileTitle}
-                        </span>
-                        <h4 className="text-xl font-black">{dict.liveDemo.demoProfileName}</h4>
-                        <p className="text-xs opacity-90 font-medium">{dict.liveDemo.demoProfileRole}</p>
-                      </div>
-                      <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-sm font-black shadow-inner">
-                        JMK
-                      </div>
-                    </div>
-
-                    <div className="absolute top-4 right-4 bg-slate-900/90 text-white backdrop-blur-md border border-slate-700 px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] font-black">ATS Match : 98%</span>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-4 text-xs">
-                    <div>
-                      <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1" style={{ color: activeColor }}>
-                        {dict.liveDemo.demoStarSection}
-                      </h5>
-                      <p className="text-slate-600 leading-relaxed text-[11.5px]">
-                        {dict.liveDemo.demoStarDesc}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1.5" style={{ color: activeColor }}>
-                        {dict.liveDemo.demoExperienceSection}
-                      </h5>
-                      <div className="border-l-2 pl-3 space-y-1" style={{ borderColor: activeColor }}>
-                        <div className="flex justify-between font-bold text-slate-800 text-[11.5px]">
-                          <span>{dict.liveDemo.demoExperienceRole}</span>
-                          <span className="text-slate-400 font-normal">2022 – Présent</span>
+                {(() => {
+                  const demo = LANDING_DEMO_PROFILES[activeTemplate as TemplateId] || LANDING_DEMO_PROFILES.modern;
+                  const initials = demo.candidateName.split(" ").map((w) => w[0]).join("");
+                  return (
+                    <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-700/80 overflow-hidden relative transform hover:-translate-y-1.5 transition-all duration-300 group">
+                      <div
+                        className="p-6 text-white transition-colors duration-500 relative"
+                        style={{ backgroundColor: activeColor }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-[9.5px] font-bold uppercase tracking-widest opacity-90">
+                              Modèle {demo.name} • {demo.tag}
+                            </span>
+                            <h4 className="text-xl font-black">{demo.candidateName}</h4>
+                            <p className="text-xs opacity-90 font-medium">{demo.candidateRole}</p>
+                          </div>
+                          <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-sm font-black shadow-inner">
+                            {initials}
+                          </div>
                         </div>
-                        <p className="text-slate-500 text-[10.5px]">
-                          {dict.liveDemo.demoExperienceDesc}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div>
-                      <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1.5" style={{ color: activeColor }}>
-                        {dict.liveDemo.demoSkillsSection}
-                      </h5>
-                      <div className="flex flex-wrap gap-1.5">
-                        {["TypeScript", "Next.js", "Python", "Mobile Money API", "Docker", "Gestion de Projet"].map((skill) => (
-                          <span
-                            key={skill}
-                            className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors"
-                            style={{
-                              backgroundColor: `${activeColor}12`,
-                              borderColor: `${activeColor}35`,
-                              color: activeColor,
-                            }}
-                          >
-                            {skill}
-                          </span>
-                        ))}
+                        <div className="absolute top-4 right-4 bg-slate-900/90 text-white backdrop-blur-md border border-slate-700 px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[10px] font-black">ATS Match : 99%</span>
+                        </div>
+                      </div>
+
+                      <div className="p-6 space-y-4 text-xs">
+                        <div>
+                          <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1" style={{ color: activeColor }}>
+                            Profil Professionnel Réel
+                          </h5>
+                          <p className="text-slate-600 leading-relaxed text-[11.5px]">
+                            {demo.data.summary}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1.5" style={{ color: activeColor }}>
+                            Parcours & Réalisations
+                          </h5>
+                          <div className="border-l-2 pl-3 space-y-1.5" style={{ borderColor: activeColor }}>
+                            {demo.data.experiences.slice(0, 2).map((exp) => (
+                              <div key={exp.id}>
+                                <div className="flex justify-between font-bold text-slate-800 text-[11.5px]">
+                                  <span>{exp.role}</span>
+                                  <span className="text-slate-400 font-normal">{exp.startDate} – {exp.endDate}</span>
+                                </div>
+                                <p className="text-blue-700 font-semibold text-[10.5px]">{exp.company}</p>
+                                <p className="text-slate-500 text-[10.5px] mt-0.5">
+                                  {exp.highlights[0]}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h5 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-1.5" style={{ color: activeColor }}>
+                            Compétences Techniques & Outils
+                          </h5>
+                          <div className="flex flex-wrap gap-1.5">
+                            {demo.data.skills[0]?.items.map((skill) => (
+                              <span
+                                key={skill}
+                                className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors"
+                                style={{
+                                  backgroundColor: `${activeColor}12`,
+                                  borderColor: `${activeColor}35`,
+                                  color: activeColor,
+                                }}
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -1623,6 +1612,16 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      <LandingResumeModal
+        profile={previewModalProfile}
+        isOpen={!!previewModalProfile}
+        onClose={() => setPreviewModalProfile(null)}
+        onSelectTemplate={(tplId) => {
+          setPreviewModalProfile(null);
+          handleStartCreation(tplId);
+        }}
+      />
 
       <WavePaymentClaimModal
         isOpen={isWaveModalOpen}

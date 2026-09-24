@@ -151,6 +151,21 @@ export default function CreateCVPage() {
     }
 
     window.addEventListener("storage", syncAuth);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tplParam = params.get("template");
+      if (tplParam && ["modern", "elegant", "corporate", "minimal", "creative", "ats"].includes(tplParam)) {
+        setResumeData((prev) => ({
+          ...prev,
+          design: {
+            ...prev.design,
+            template: tplParam as any,
+          },
+        }));
+      }
+    }
+
     return () => window.removeEventListener("storage", syncAuth);
   }, []);
 

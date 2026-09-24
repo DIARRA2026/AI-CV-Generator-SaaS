@@ -44,6 +44,7 @@ import {
   Copy,
   Check,
   Zap,
+  X,
 } from "lucide-react";
 import { StorageManager, RegisteredUser, UserSession } from "@/lib/storage";
 import {
@@ -158,6 +159,20 @@ export default function AdminConsolePage() {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Fermeture des modales avec la touche Échap
+  useEffect(() => {
+    if (!editPlanModalOpen && !resetPassModalOpen && !manualModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (editPlanModalOpen) setEditPlanModalOpen(false);
+        if (resetPassModalOpen) setResetPassModalOpen(false);
+        if (manualModalOpen) setManualModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editPlanModalOpen, resetPassModalOpen, manualModalOpen]);
 
   // Vérifier l'état d'authentification admin côté serveur
   const checkAuth = async (initialCheck = false) => {
@@ -2204,8 +2219,20 @@ export default function AdminConsolePage() {
       {/* MODAL 1 : SURCLASSEMENT / MODIFICATION DE FORMULE */}
       {/* ================================================================= */}
       {editPlanModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditPlanModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setEditPlanModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
@@ -2214,9 +2241,10 @@ export default function AdminConsolePage() {
               <button
                 type="button"
                 onClick={() => setEditPlanModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Fermer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -2275,8 +2303,20 @@ export default function AdminConsolePage() {
       {/* MODAL 2 : RÉINITIALISATION DU MOT DE PASSE */}
       {/* ================================================================= */}
       {resetPassModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setResetPassModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setResetPassModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">
                 <Key className="w-4 h-4 text-blue-400" />
@@ -2285,9 +2325,10 @@ export default function AdminConsolePage() {
               <button
                 type="button"
                 onClick={() => setResetPassModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Fermer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -2336,8 +2377,20 @@ export default function AdminConsolePage() {
       {/* MODAL 3 : VALIDATION MANUELLE DE TRANSACTION MOBILE MONEY         */}
       {/* ================================================================= */}
       {manualModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setManualModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setManualModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -2346,9 +2399,10 @@ export default function AdminConsolePage() {
               <button
                 type="button"
                 onClick={() => setManualModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Fermer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

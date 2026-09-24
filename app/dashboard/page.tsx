@@ -121,6 +121,16 @@ export default function DashboardPage() {
 
   }, []);
 
+  // Fermeture du modal de création avec la touche Echap
+  useEffect(() => {
+    if (!isCreatingModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsCreatingModal(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCreatingModal]);
+
   // 2. Synchronisation de l'état local (écoute passive des événements storage locaux, sans boucle réseau)
   useEffect(() => {
     const syncLocalState = () => {
@@ -1254,12 +1264,32 @@ export default function DashboardPage() {
       )}
 
       {isCreatingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreatingModal(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setIsCreatingModal(false);
+          }}
+        >
+          <div
+            className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-black text-slate-900 text-base">
                 {isBusinessAccount ? dict.dashboard.modalTitleCandidate : dict.dashboard.modalTitleNewCv}
               </h3>
+              <button
+                type="button"
+                onClick={() => setIsCreatingModal(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleCreateNew} className="space-y-4">

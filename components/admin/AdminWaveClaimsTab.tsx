@@ -47,6 +47,19 @@ export const AdminWaveClaimsTab: React.FC<AdminWaveClaimsTabProps> = ({ onNotify
     fetchClaims();
   }, [statusFilter]);
 
+  // Fermeture des modales avec la touche Échap
+  useEffect(() => {
+    if (!zoomScreenshotUrl && !rejectModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (zoomScreenshotUrl) setZoomScreenshotUrl(null);
+        if (rejectModalOpen) setRejectModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomScreenshotUrl, rejectModalOpen]);
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -396,16 +409,23 @@ export const AdminWaveClaimsTab: React.FC<AdminWaveClaimsTabProps> = ({ onNotify
       {/* Modal Zoom Screenshot */}
       {zoomScreenshotUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in"
-          onClick={() => setZoomScreenshotUrl(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in overflow-y-auto cursor-pointer"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setZoomScreenshotUrl(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setZoomScreenshotUrl(null);
+          }}
         >
           <div
-            className="relative max-w-2xl max-h-[85vh] bg-slate-900 rounded-2xl border border-slate-800 p-2 overflow-hidden shadow-2xl"
+            className="relative max-w-2xl max-h-[85vh] bg-slate-900 rounded-2xl border border-slate-800 p-2 overflow-hidden shadow-2xl my-auto"
             onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setZoomScreenshotUrl(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition"
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition cursor-pointer"
+              aria-label="Fermer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -421,12 +441,18 @@ export const AdminWaveClaimsTab: React.FC<AdminWaveClaimsTabProps> = ({ onNotify
       {/* Modal Rejet */}
       {rejectModalOpen && rejectingClaim && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
-          onClick={() => setRejectModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setRejectModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setRejectModalOpen(false);
+          }}
         >
           <div
-            className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-4 shadow-2xl"
+            className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-4 shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
@@ -435,7 +461,8 @@ export const AdminWaveClaimsTab: React.FC<AdminWaveClaimsTabProps> = ({ onNotify
               </h3>
               <button
                 onClick={() => setRejectModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white cursor-pointer"
+                aria-label="Fermer"
               >
                 <X className="w-5 h-5" />
               </button>

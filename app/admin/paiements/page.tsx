@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -39,6 +39,18 @@ export default function AdminPaiementsPage() {
   useEffect(() => {
     fetchClaims();
   }, [filter]);
+
+  useEffect(() => {
+    if (!rejectModalClaimId && !previewImage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (rejectModalClaimId) setRejectModalClaimId(null);
+        if (previewImage) setPreviewImage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [rejectModalClaimId, previewImage]);
 
   const handleValidate = async (claimId: string) => {
     if (!confirm("Confirmer la validation de ce paiement et la livraison immédiate des crédits ?")) return;
@@ -343,12 +355,34 @@ export default function AdminPaiementsPage() {
 
       {/* Modal Rejet */}
       {rejectModalClaimId && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-rose-500" />
-              Motif du rejet du paiement
-            </h3>
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setRejectModalClaimId(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setRejectModalClaimId(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-500" />
+                Motif du rejet du paiement
+              </h3>
+              <button
+                type="button"
+                onClick={() => setRejectModalClaimId(null)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-slate-500">
               Indiquez la raison qui sera affichée au client dans son espace de suivi.
             </p>
@@ -363,14 +397,14 @@ export default function AdminPaiementsPage() {
               <button
                 type="button"
                 onClick={() => setRejectModalClaimId(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="button"
                 onClick={handleReject}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition cursor-pointer"
               >
                 Confirmer le rejet
               </button>
@@ -382,10 +416,27 @@ export default function AdminPaiementsPage() {
       {/* Modal Preview Capture d écran */}
       {previewImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewImage(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setPreviewImage(null);
+          }}
         >
-          <div className="relative max-w-2xl max-h-[85vh] bg-white rounded-2xl overflow-hidden shadow-2xl p-2">
+          <div
+            className="relative max-w-2xl max-h-[85vh] bg-white rounded-2xl overflow-hidden shadow-2xl p-2 my-auto"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors z-10 cursor-pointer"
+              aria-label="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
             <img src={previewImage} alt="Capture Wave" className="w-full h-auto max-h-[80vh] object-contain rounded-xl" />
           </div>
         </div>

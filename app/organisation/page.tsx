@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal"
 import {
   Building2, Users, CreditCard, ShieldCheck, Plus, ArrowUpRight,
   Download, Clock, CheckCircle2, AlertCircle, Trash2, Mail, Palette,
-  Settings, ChevronRight, BarChart3, FileSpreadsheet, Lock
+  Settings, ChevronRight, BarChart3, FileSpreadsheet, Lock, X
 } from "lucide-react";
 import { Organization, OrganizationMember } from "@/lib/types";
 
@@ -86,6 +86,15 @@ export default function OrganisationPage() {
       setBrandingColor(selectedOrg.couleurPrimaire || "#2563EB");
     }
   }, [selectedOrg]);
+
+  useEffect(() => {
+    if (!isCreateModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsCreateModalOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCreateModalOpen]);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -670,15 +679,37 @@ export default function OrganisationPage() {
 
       {/* Modal Création Organisation */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Créer une nouvelle organisation
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Configurez votre espace entreprise pour démarrer avec votre équipe.
-              </p>
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6 my-auto relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Créer une nouvelle organisation
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Configurez votre espace entreprise pour démarrer avec votre équipe.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleCreateOrg} className="space-y-4">
@@ -716,13 +747,13 @@ export default function OrganisationPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition cursor-pointer"
                 >
                   Créer l organisation
                 </button>

@@ -736,10 +736,16 @@ export const AuthModal: React.FC<Props> = ({
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-md fade-in overflow-y-auto"
-        onMouseDown={onClose}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
         <div
           className="bg-white rounded-3xl shadow-2xl w-full max-w-[480px] p-6 sm:p-8 text-center border border-slate-100 relative my-auto animate-in fade-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
           {/* Bouton Fermer */}
@@ -973,12 +979,18 @@ export const AuthModal: React.FC<Props> = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/75 backdrop-blur-md fade-in overflow-y-auto"
-      onMouseDown={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className={`bg-white rounded-3xl shadow-2xl w-full ${
           mode === "register" && accountType === "business" ? "max-w-xl sm:max-w-2xl" : "max-w-[450px]"
         } max-h-[92vh] overflow-hidden relative flex flex-col transform transition-all border border-slate-100 my-auto`}
+        onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Barre dégradée supérieure d'accentuation */}

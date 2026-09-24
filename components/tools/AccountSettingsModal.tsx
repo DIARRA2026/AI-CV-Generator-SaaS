@@ -255,15 +255,30 @@ export const AccountSettingsModal: React.FC<Props> = ({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   const initials = `${firstName ? firstName[0] : "U"}${lastName ? lastName[0] : ""}`.toUpperCase();
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in overflow-hidden"
-      onMouseDown={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative max-h-[92vh] flex flex-col transform transition-all border border-slate-100"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative max-h-[92vh] flex flex-col transform transition-all border border-slate-100 my-auto"
+        onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Ligne dégradée d'accent */}

@@ -172,6 +172,19 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener("click", handleOutsideClick);
   }, [isProfileMenuOpen]);
 
+  // Fermer le menu déroulant ou le tiroir mobile avec la touche Échap
+  useEffect(() => {
+    if (!isProfileMenuOpen && !isMobileDrawerOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+        if (isMobileDrawerOpen) setIsMobileDrawerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isProfileMenuOpen, isMobileDrawerOpen]);
+
   const handleLogout = () => {
     StorageManager.logout();
     setCurrentUser(null);
@@ -570,7 +583,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Backdrop avec flou */}
           <div
             onClick={() => setIsMobileDrawerOpen(false)}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            onMouseDown={() => setIsMobileDrawerOpen(false)}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity cursor-pointer"
           />
 
           {/* Panneau Latéral */}

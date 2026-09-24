@@ -1,424 +1,359 @@
-import { supabase } from "./supabaseClient";
+﻿import { supabase } from "./supabaseClient";
 import { supabaseAdmin } from "./supabaseAdmin";
-import {
-  CreditPackCode,
-  CreditBatch,
-  CreditLedgerEntry,
-  PaymentClaim,
-  UserCreditSummary,
-} from "./types";
+import { SoldeCredits, CreditBatchV2, CreditLedgerEntryV2, PaymentClaimV2 } from "./types";
 import { getCreditPack } from "@/config/payments";
 
+export type CompteType = "user" | "org";
+
+/**
+ * CreditService — Couche d acces aux donnees du systeme de credits.
+ * Toutes les methodes acceptent compteId + compteType pour supporter B2B (orgs).
+ * Le debit atomique passe TOUJOURS par executerAction() ou consommer_credits() en DB.
+ * Ne jamais debiter directement depuis ce service dans une route IA.
+ */
 export class CreditService {
   /**
-   * Récupère le résumé du solde et la date d'expiration la plus proche
+   * Solde consolide du compte (user ou org)
    */
-  static async getUserBalance(userId: string): Promise<UserCreditSummary> {
+  static async getSolde(
+    compteId: string,
+    compteType: CompteType = "user"
+  ): Promise<SoldeCredits> {
     const client = supabaseAdmin || supabase;
-    if (!client || !userId) {
-      return { balance: 0, nearestExpiry: null, activeBatchesCount: 0 };
+    if (!client || !compteId) {
+      return { solde: 0, prochaineExpiration: null, nbLots: 0 };
     }
-
     try {
-      // 1. Appel de la fonction stockée PostgreSQL optimisée
-      const { data, error } = await client.rpc("get_user_credit_balance", {
-        p_user_id: userId,
+      const { data } = await client.rpc("solde_credits", {
+        p_compte: compteId,
+        p_type: compteType,
       });
-
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         return {
-          balance: Number(data[0].balance) || 0,
-          nearestExpiry: data[0].nearest_expiry || null,
-          activeBatchesCount: Number(data[0].active_batches) || 0,
+          solde: Number(data[0].solde) || 0,
+          prochaineExpiration: data[0].prochaine_expiration || null,
+          nbLots: Number(data[0].nb_lots) || 0,
         };
       }
+      return { solde: 0, prochaineExpiration: null, nbLots: 0 };
+    } catch {
+      return { solde: 0, prochaineExpiration: null, nbLots: 0 };
+    }
+  }
 
-      // 2. Repli direct par requête SELECT si la RPC n'est pas accessible
+  /**
+   * Alias compat legacy - utilise user comme compte_type
+   */
+  static async getUserBalance(userId: string): Promise<{
+    balance: number; nearestExpiry: string | null; activeBatchesCount: number;
+  }> {
+    const s = await CreditService.getSolde(userId, "user");
+    return { balance: s.solde, nearestExpiry: s.prochaineExpiration, activeBatchesCount: s.nbLots };
+  }
+
+  /**
+   * Lots de credits actifs du compte
+   */
+  static async getLots(
+    compteId: string,
+    compteType: CompteType = "user"
+  ): Promise<CreditBatchV2[]> {
+    const client = supabaseAdmin || supabase;
+    if (!client || !compteId) return [];
+    try {
       const now = new Date().toISOString();
-      const { data: batches } = await client
-        .from("credit_batches")
-        .select("credits_remaining, expires_at")
-        .eq("user_id", userId)
-        .gt("credits_remaining", 0)
-        .or(`expires_at.is.null,expires_at.gt.${now}`);
-
-      if (batches && batches.length > 0) {
-        let total = 0;
-        let nearest: string | null = null;
-        batches.forEach((b: any) => {
-          total += Number(b.credits_remaining) || 0;
-          if (b.expires_at) {
-            if (!nearest || new Date(b.expires_at) < new Date(nearest)) {
-              nearest = b.expires_at;
-            }
-          }
-        });
-        return {
-          balance: total,
-          nearestExpiry: nearest,
-          activeBatchesCount: batches.length,
-        };
-      }
-
-      return { balance: 0, nearestExpiry: null, activeBatchesCount: 0 };
-    } catch (err) {
-      console.warn("Erreur CreditService.getUserBalance:", err);
-      return { balance: 0, nearestExpiry: null, activeBatchesCount: 0 };
-    }
-  }
-
-  /**
-   * Attribue de façon idempotente les 20 crédits de bienvenue offerts
-   */
-  static async grantWelcomeCredits(userId: string): Promise<boolean> {
-    const client = supabaseAdmin || supabase;
-    if (!client || !userId) return false;
-
-    try {
-      const { data, error } = await client.rpc("grant_welcome_credits", {
-        p_user_id: userId,
-      });
-      if (error) {
-        console.warn("Erreur grant_welcome_credits:", error);
-        return false;
-      }
-      return Boolean(data);
-    } catch (err) {
-      console.warn("Erreur CreditService.grantWelcomeCredits:", err);
-      return false;
-    }
-  }
-
-  /**
-   * Débit atomique de crédits côté serveur (SECURITY DEFINER)
-   */
-  static async consumeCredits(
-    userId: string,
-    amount: number,
-    action: string,
-    ref?: string
-  ): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-    if (!supabaseAdmin) {
-      return { success: false, error: "Base de données administrative indisponible" };
-    }
-    if (amount <= 0) {
-      return { success: true };
-    }
-
-    try {
-      const { data, error } = await supabaseAdmin.rpc("consume_user_credits", {
-        p_user_id: userId,
-        p_amount: amount,
-        p_action: action,
-        p_ref: ref || null,
-      });
-
-      if (error) {
-        const msg = error.message || "";
-        if (msg.includes("INSUFFICIENT_CREDITS")) {
-          return { success: false, error: "INSUFFICIENT_CREDITS" };
-        }
-        return { success: false, error: msg || "Erreur débit crédits" };
-      }
-
-      return { success: true, newBalance: Number(data) };
-    } catch (err: any) {
-      console.error("Erreur CreditService.consumeCredits:", err);
-      return { success: false, error: err.message || "Erreur interne débit crédits" };
-    }
-  }
-
-  /**
-   * Remboursement de crédits en cas d'échec d'une opération
-   */
-  static async refundCredits(
-    userId: string,
-    amount: number,
-    action: string = "refund",
-    ref?: string
-  ): Promise<{ success: boolean; newBalance?: number }> {
-    if (!supabaseAdmin || amount <= 0) return { success: false };
-
-    try {
-      const { data, error } = await supabaseAdmin.rpc("refund_user_credits", {
-        p_user_id: userId,
-        p_amount: amount,
-        p_action: action,
-        p_ref: ref || null,
-      });
-
-      if (error) {
-        console.error("Erreur CreditService.refundCredits:", error);
-        return { success: false };
-      }
-
-      return { success: true, newBalance: Number(data) };
-    } catch (err) {
-      console.error("Erreur CreditService.refundCredits:", err);
-      return { success: false };
-    }
-  }
-
-  /**
-   * Récupère la liste des lots de crédits de l'utilisateur
-   */
-  static async getUserBatches(userId: string): Promise<CreditBatch[]> {
-    const client = supabaseAdmin || supabase;
-    if (!client || !userId) return [];
-
-    try {
-      const { data, error } = await client
+      const { data } = await client
         .from("credit_batches")
         .select("*")
-        .eq("user_id", userId)
-        .order("purchased_at", { ascending: false });
-
-      if (error || !data) return [];
-
+        .eq("compte_id", compteId)
+        .eq("compte_type", compteType)
+        .gt("restant", 0)
+        .or(`expire_le.is.null,expire_le.gt.${now}`)
+        .order("expire_le", { ascending: true, nullsFirst: false });
+      if (!data) return [];
       return data.map((b: any) => ({
         id: b.id,
-        userId: b.user_id,
-        creditsInitial: b.credits_initial,
-        creditsRemaining: b.credits_remaining,
-        source: b.source,
-        packCode: b.pack_code,
-        purchasedAt: b.purchased_at,
-        expiresAt: b.expires_at,
-        createdAt: b.created_at,
+        compteId: b.compte_id,
+        compteType: b.compte_type,
+        packSlug: b.pack_slug,
+        creditsInitiaux: b.credits_initiaux,
+        restant: b.restant,
+        creeLe: b.cree_le,
+        expireLe: b.expire_le,
+        origine: b.origine,
+        actif: b.actif,
       }));
-    } catch (err) {
-      console.warn("Erreur CreditService.getUserBatches:", err);
-      return [];
-    }
+    } catch { return []; }
   }
 
   /**
-   * Récupère l'historique comptable du grand livre (ledger)
+   * Alias compat legacy
    */
-  static async getUserLedger(userId: string, limit = 50): Promise<CreditLedgerEntry[]> {
-    const client = supabaseAdmin || supabase;
-    if (!client || !userId) return [];
+  static async getUserBatches(userId: string) {
+    const lots = await CreditService.getLots(userId, "user");
+    return lots.map(l => ({
+      id: l.id,
+      userId: l.compteId,
+      creditsInitial: l.creditsInitiaux,
+      creditsRemaining: l.restant,
+      source: l.origine,
+      packCode: l.packSlug,
+      purchasedAt: l.creeLe,
+      expiresAt: l.expireLe,
+      createdAt: l.creeLe,
+    }));
+  }
 
+  /**
+   * Historique comptable (grand livre)
+   */
+  static async getLedger(
+    compteId: string,
+    compteType: CompteType = "user",
+    limit = 50
+  ): Promise<CreditLedgerEntryV2[]> {
+    const client = supabaseAdmin || supabase;
+    if (!client || !compteId) return [];
     try {
-      const { data, error } = await client
+      const { data } = await client
         .from("credit_ledger")
         .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
+        .eq("compte_id", compteId)
+        .eq("compte_type", compteType)
+        .order("cree_le", { ascending: false })
         .limit(limit);
-
-      if (error || !data) return [];
-
+      if (!data) return [];
       return data.map((l: any) => ({
         id: l.id,
-        userId: l.user_id,
-        batchId: l.batch_id,
+        compteId: l.compte_id,
+        compteType: l.compte_type,
+        lotId: l.lot_id,
         action: l.action,
-        delta: l.delta,
-        balanceAfter: l.balance_after,
-        ref: l.ref,
-        createdAt: l.created_at,
+        montant: l.montant,
+        reference: l.reference,
+        meta: l.meta || {},
+        creeLe: l.cree_le,
       }));
-    } catch (err) {
-      console.warn("Erreur CreditService.getUserLedger:", err);
-      return [];
-    }
+    } catch { return []; }
   }
 
   /**
-   * Soumission d'une déclaration de paiement Wave par le candidat
+   * Alias compat legacy
+   */
+  static async getUserLedger(userId: string, limit = 50) {
+    const ledger = await CreditService.getLedger(userId, "user", limit);
+    return ledger.map(l => ({
+      id: l.id,
+      userId: l.compteId,
+      batchId: l.lotId,
+      action: l.action,
+      delta: l.montant,
+      balanceAfter: 0,
+      ref: l.reference,
+      createdAt: l.creeLe,
+    }));
+  }
+
+  /**
+   * Soumettre une declaration de paiement
    */
   static async submitPaymentClaim(payload: {
-    userId: string;
-    userEmail: string;
-    packCode: CreditPackCode;
-    waveReference: string;
+    compteId: string;
+    compteType?: CompteType;
+    packSlug: string;
+    telephone?: string;
+    operateur?: "wave" | "orange_money" | "autre";
+    referenceTransaction?: string;
     screenshotUrl?: string;
-  }): Promise<{ success: boolean; claim?: PaymentClaim; message?: string }> {
+    // legacy
+    userId?: string;
+    userEmail?: string;
+    packCode?: string;
+    waveReference?: string;
+  }): Promise<{ success: boolean; claim?: PaymentClaimV2; message?: string }> {
     const client = supabaseAdmin || supabase;
-    if (!client) {
-      return { success: false, message: "Service de données indisponible" };
-    }
+    if (!client) return { success: false, message: "Service indisponible" };
 
-    const cleanRef = payload.waveReference.trim();
-    if (!cleanRef) {
-      return { success: false, message: "La référence de paiement Wave est obligatoire" };
-    }
+    const compteId = payload.compteId || payload.userId || "";
+    const compteType = payload.compteType ?? "user";
+    const packSlug = payload.packSlug || payload.packCode || "";
 
-    const pack = getCreditPack(payload.packCode);
-    if (!pack || pack.priceFcfa <= 0) {
-      return { success: false, message: "Pack de crédits payant invalide" };
+    const pack = getCreditPack(packSlug);
+    if (!pack || pack.prixFcfa <= 0) {
+      return { success: false, message: "Pack payant invalide: " + packSlug };
     }
 
     try {
       const { data, error } = await client
         .from("payment_claims")
         .insert({
-          user_id: payload.userId,
-          user_email: payload.userEmail.toLowerCase().trim(),
-          pack_code: payload.packCode,
-          amount_fcfa: pack.priceFcfa,
-          wave_reference: cleanRef,
+          compte_id: compteId,
+          compte_type: compteType,
+          pack_slug: packSlug,
+          montant_attendu: pack.prixFcfa,
+          telephone: payload.telephone?.trim() || null,
+          operateur: payload.operateur ?? "wave",
+          reference_transaction: (payload.referenceTransaction || payload.waveReference)?.trim() || null,
           screenshot_url: payload.screenshotUrl || null,
-          status: "pending",
+          statut: "en_attente",
         })
         .select()
         .single();
 
       if (error || !data) {
-        return { success: false, message: error?.message || "Erreur lors de l'enregistrement" };
+        return { success: false, message: error?.message || "Erreur enregistrement" };
       }
 
       return {
         success: true,
         claim: {
           id: data.id,
-          userId: data.user_id,
-          userEmail: data.user_email,
-          packCode: data.pack_code,
-          amountFcfa: data.amount_fcfa,
-          waveReference: data.wave_reference,
+          compteId: data.compte_id,
+          compteType: data.compte_type,
+          packSlug: data.pack_slug,
+          montantAttendu: data.montant_attendu,
+          telephone: data.telephone,
+          operateur: data.operateur,
+          referenceTransaction: data.reference_transaction,
           screenshotUrl: data.screenshot_url,
-          status: data.status,
-          createdAt: data.created_at,
+          statut: data.statut,
+          creeLe: data.cree_le,
         },
       };
     } catch (err: any) {
-      console.error("Erreur CreditService.submitPaymentClaim:", err);
       return { success: false, message: err.message };
     }
   }
 
   /**
-   * Récupère les déclarations de paiement de l'utilisateur
+   * Declarations de paiement d un compte
    */
-  static async getUserClaims(userId: string): Promise<PaymentClaim[]> {
+  static async getClaims(
+    compteId: string,
+    compteType: CompteType = "user"
+  ): Promise<PaymentClaimV2[]> {
     const client = supabaseAdmin || supabase;
-    if (!client || !userId) return [];
-
+    if (!client || !compteId) return [];
     try {
-      const { data, error } = await client
+      const { data } = await client
         .from("payment_claims")
         .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error || !data) return [];
-
+        .eq("compte_id", compteId)
+        .eq("compte_type", compteType)
+        .order("cree_le", { ascending: false });
+      if (!data) return [];
       return data.map((c: any) => ({
         id: c.id,
-        userId: c.user_id,
-        userEmail: c.user_email,
-        packCode: c.pack_code,
-        amountFcfa: c.amount_fcfa,
-        waveReference: c.wave_reference,
+        compteId: c.compte_id,
+        compteType: c.compte_type,
+        packSlug: c.pack_slug,
+        montantAttendu: c.montant_attendu,
+        telephone: c.telephone,
+        operateur: c.operateur,
+        referenceTransaction: c.reference_transaction,
         screenshotUrl: c.screenshot_url,
-        status: c.status,
-        rejectionReason: c.rejection_reason,
-        reviewedBy: c.reviewed_by,
-        reviewedAt: c.reviewed_at,
-        createdAt: c.created_at,
+        statut: c.statut,
+        validePar: c.valide_par,
+        valideLe: c.valide_le,
+        note: c.note,
+        creeLe: c.cree_le,
       }));
-    } catch (err) {
-      console.warn("Erreur CreditService.getUserClaims:", err);
-      return [];
-    }
+    } catch { return []; }
   }
 
   /**
-   * Récupère les réclamations pour la console SuperAdmin
+   * Alias legacy getUserClaims
    */
-  static async getAdminClaims(statusFilter = "all"): Promise<PaymentClaim[]> {
-    if (!supabaseAdmin) return [];
+  static async getUserClaims(userId: string) {
+    const claims = await CreditService.getClaims(userId, "user");
+    return claims.map(c => ({
+      id: c.id,
+      userId: c.compteId,
+      userEmail: "",
+      packCode: c.packSlug,
+      amountFcfa: c.montantAttendu,
+      waveReference: c.referenceTransaction ?? "",
+      screenshotUrl: c.screenshotUrl,
+      status: c.statut === "en_attente" ? "pending" : c.statut === "valide" ? "approved" : "rejected",
+      rejectionReason: c.note,
+      reviewedBy: c.validePar,
+      reviewedAt: c.valideLe,
+      createdAt: c.creeLe,
+    }));
+  }
 
+  /**
+   * Admin : toutes les declarations
+   */
+  static async getAdminClaims(statusFilter = "all") {
+    if (!supabaseAdmin) return [];
     try {
       let query = supabaseAdmin
         .from("payment_claims")
         .select("*")
-        .order("created_at", { ascending: false });
-
+        .order("cree_le", { ascending: false });
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        const statut = statusFilter === "pending" ? "en_attente" : statusFilter === "approved" ? "valide" : statusFilter;
+        query = query.eq("statut", statut);
       }
-
-      const { data, error } = await query.limit(100);
-      if (error || !data) return [];
-
-      return data.map((c: any) => ({
+      const { data } = await query.limit(200);
+      return (data ?? []).map((c: any) => ({
         id: c.id,
-        userId: c.user_id,
-        userEmail: c.user_email,
-        packCode: c.pack_code,
-        amountFcfa: c.amount_fcfa,
-        waveReference: c.wave_reference,
+        userId: c.compte_id,
+        userEmail: "",
+        packCode: c.pack_slug,
+        amountFcfa: c.montant_attendu,
+        waveReference: c.reference_transaction ?? "",
         screenshotUrl: c.screenshot_url,
-        status: c.status,
-        rejectionReason: c.rejection_reason,
-        reviewedBy: c.reviewed_by,
-        reviewedAt: c.reviewed_at,
-        createdAt: c.created_at,
+        status: c.statut === "en_attente" ? "pending" : c.statut === "valide" ? "approved" : "rejected",
+        rejectionReason: c.note,
+        reviewedBy: c.valide_par,
+        reviewedAt: c.valide_le,
+        createdAt: c.cree_le,
       }));
-    } catch (err) {
-      console.error("Erreur CreditService.getAdminClaims:", err);
-      return [];
-    }
+    } catch { return []; }
   }
 
-  /**
-   * Validation 1-Clic d'un paiement Wave par l'administrateur
-   */
-  static async approveClaim(
-    claimId: string,
-    adminId: string
-  ): Promise<{ success: boolean; message: string; newBalance?: number }> {
-    if (!supabaseAdmin) {
-      return { success: false, message: "Base de données administrative non disponible" };
-    }
-
-    try {
-      const { data, error } = await supabaseAdmin.rpc("approve_payment_claim", {
-        p_claim_id: claimId,
-        p_admin_id: adminId || "00000000-0000-0000-0000-000000000000",
-      });
-
-      if (error) {
-        return { success: false, message: error.message };
-      }
-
-      return data as { success: boolean; message: string; newBalance?: number };
-    } catch (err: any) {
-      console.error("Erreur CreditService.approveClaim:", err);
-      return { success: false, message: err.message };
-    }
+  /** Alias legacy approveClaim */
+  static async approveClaim(claimId: string, adminId: string) {
+    const { livrerPackAdmin } = await import("./livrerPack");
+    return livrerPackAdmin(claimId, adminId);
   }
 
-  /**
-   * Rejet d'un paiement Wave avec motif par l'administrateur
-   */
-  static async rejectClaim(
-    claimId: string,
-    adminId: string,
-    reason: string
-  ): Promise<{ success: boolean; message: string }> {
-    if (!supabaseAdmin) {
-      return { success: false, message: "Base de données administrative non disponible" };
-    }
+  /** Alias legacy rejectClaim */
+  static async rejectClaim(claimId: string, adminId: string, reason: string) {
+    const { rejeterClaim } = await import("./livrerPack");
+    return rejeterClaim(claimId, adminId, reason);
+  }
 
+  /** Alias legacy grantWelcomeCredits */
+  static async grantWelcomeCredits(userId: string): Promise<boolean> {
+    const client = supabaseAdmin || supabase;
+    if (!client || !userId) return false;
     try {
-      const { data, error } = await supabaseAdmin.rpc("reject_payment_claim", {
-        p_claim_id: claimId,
-        p_admin_id: adminId || "00000000-0000-0000-0000-000000000000",
-        p_reason: reason || "Référence introuvable",
+      const { data } = await client.rpc("grant_decouverte", {
+        p_compte_id: userId,
+        p_type: "user",
+        p_email: null,
       });
+      return Boolean(data);
+    } catch { return false; }
+  }
 
-      if (error) {
-        return { success: false, message: error.message };
-      }
-
-      return data as { success: boolean; message: string };
+  /** Alias legacy consumeCredits - NE PAS UTILISER dans les routes IA - utiliser executerAction() */
+  static async consumeCredits(userId: string, amount: number, action: string, ref?: string) {
+    console.warn("[CreditService.consumeCredits] Deprecated. Utiliser executerAction() dans les routes IA.");
+    if (!supabaseAdmin) return { success: false, error: "Admin DB indisponible" };
+    try {
+      const { data } = await supabaseAdmin.rpc("consommer_credits", {
+        p_compte: userId, p_type: "user", p_action: action,
+        p_reference: ref ?? "LEGACY_" + Date.now(), p_meta: {},
+      });
+      const r = data?.[0];
+      if (!r?.ok) return { success: false, error: r?.motif ?? "debit_echoue" };
+      return { success: true, newBalance: r.restant };
     } catch (err: any) {
-      console.error("Erreur CreditService.rejectClaim:", err);
-      return { success: false, message: err.message };
+      return { success: false, error: err.message };
     }
   }
 }

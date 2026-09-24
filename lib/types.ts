@@ -278,83 +278,141 @@ export interface SystemHealthStatus {
 }
 
 // =========================================================================
-// SYSTÈME DE CRÉDITS PRÉPAYÉS & PAIEMENT WAVE SANS ABONNEMENT
+// RETROCOMPATIBILITE - TYPES LEGACY (ne pas supprimer avant refonte complète UI)
 // =========================================================================
 
-export type CreditPackCode = "decouverte" | "essentiel" | "evolution" | "carriere";
-
-export interface CreditPack {
-  code: CreditPackCode;
-  label: string;
-  priceFcfa: number;
-  credits: number;
-  validityDays: number | null; // null = permanent
-  unitPriceFcfa: number;
-  waveLink: string | null;
-  active: boolean;
-  features?: string[];
-  recommended?: boolean;
-  badge?: string;
-  description?: string;
-}
-
-export type CreditSource = "offert" | "achat" | "migration" | "bonus";
-
-export interface CreditBatch {
-  id: string;
-  userId: string;
-  creditsInitial: number;
-  creditsRemaining: number;
-  source: CreditSource;
-  packCode: CreditPackCode | null;
-  purchasedAt: string;
-  expiresAt: string | null;
-  createdAt: string;
-}
-
-export type CreditActionType =
-  | "welcome_gift"
-  | "purchase"
-  | "cv_generate"
-  | "cv_rewrite"
-  | "cover_letter"
-  | "ats_adaptation"
-  | "english_version"
-  | "pro_photo"
-  | "refund"
-  | "migration";
-
-export interface CreditLedgerEntry {
-  id: string;
-  userId: string;
-  batchId?: string | null;
-  action: CreditActionType | string;
-  delta: number;
-  balanceAfter: number;
-  ref?: string | null;
-  createdAt: string;
-}
-
-export type PaymentClaimStatus = "pending" | "approved" | "rejected";
-
+/** @deprecated Utiliser PaymentClaimV2 */
 export interface PaymentClaim {
   id: string;
   userId: string;
-  userEmail?: string;
-  packCode: CreditPackCode;
+  userEmail: string;
+  packCode: string;
   amountFcfa: number;
   waveReference: string;
-  screenshotUrl?: string | null;
-  status: PaymentClaimStatus;
+  screenshotUrl?: string;
+  status: "pending" | "approved" | "rejected";
   rejectionReason?: string | null;
   reviewedBy?: string | null;
   reviewedAt?: string | null;
   createdAt: string;
 }
 
+/** @deprecated Utiliser CreditBatchV2 */
+export interface CreditBatch {
+  id: string;
+  userId: string;
+  creditsInitial: number;
+  creditsRemaining: number;
+  source: string;
+  packCode?: string;
+  purchasedAt: string;
+  expiresAt?: string | null;
+  createdAt: string;
+}
+
+/** @deprecated Utiliser CreditLedgerEntryV2 */
+export interface CreditLedgerEntry {
+  id: string;
+  userId: string;
+  batchId?: string | null;
+  action: string;
+  delta: number;
+  balanceAfter: number;
+  ref?: string | null;
+  createdAt: string;
+}
+
+/** @deprecated Utiliser SoldeCredits */
 export interface UserCreditSummary {
   balance: number;
   nearestExpiry: string | null;
   activeBatchesCount: number;
 }
 
+// =========================================================================
+// SYSTEME DE CREDITS PREPAYÉS B2C & B2B - TYPES V2
+// =========================================================================
+
+export type PackSlug =
+  | 'decouverte' | 'essentiel' | 'evolution' | 'carriere'
+  | 'revendeur' | 'structure' | 'business_pro' | 'licence_etablissement';
+
+export type PackSegment = 'b2c' | 'b2b';
+export type CompteType = 'user' | 'org';
+
+export type CreditActionKeyV2 =
+  | 'cv_complet' | 'lettre_motivation' | 'analyse_ats'
+  | 'traduction_anglais' | 'photo_ia' | 'export_pdf' | 'export_docx';
+
+export interface ActionCost {
+  cle: string;
+  libelle: string;
+  cout: number;
+  actif: boolean;
+}
+
+export interface CreditBatchV2 {
+  id: string;
+  compteId: string;
+  compteType: CompteType;
+  packSlug: PackSlug | null;
+  creditsInitiaux: number;
+  restant: number;
+  creeLe: string;
+  expireLe: string | null;
+  origine: 'offert' | 'achat' | 'migration' | 'bonus' | 'pilote';
+  actif: boolean;
+}
+
+export interface CreditLedgerEntryV2 {
+  id: string;
+  compteId: string;
+  compteType: CompteType;
+  lotId: string | null;
+  action: string;
+  montant: number;
+  reference: string;
+  meta: Record<string, unknown>;
+  creeLe: string;
+}
+
+export interface SoldeCredits {
+  solde: number;
+  prochaineExpiration: string | null;
+  nbLots: number;
+}
+
+export type StatutClaim = 'en_attente' | 'valide' | 'rejete';
+export type Operateur = 'wave' | 'orange_money' | 'autre';
+
+export interface PaymentClaimV2 {
+  id: string;
+  compteId: string;
+  compteType: CompteType;
+  packSlug: PackSlug;
+  montantAttendu: number;
+  telephone?: string;
+  operateur: Operateur;
+  referenceTransaction?: string;
+  screenshotUrl?: string;
+  statut: StatutClaim;
+  validePar?: string | null;
+  valideLe?: string | null;
+  note?: string | null;
+  creeLe: string;
+}
+
+export interface LivraisonResult {
+  success: boolean;
+  message: string;
+  creditsAccordes?: number;
+  packSlug?: string;
+  idempotent?: boolean;
+}
+
+export interface ExecuterActionResult<T = unknown> {
+  ok: boolean;
+  resultat?: T;
+  solde?: number;
+  motif?: string;
+}

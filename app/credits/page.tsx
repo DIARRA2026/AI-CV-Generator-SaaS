@@ -50,7 +50,7 @@ export default function CreditsPage() {
     fetchData();
   }, []);
 
-  const formatExpiry = (dateStr: string | null) => {
+  const formatExpiry = (dateStr?: string | null) => {
     if (!dateStr) return "Aucune expiration (illimité)";
     const date = new Date(dateStr);
     const diffDays = Math.ceil((date.getTime() - Date.now()) / (1000 * 3600 * 24));
@@ -62,7 +62,7 @@ export default function CreditsPage() {
   const getActionLabel = (action: string) => {
     switch (action) {
       case "welcome_gift":
-        return "Cadeau de bienvenue (20 crédits)";
+        return "Cadeau de bienvenue (30 crédits)";
       case "purchase":
         return "Achat de pack de crédits Wave";
       case "cv_generate":

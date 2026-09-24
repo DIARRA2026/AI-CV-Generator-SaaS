@@ -1,226 +1,171 @@
 /**
- * MONCV.AI — CONFIGURATION DU SYSTÈME DE CRÉDITS PRÉPAYÉS & PAIEMENTS WAVE
- * 
- * Marchand Wave : MonCV.ai / INNOVA GROUP
- * Identifiant Marchand : M_iWih2Nsg7dr8
- * Marché : Côte d'Ivoire (CI) & Afrique de l'Ouest
- * 
- * MODÈLE : CRÉDITS PRÉPAYÉS AVEC DURÉE DE VALIDITÉ (ZÉRO ABONNEMENT)
- * Les exports PDF et Word, l'aperçu et les éditions manuelles restent 100% gratuits et illimités.
+ * MONCV.AI - CONFIGURATION DU SYSTEME DE CREDITS PREPAYÉS B2C & B2B
+ * Marchand Wave : MonCV.ai / INNOVA GROUP - M_iWih2Nsg7dr8
+ * REGLE : Le serveur lit TOUJOURS les couts depuis action_costs en DB.
+ * INVARIANT : prix_credit(B2B) < prix_credit(meilleur B2C)
+ * B2C plancher : 8.33 F/credit (Carriere 5000/600)
+ * B2B plafond  : 6.67 F/credit (Revendeur 10000/1500)
  */
 
-import { CreditPack, CreditPackCode, PlanTier } from "@/lib/types";
+export type PackSlug =
+  | 'decouverte' | 'essentiel' | 'evolution' | 'carriere'
+  | 'revendeur' | 'structure' | 'business_pro' | 'licence_etablissement';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. BARÈME DU COÛT EN CRÉDITS DES ACTIONS IA
-// ─────────────────────────────────────────────────────────────────────────────
+export type PackSegment = 'b2c' | 'b2b';
 
-export const CREDIT_ACTIONS_COST = {
-  // Génération ou réécriture complète de CV par l'IA
-  cv_generate: 15,
-  cv_rewrite: 15,
-
-  // Lettre de motivation ciblée par l'IA
-  cover_letter: 8,
-
-  // Adaptation du CV à une offre d'emploi (ATS)
-  ats_adaptation: 8,
-  ats_analysis: 8,
-
-  // Version anglaise du CV
-  english_version: 12,
-  translate_en: 12,
-
-  // Photo professionnelle (retouche / amélioration IA de portrait)
-  pro_photo: 20,
-
-  // Gratuit & Illimité (ne débite jamais de crédits)
-  manual_creation: 0,
-  manual_edit: 0,
-  preview: 0,
-  pdf_export: 0,
-  docx_export: 0,
-} as const;
-
-export type { CreditPack, CreditPackCode } from "@/lib/types";
-
-export type CreditActionKey = keyof typeof CREDIT_ACTIONS_COST;
-
-export function getActionCost(action: CreditActionKey | string): number {
-  return (CREDIT_ACTIONS_COST as Record<string, number>)[action] ?? 0;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. NOUVELLE GRILLE OFFICIELLE DES PACKS DE CRÉDITS
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const CREDIT_PACKS: Record<CreditPackCode, CreditPack> = {
-  decouverte: {
-    code: "decouverte",
-    label: "Découverte",
-    priceFcfa: 0,
-    credits: 20,
-    validityDays: null, // Permanent
-    unitPriceFcfa: 0,
-    waveLink: null,
-    active: true,
-    badge: "Offert à l'inscription",
-    description: "20 crédits offerts immédiatement pour tester la puissance de notre IA.",
-    features: [
-      "20 crédits offerts à la création du compte",
-      "Génération complète d'un CV par IA (15 crédits)",
-      "Création manuelle illimitée 100% gratuite",
-      "Export PDF & Word sans filigrane illimité",
-    ],
-  },
-  essentiel: {
-    code: "essentiel",
-    label: "Essentiel",
-    priceFcfa: 1500,
-    credits: 60,
-    validityDays: 30, // 1 mois
-    unitPriceFcfa: 25, // 25 FCFA / crédit
-    waveLink: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=1500",
-    active: true,
-    badge: "1 Mois de validité",
-    description: "Idéal pour postuler rapidement à plusieurs offres d'emploi ciblées.",
-    features: [
-      "60 crédits valables 30 jours (25 F / crédit)",
-      "Jusqu'à 4 générations complètes de CV par l'IA",
-      "Ou 7 lettres de motivation percutantes",
-      "Exports PDF et Word HD sans filigrane illimités",
-    ],
-  },
-  evolution: {
-    code: "evolution",
-    label: "Évolution",
-    priceFcfa: 2500,
-    credits: 125,
-    validityDays: 90, // 3 mois
-    unitPriceFcfa: 20, // 20 FCFA / crédit
-    waveLink: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=2500",
-    active: true,
-    recommended: true,
-    badge: "Recommandé ★ • 3 Mois",
-    description: "Le pack le plus équilibré pour maximiser vos entretiens d'embauche.",
-    features: [
-      "125 crédits valables 90 jours (20 F / crédit)",
-      "Générations de CV + Lettres de motivation illimitées",
-      "Adaptations ATS directes aux offres d'emploi",
-      "Traductions en version anglaise incluses",
-      "Économie de 20% par rapport au tarif unitaire",
-    ],
-  },
-  carriere: {
-    code: "carriere",
-    label: "Carrière",
-    priceFcfa: 5000,
-    credits: 300,
-    validityDays: 180, // 6 mois
-    unitPriceFcfa: 16.6, // 16,6 FCFA / crédit
-    waveLink: "https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=5000",
-    active: true,
-    badge: "Meilleure Valeur • 6 Mois",
-    description: "Pack longue durée pour booster votre carrière et vos candidatures internationales.",
-    features: [
-      "300 crédits valables 180 jours (16,6 F / crédit)",
-      "Retouches photo professionnelle par IA incluses",
-      "Adaptations ATS illimitées pour toutes vos candidatures",
-      "Versions anglaises et portfolios en ligne",
-      "Tarif préférentiel plancher garanti",
-    ],
-  },
-};
-
-export const CREDIT_PACKS_ARRAY: CreditPack[] = [
-  CREDIT_PACKS.decouverte,
-  CREDIT_PACKS.essentiel,
-  CREDIT_PACKS.evolution,
-  CREDIT_PACKS.carriere,
-];
-
-export function getCreditPack(code: CreditPackCode | string): CreditPack | null {
-  return CREDIT_PACKS[code as CreditPackCode] || null;
-}
-
-export function getWaveLink(code: CreditPackCode | string): string | null {
-  const pack = getCreditPack(code);
-  return pack?.waveLink || null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPATIBILITÉ RÉTROACTIVE (Pont transparent pour les anciennes références)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface PaymentPlanConfig {
-  id: PlanTier;
-  name: string;
-  category: "particulier" | "entreprise";
-  amount: number;
-  formattedAmount: string;
-  currency: "FCFA";
-  badge: string;
+export interface CreditPack {
+  slug: PackSlug;
+  nom: string;
+  segment: PackSegment;
+  prixFcfa: number;
+  credits: number;
+  validiteMois: number | null;
+  sieges: number | null;
+  ordre: number;
+  actif: boolean;
+  misEnAvant: boolean;
+  cible: string;
+  prixCreditFcfa: number;
+  waveLink: string | null;
+  avantages: string[];
+  label: string;
+  code: string;
+  priceFcfa: number;
+  validityDays: number | null;
+  unitPriceFcfa: number;
+  recommended: boolean;
   description: string;
-  allowedCandidates: number;
   features: string[];
 }
 
-export function getPaymentPlanConfig(planId: PlanTier | string): PaymentPlanConfig | null {
-  if (planId === "1500") {
-    return {
-      id: "1500",
-      name: "Pack Essentiel (60 Crédits)",
-      category: "particulier",
-      amount: 1500,
-      formattedAmount: "1 500 FCFA",
-      currency: "FCFA",
-      badge: "60 Crédits",
-      description: "Pack prépayé 60 crédits valable 30 jours.",
-      allowedCandidates: 1,
-      features: CREDIT_PACKS.essentiel.features || [],
-    };
-  }
-  if (planId === "2500") {
-    return {
-      id: "2500",
-      name: "Pack Évolution (125 Crédits)",
-      category: "particulier",
-      amount: 2500,
-      formattedAmount: "2 500 FCFA",
-      currency: "FCFA",
-      badge: "125 Crédits",
-      description: "Pack prépayé 125 crédits valable 90 jours.",
-      allowedCandidates: 2,
-      features: CREDIT_PACKS.evolution.features || [],
-    };
-  }
-  if (planId === "5000") {
-    return {
-      id: "5000",
-      name: "Pack Carrière (300 Crédits)",
-      category: "particulier",
-      amount: 5000,
-      formattedAmount: "5 000 FCFA",
-      currency: "FCFA",
-      badge: "300 Crédits",
-      description: "Pack prépayé 300 crédits valable 180 jours.",
-      allowedCandidates: 4,
-      features: CREDIT_PACKS.carriere.features || [],
-    };
-  }
-  return null;
+export type CreditActionKey =
+  | 'cv_complet' | 'lettre_motivation' | 'analyse_ats'
+  | 'traduction_anglais' | 'photo_ia' | 'export_pdf' | 'export_docx';
+
+export const CREDIT_ACTIONS_COST = {
+  cv_complet:          10,
+  lettre_motivation:    5,
+  analyse_ats:          5,
+  traduction_anglais:   8,
+  photo_ia:            25,
+  export_pdf:           0,
+  export_docx:          0,
+  cv_generate:         10,
+  cv_rewrite:          10,
+  cover_letter:         5,
+  ats_adaptation:       5,
+  ats_analysis:         5,
+  english_version:      8,
+  translate_en:         8,
+  pro_photo:           25,
+  manual_creation:      0,
+  manual_edit:          0,
+  preview:              0,
+} as const;
+
+export type CreditActionKeyCompat = keyof typeof CREDIT_ACTIONS_COST;
+
+export function getActionCost(action: string): number {
+  return (CREDIT_ACTIONS_COST as Record<string, number>)[action] ?? 0;
 }
 
-export function getPlanAmount(planId: PlanTier | string): number {
-  if (planId === "1500") return 1500;
-  if (planId === "2500") return 2500;
-  if (planId === "5000") return 5000;
-  return 0;
+const WAVE_BASE = 'https://pay.wave.com/m/M_iWih2Nsg7dr8/c/ci/?amount=';
+
+function makePack(
+  slug: PackSlug, nom: string, segment: PackSegment, prixFcfa: number,
+  credits: number, validiteMois: number | null, sieges: number | null,
+  ordre: number, misEnAvant: boolean, cible: string, prixCreditFcfa: number,
+  avantages: string[]
+): CreditPack {
+  return {
+    slug, nom, segment, prixFcfa, credits, validiteMois, sieges, ordre,
+    actif: true, misEnAvant, cible, prixCreditFcfa, avantages,
+    waveLink: prixFcfa > 0 ? WAVE_BASE + prixFcfa : null,
+    label: nom, code: slug, priceFcfa: prixFcfa,
+    validityDays: validiteMois ? validiteMois * 30 : null,
+    unitPriceFcfa: prixCreditFcfa, recommended: misEnAvant,
+    description: cible, features: avantages,
+  };
 }
 
-export function getWavePaymentUrl(planId: PlanTier | string): string | null {
-  if (planId === "1500" || planId === "essentiel") return CREDIT_PACKS.essentiel.waveLink;
-  if (planId === "2500" || planId === "evolution") return CREDIT_PACKS.evolution.waveLink;
-  if (planId === "5000" || planId === "carriere") return CREDIT_PACKS.carriere.waveLink;
-  return null;
+const PACKS_B2C: Record<string, CreditPack> = {
+  decouverte: makePack('decouverte', 'Decouverte', 'b2c', 0, 30, null, 1, 1, false,
+    'Tout utilisateur qui cree un compte', 0,
+    ['30 credits offerts a l inscription', 'Genere 1 CV + 1 lettre + 1 analyse ATS',
+     'Creation manuelle illimitee', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
+  essentiel: makePack('essentiel', 'Essentiel', 'b2c', 1500, 120, 12, 1, 2, false,
+    'Candidat en recherche active', 12.5,
+    ['120 credits valables 12 mois', 'Soit 12 CV complets ou 24 lettres',
+     '12,5 F le credit', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
+  evolution: makePack('evolution', 'Evolution', 'b2c', 2500, 250, 12, 1, 3, false,
+    'Candidat qui multiplie les candidatures', 10,
+    ['250 credits valables 12 mois', 'Soit 25 CV complets ou 50 lettres',
+     '10 F le credit (economie 20%)', 'Traductions Anglais incluses',
+     'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
+  carriere: makePack('carriere', 'Carriere', 'b2c', 5000, 600, 12, 1, 4, true,
+    'Candidat exigeant, reconversion, international', 8.33,
+    ['600 credits valables 12 mois', 'Soit 60 CV complets - photo IA incluse',
+     '8,33 F le credit - meilleur rapport B2C', 'Photo de profil IA',
+     'Traductions Anglais illimitees', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
+};
+
+const PACKS_B2B: Record<string, CreditPack> = {
+  revendeur: makePack('revendeur', 'Revendeur', 'b2b', 10000, 1500, 12, 1, 5, false,
+    'Agence RH, cabinet, point de vente', 6.67,
+    ['1 500 credits valables 12 mois', 'Soit 150 profils complets',
+     '6,67 F le credit', 'Compte structure avec nom de l agence',
+     'Recharge en un clic', 'Facture normalisee OHADA']),
+  structure: makePack('structure', 'Structure', 'b2b', 25000, 5000, 12, 3, 6, false,
+    'PME, ONG, structure educative', 5,
+    ['Tout Revendeur +', '5 000 credits valables 12 mois', '5,00 F le credit',
+     '3 utilisateurs simultanes', 'Logo et couleurs de la structure',
+     'Export groupe CSV', 'Facture normalisee OHADA']),
+  business_pro: makePack('business_pro', 'Business Pro', 'b2b', 60000, 15000, 12, 10, 7, true,
+    'Entreprise RH, cabinet conseil, ecole', 4,
+    ['Tout Structure +', '15 000 credits valables 12 mois', '4,00 F le credit',
+     '10 utilisateurs simultanes', 'Tableau de bord analytics',
+     'Import en lot (CSV)', 'Support WhatsApp prioritaire', 'Facture normalisee OHADA']),
+  licence_etablissement: makePack('licence_etablissement', 'Licence Etablissement', 'b2b', 150000, 50000, 12, null, 8, false,
+    'Grande ecole, universite', 3,
+    ['Tout Business Pro +', '50 000 credits valables 12 mois', '3,00 F le credit',
+     'Utilisateurs illimites', 'Espaces par promotion', 'Gestionnaire de compte dedie',
+     'Devis sur bon de commande', 'Facture normalisee OHADA']),
+};
+
+export const ALL_PACKS: Record<string, CreditPack> = {
+  ...PACKS_B2C, ...PACKS_B2B,
+};
+
+export const PACKS_B2C_ARRAY: CreditPack[] = Object.values(PACKS_B2C).sort((a, b) => a.ordre - b.ordre);
+export const PACKS_B2B_ARRAY: CreditPack[] = Object.values(PACKS_B2B).sort((a, b) => a.ordre - b.ordre);
+export const ALL_PACKS_ARRAY: CreditPack[] = [...PACKS_B2C_ARRAY, ...PACKS_B2B_ARRAY];
+
+export function getCreditPack(slug: string): CreditPack | null {
+  return ALL_PACKS[slug as PackSlug] ?? null;
 }
+export function getWaveLink(slug: string): string | null {
+  return getCreditPack(slug)?.waveLink ?? null;
+}
+export function getPrixCreditFcfa(slug: string): number {
+  const pack = getCreditPack(slug);
+  if (!pack || pack.prixFcfa === 0) return 0;
+  return Number((pack.prixFcfa / pack.credits).toFixed(2));
+}
+
+export type CreditPackCode = PackSlug;
+export const CREDIT_PACKS: Record<string, CreditPack> = ALL_PACKS;
+export const CREDIT_PACKS_ARRAY = PACKS_B2C_ARRAY;
+
+export function getPaymentPlanConfig(slug: string) {
+  const pack = getCreditPack(slug);
+  if (!pack) return null;
+  return {
+    id: pack.slug, name: pack.nom,
+    category: (pack.segment === 'b2c' ? 'particulier' : 'entreprise') as 'particulier' | 'entreprise',
+    amount: pack.prixFcfa, formattedAmount: pack.prixFcfa.toLocaleString('fr-FR') + ' FCFA',
+    currency: 'FCFA' as const, badge: pack.credits + ' Credits',
+    description: pack.cible, allowedCandidates: pack.sieges ?? 999, features: pack.avantages,
+  };
+}
+export function getPlanAmount(slug: string): number { return getCreditPack(slug)?.prixFcfa ?? 0; }
+export function getWavePaymentUrl(slug: string): string | null { return getWaveLink(slug); }

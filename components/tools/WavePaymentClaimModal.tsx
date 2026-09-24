@@ -13,6 +13,8 @@ interface WavePaymentClaimModalProps {
   onClose: () => void;
   defaultPackCode?: string;
   onClaimSubmitted?: () => void;
+  onSuccess?: () => void;
+  orgId?: string;
 }
 
 export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
@@ -20,6 +22,8 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
   onClose,
   defaultPackCode = "evolution",
   onClaimSubmitted,
+  onSuccess,
+  orgId,
 }) => {
   const [selectedPackCode, setSelectedPackCode] = useState<string>(defaultPackCode);
   const [waveReference, setWaveReference] = useState("");
@@ -71,6 +75,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          packSlug: currentPack.code,
           packCode: currentPack.code,
           pack_code: currentPack.code,
           amountFcfa: currentPack.priceFcfa,
@@ -78,6 +83,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
           wave_reference: cleanRef,
           screenshotUrl: screenshotDataUrl || null,
           screenshot_url: screenshotDataUrl || null,
+          orgId: orgId || undefined,
         }),
       });
 
@@ -88,6 +94,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
 
       setIsSubmittedSuccess(true);
       if (onClaimSubmitted) onClaimSubmitted();
+      if (onSuccess) onSuccess();
     } catch (err: any) {
       setErrorMessage(err.message || "Une erreur est survenue.");
     } finally {

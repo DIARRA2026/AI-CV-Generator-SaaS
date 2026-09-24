@@ -416,3 +416,39 @@ export interface ExecuterActionResult<T = unknown> {
   solde?: number;
   motif?: string;
 }
+
+export type OrgRole = 'proprietaire' | 'admin' | 'membre';
+
+export interface Organization {
+  id: string;
+  nom: string;
+  slug: string;
+  rccm?: string | null;
+  ifu?: string | null;
+  adresse?: string | null;
+  telephone?: string | null;
+  emailFacturation?: string | null;
+  logoUrl?: string | null;
+  couleurPrimaire: string;
+  packSlug: PackSlug | null;
+  packNom?: string;
+  prochaineExpiration?: string | null;
+  actif: boolean;
+  creeLe: string;
+  misAJour?: string;
+  siegesMax?: number | null;
+  siegesUtilises?: number;
+  soldeCredits?: number;
+  monRole?: OrgRole;
+}
+
+export interface OrganizationMember {
+  orgId: string;
+  userId: string;
+  role: OrgRole;
+  invitePar?: string | null;
+  creeLe: string;
+  email?: string;
+  fullName?: string;
+}
+

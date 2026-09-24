@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
+import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
 import { PlanTier, AccountType } from "@/lib/types";
@@ -12,6 +12,9 @@ import { StorageManager } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack, CREDIT_ACTIONS_COST } from "@/config/payments";
+import { LandingPricingSection } from "@/components/landing/LandingPricingSection";
+import { LandingBusinessSection } from "@/components/landing/LandingBusinessSection";
 import {
   Sparkles,
   ArrowRight,
@@ -29,6 +32,8 @@ import {
   Flame,
   Globe,
   Building,
+  Building2,
+  User,
   ChevronDown,
   Palette,
   Briefcase,
@@ -64,9 +69,9 @@ const COLOR_PALETTE = [
 ];
 
 export default function HomePage() {
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isPaymentWaveOpened, setIsPaymentWaveOpened] = useState(false);
-  const [selectedPlanPrice, setSelectedPlanPrice] = useState<PlanTier>("2500");
+  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
+  const [selectedWavePack, setSelectedWavePack] = useState<string>("carriere");
+  const [pricingTab, setPricingTab] = useState<"particuliers" | "entreprises">("particuliers");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
   const [authDefaultPlan, setAuthDefaultPlan] = useState<PlanTier>("free");
@@ -241,29 +246,19 @@ export default function HomePage() {
 
   const handleOpenBusinessAuth = () => {
     if (typeof window !== "undefined") {
-      if (StorageManager.isLoggedIn() && StorageManager.isBusinessAccount()) {
-        router.push("/dashboard?tab=business");
+      if (StorageManager.isLoggedIn()) {
+        router.push("/organisation");
         return;
       }
     }
     setAuthAccountType("business");
-    setAuthDefaultPlan("enterprise75");
+    setAuthDefaultPlan("free");
     setIsAuthOpen(true);
   };
 
-  const handleOpenPlanPayment = (plan: PlanTier) => {
-    if (typeof window !== "undefined") {
-      StorageManager.setPlanTier(plan, {
-        status: "active",
-        paymentMethod: "Accès Libre & Gratuit",
-      });
-      const isBiz = plan.startsWith("enterprise") || plan === "cyber15";
-      if (isBiz) {
-        router.push("/dashboard?tab=business");
-      } else {
-        router.push("/create");
-      }
-    }
+  const handleSelectWavePack = (packCode: string) => {
+    setSelectedWavePack(packCode);
+    setIsWaveModalOpen(true);
   };
 
   // Traitement automatique au retour de confirmation d'email (lien Supabase /auth/confirm?next=/?confirmed=true)
@@ -297,7 +292,7 @@ export default function HomePage() {
       if (pending) {
         StorageManager.clearPendingCheckoutPlan();
         setTimeout(() => {
-          handleOpenPlanPayment(pending.plan);
+          handleSelectWavePack(pending.plan || "evolution");
         }, 400);
       }
     };
@@ -310,7 +305,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-600 selection:text-white font-sans overflow-x-hidden">
       <Navbar
-        onOpenPayment={() => handleOpenPlanPayment("2500")}
+        onOpenPayment={() => handleSelectWavePack("carriere")}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
 
@@ -392,9 +387,9 @@ export default function HomePage() {
               </span>
               <span className="text-slate-900 font-bold whitespace-nowrap">{dict.hero.statsCvs}</span>
               <span className="text-slate-300">•</span>
-              <span className="text-blue-600 font-semibold whitespace-nowrap">{dict.hero.badge}</span>
-              <span className="px-1.5 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] rounded-full font-bold uppercase tracking-wider shadow-xs shrink-0">
-                IA 2026
+              <span className="text-blue-600 font-bold whitespace-nowrap">30 crédits IA offerts</span>
+              <span className="px-1.5 py-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[9px] rounded-full font-bold uppercase tracking-wider shadow-xs shrink-0">
+                0 F / Mois
               </span>
             </div>
 
@@ -409,11 +404,11 @@ export default function HomePage() {
 
             {/* Sous-titre */}
             <p className="mt-4 text-xs sm:text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal text-center px-1">
-              {dict.hero.subtitle}
+              Créez, modifiez et téléchargez vos CVs en PDF HD et Word DOCX gratuitement et sans filigrane. Boostez vos chances d'embauche avec l'IA grâce à nos crédits prépayés rechargeables par Mobile Money (Wave, Orange Money) — zéro abonnement, zéro engagement.
             </p>
 
             {/* CTAs d'action */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto w-full px-2">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-3xl mx-auto w-full px-2">
               <button
                 type="button"
                 onClick={handleStartCreation}
@@ -423,32 +418,36 @@ export default function HomePage() {
                 <span className="whitespace-nowrap font-black">
                   {isLoggedIn
                     ? isBusinessAccount
-                      ? dict.nav.backToEnterprise
+                      ? "Accéder à l'Organisation"
                       : dict.nav.myCvs
-                    : dict.hero.ctaCreateCv}
+                    : "Créer mon CV Gratuitement (30 cr offerts)"}
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-1.5 transition-transform" />
               </button>
 
-              <div className="w-full sm:w-auto grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:gap-3">
+              <div className="w-full sm:w-auto flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
                 <a
-                  href="#exposition-modeles"
-                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:border-blue-300 cursor-pointer card-hover-lift"
+                  href="#modeles"
+                  className="px-4 py-3 sm:px-5 sm:py-4 bg-white/95 backdrop-blur-md hover:bg-blue-50/70 text-slate-800 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:border-blue-300 cursor-pointer card-hover-lift"
                 >
                   <Eye className="w-4 h-4 text-blue-600 animate-bounce-soft shrink-0" />
-                  <span className="whitespace-nowrap">{dict.hero.modelsButton}</span>
+                  <span className="whitespace-nowrap">Modèles</span>
+                </a>
+
+                <a
+                  href="#tarifs"
+                  className="px-4 py-3 sm:px-5 sm:py-4 bg-blue-50/80 hover:bg-blue-100 text-blue-900 font-bold rounded-2xl border border-blue-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer card-hover-lift"
+                >
+                  <Zap className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="whitespace-nowrap">Tarifs</span>
                 </a>
 
                 <Link
-                  href="/portfolio"
-                  target="_blank"
-                  className="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 bg-purple-50 hover:bg-purple-100/90 text-purple-900 font-bold rounded-2xl border border-purple-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer btn-press card-hover-lift"
+                  href="/organisation"
+                  className="px-4 py-3 sm:px-5 sm:py-4 bg-amber-50 hover:bg-amber-100/90 text-amber-950 font-bold rounded-2xl border border-amber-200 shadow-xs hover:shadow-md text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer card-hover-lift"
                 >
-                  <Globe className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span className="whitespace-nowrap">{dict.hero.portfolioButton}</span>
-                  <span className="px-1.5 py-0.2 rounded-md bg-purple-600 text-white text-[9px] font-black uppercase shrink-0">
-                    VIP
-                  </span>
+                  <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span className="whitespace-nowrap">Entreprises (B2B)</span>
                 </Link>
               </div>
             </div>
@@ -479,15 +478,15 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[11px] sm:text-xs font-semibold text-slate-600 text-center">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 icon-glow-emerald" />
-                  <span>{dict.hero.checkNoSignup}</span>
+                  <span>30 crédits offerts à l'inscription</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0 icon-glow-blue animate-pulse-soft" />
-                  <span>{dict.hero.checkAtsScore}</span>
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0 icon-glow-blue" />
+                  <span>Exports PDF & Word HD 100% Gratuits</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
-                  <span>{dict.hero.checkMobileMoney}</span>
+                  <span>Paiement Wave sans abonnement</span>
                 </span>
               </div>
             </div>
@@ -666,31 +665,31 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-blue-600">{dict.hero.metricDownloads}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-blue-600">+18 450</span>
                     <FileText className="w-5 h-5 text-blue-400" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-1">{dict.hero.metricDownloadsLabel}</div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">CVs Téléchargés</div>
                 </div>
                 <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-emerald-600">{dict.hero.metricAtsRate}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-600">98.4%</span>
                     <ShieldCheck className="w-5 h-5 text-emerald-400 icon-glow-emerald" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-1">{dict.hero.metricAtsLabel}</div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">Validation Robots ATS</div>
                 </div>
                 <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-indigo-600">{dict.hero.metricCalls}</span>
-                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                    <span className="text-2xl sm:text-3xl font-black text-indigo-600">100% Gratuit</span>
+                    <Download className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-1">{dict.hero.metricCallsLabel}</div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">Exports PDF & Word HD</div>
                 </div>
                 <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs card-hover-lift card-shine">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-amber-500">{dict.hero.metricTime}</span>
-                    <Clock className="w-5 h-5 text-amber-400" />
+                    <span className="text-2xl sm:text-3xl font-black text-amber-500">0 F / Mois</span>
+                    <Zap className="w-5 h-5 text-amber-400" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-600 mt-1">{dict.hero.metricTimeLabel}</div>
+                  <div className="text-[11px] font-bold text-slate-600 mt-1">Zéro Abonnement Récurrent</div>
                 </div>
               </div>
             </div>
@@ -719,13 +718,15 @@ export default function HomePage() {
             <div className="text-center max-w-3xl mx-auto mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-2 border border-blue-100">
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                <span>{dict.gallery.badge}</span>
+                <span>Collection Officielle 2026</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-emerald-600 font-extrabold">Exports PDF & Word HD 100% Gratuits</span>
               </div>
               <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
                 {dict.gallery.title}
               </h2>
               <p className="text-slate-600 text-xs sm:text-sm mt-2">
-                {dict.gallery.subtitle}
+                {dict.gallery.subtitle} Choisissez votre modèle, personnalisez les sections et téléchargez sans aucun filigrane.
               </p>
             </div>
 
@@ -1304,239 +1305,12 @@ export default function HomePage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 6. TARIFS : LES 04 OFFRES */}
+        {/* 6. TARIFS : PACKS DE CRÉDITS PRÉPAYÉS & ZÉRO ABONNEMENT */}
         {/* ========================================================================= */}
-        <section id="tarifs" className="py-10 sm:py-16 bg-white border-t border-slate-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1 block">
-                {dict.pricing.badge}
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                {dict.pricing.title}
-              </h2>
-              <p className="text-slate-600 text-xs sm:text-sm mt-1.5">
-                {dict.pricing.subtitle}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
-              {/* OFFRE 1 : GRATUIT (0 FCFA) */}
-              <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all relative card-hover-lift card-shine">
-                <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-200 text-slate-700 mb-2">
-                    {dict.pricing.candidateFreeBadge}
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">{dict.pricing.candidateFreeTitle}</h3>
-                  <div className="text-3xl font-black text-slate-900 mt-1">
-                    {dict.pricing.candidateFreePrice} <span className="text-sm font-semibold text-slate-500">{dict.pricing.candidateFreePeriod}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    {dict.pricing.candidateFreeDesc}
-                  </p>
-
-                  <div className="mt-4 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 text-[10.5px] text-amber-900 font-semibold">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse-soft" />
-                    <span>{dict.pricing.candidateFreeWarning}</span>
-                  </div>
-
-                  <ul className="mt-5 space-y-2.5 text-xs text-slate-600">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateFreeF1}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateFreeF2}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateFreeF3}</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-slate-400">
-                      <XCircle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                      <span>{dict.pricing.candidateFreeF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-slate-400">
-                      <XCircle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                      <span>{dict.pricing.candidateFreeF5}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleStartCreation}
-                  className="mt-6 w-full py-3 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-2xl border border-slate-200 text-center text-xs transition-all cursor-pointer shadow-xs"
-                >
-                  {dict.pricing.candidateFreeCta}
-                </button>
-              </div>
-
-              {/* OFFRE 2 : PACK ESSENTIEL (1 500 FCFA) */}
-              <div className="p-6 rounded-3xl bg-white border-2 border-blue-200 flex flex-col justify-between shadow-sm hover:border-blue-400 transition-all relative card-hover-lift card-shine">
-                <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-100 text-blue-800 mb-2">
-                    {dict.pricing.candidateEssentialBadge}
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">{dict.pricing.candidateEssentialTitle}</h3>
-                  <div className="text-3xl font-black text-slate-900 mt-1">
-                    {dict.pricing.candidateEssentialPrice} <span className="text-sm font-semibold text-slate-500">{dict.pricing.candidateEssentialPeriod}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    {dict.pricing.candidateEssentialDesc}
-                  </p>
-
-                  <ul className="mt-5 space-y-2.5 text-xs text-slate-700">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 icon-glow-emerald" />
-                      <span><strong>{dict.pricing.candidateEssentialF1}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateEssentialF2}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateEssentialF3}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateEssentialF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{dict.pricing.candidateEssentialF5}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("1500")}
-                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm transition-all cursor-pointer shadow-md hover:shadow-blue-600/30 flex items-center justify-center gap-2 card-hover-lift"
-                  >
-                    <span>Créer mon CV Gratuitement</span>
-                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
-                  </button>
-                </div>
-              </div>
-
-              {/* OFFRE 3 : PACK CANDIDATURE PRO (2 500 FCFA) - RECOMMANDÉ */}
-              <div className="p-6 rounded-3xl bg-gradient-to-b from-blue-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden ring-4 ring-blue-500/80 animate-pulse-glow card-hover-lift card-shine">
-                <div className="absolute top-3 right-3 bg-blue-500 text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  {dict.common.recommended}
-                </div>
-
-                <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/30 text-blue-200 mb-2 border border-blue-400/30">
-                    {dict.pricing.candidateProBadge}
-                  </div>
-                  <h3 className="text-lg font-bold text-blue-100">{dict.pricing.candidateProTitle}</h3>
-                  <div className="text-3xl font-black text-white mt-1">
-                    {dict.pricing.candidateProPrice} <span className="text-sm font-semibold text-blue-300">{dict.pricing.candidateProPeriod}</span>
-                  </div>
-                  <p className="text-[11px] text-blue-200/80 mt-1">
-                    {dict.pricing.candidateProDesc}
-                  </p>
-
-                  <ul className="mt-5 space-y-2.5 text-xs text-blue-100">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
-                      <span><strong>{dict.pricing.candidateProF1}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
-                      <span><strong>{dict.pricing.candidateProF2}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
-                      <span><strong>{dict.pricing.candidateProF3}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
-                      <span>{dict.pricing.candidateProF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 icon-glow-blue" />
-                      <span>{dict.pricing.candidateProF5}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("2500")}
-                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-amber-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
-                  >
-                    <Sparkles className="w-4 h-4 text-slate-950 animate-spin-slow shrink-0" />
-                    <span>Choisir Candidature Pro (Offert)</span>
-                    <Crown className="w-4 h-4 shrink-0" />
-                  </button>
-                </div>
-              </div>
-
-              {/* OFFRE 4 : PACK CARRIÈRE VIP & PORTFOLIO (5 000 FCFA) */}
-              <div className="p-6 rounded-3xl bg-gradient-to-b from-purple-950 via-slate-900 to-indigo-950 text-white flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all relative overflow-hidden border-2 border-purple-400 card-hover-lift card-shine">
-                <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
-                  <Crown className="w-3 h-3 text-amber-300 animate-bounce-soft" />
-                  {dict.pricing.candidateVipBadge}
-                </div>
-
-                <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-purple-500/30 text-purple-200 mb-2 border border-purple-400/30">
-                    {dict.pricing.candidateVipBadge}
-                  </div>
-                  <h3 className="text-lg font-bold text-purple-100">{dict.pricing.candidateVipTitle}</h3>
-                  <div className="text-3xl font-black text-white mt-1">
-                    {dict.pricing.candidateVipPrice} <span className="text-sm font-semibold text-purple-300">{dict.pricing.candidateVipPeriod}</span>
-                  </div>
-                  <p className="text-[11px] text-purple-200/80 mt-1">
-                    {dict.pricing.candidateVipDesc}
-                  </p>
-
-                  <ul className="mt-5 space-y-2.5 text-xs text-purple-100">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
-                      <span><strong>{dict.pricing.candidateVipF1}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
-                      <span><strong>{dict.pricing.candidateVipF2}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
-                      <span><strong>{dict.pricing.candidateVipF3}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
-                      <span><strong>{dict.pricing.candidateVipF4}</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 icon-glow-purple" />
-                      <span><strong>{dict.pricing.candidateVipF5}</strong></span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("5000")}
-                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-black rounded-2xl text-center text-xs sm:text-sm shadow-xl shadow-purple-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer animate-cta-loop"
-                  >
-                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
-                    <span>Choisir Pack VIP & Portfolio (Offert)</span>
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingPricingSection
+          onSelectPack={(slug) => handleSelectWavePack(slug)}
+          onStartCreation={handleStartCreation}
+        />
 
         {/* ========================================================================= */}
         {/* 7. FAQ INTERACTIVE */}
@@ -1615,331 +1389,10 @@ export default function HomePage() {
         {/* ========================================================================= */}
         {/* 8-BIS. SECTION OFFRES BUSINESS & ENTREPRISES */}
         {/* ========================================================================= */}
-        <section id="business" className="py-16 sm:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white relative overflow-hidden border-t border-slate-800">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-indigo-500/15 to-purple-600/15 blur-3xl -z-10 pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-            <div className="text-center mb-4">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-wider shadow-lg backdrop-blur-md">
-                <Building className="w-3.5 h-3.5 text-blue-400" />
-                <span>{dict.businessSection.badge}</span>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-              </div>
-            </div>
-
-            <div className="text-center max-w-3xl mx-auto space-y-3">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black tracking-tight leading-tight">
-                {dict.businessSection.title} <br className="hidden sm:inline" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-amber-300">
-                  {dict.businessSection.titleHighlight}
-                </span>
-              </h2>
-              <p className="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed font-normal">
-                {dict.businessSection.subtitle}
-              </p>
-            </div>
-
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-blue-500/40 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <h4 className="font-extrabold text-sm text-white">{dict.businessSection.pillar1Title}</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {dict.businessSection.pillar1Desc}
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-indigo-500/40 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <h4 className="font-extrabold text-sm text-white">{dict.businessSection.pillar2Title}</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {dict.businessSection.pillar2Desc}
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-emerald-500/40 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <h4 className="font-extrabold text-sm text-white">{dict.businessSection.pillar3Title}</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {dict.businessSection.pillar3Desc}
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-2 hover:border-amber-500/40 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                  <Award className="w-5 h-5" />
-                </div>
-                <h4 className="font-extrabold text-sm text-white">{dict.businessSection.pillar4Title}</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {dict.businessSection.pillar4Desc}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-8 sm:pt-10 overflow-visible">
-              {/* PACK 1 : STARTER PME */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                      <Building className="w-3.5 h-3.5 icon-glow-emerald" />
-                      {dict.pricing.enterpriseStarterBadge}
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl font-extrabold text-white mt-3">{dict.pricing.enterpriseStarterTitle}</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {dict.pricing.enterpriseStarterDesc}
-                  </p>
-
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-white">{dict.pricing.enterpriseStarterPrice}</span>
-                    <span className="text-sm font-bold text-slate-400">{dict.pricing.enterpriseStarterPeriod}</span>
-                    <span className="text-xs font-semibold text-teal-400 ml-auto bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-800/40">
-                      {dict.pricing.enterpriseStarterRate}
-                    </span>
-                  </div>
-
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 icon-glow-emerald" />
-                      <span>{dict.pricing.enterpriseStarterF1}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseStarterF2}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseStarterF3}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseStarterF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseStarterF5}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-8 flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise30")}
-                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-emerald-600/30 card-hover-lift"
-                  >
-                    <Building className="w-4 h-4 shrink-0" />
-                    <span>Activer Starter PME (Offert)</span>
-                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
-                  </button>
-                </div>
-              </div>
-
-              {/* PACK 2 : BUSINESS PRO */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-400 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xl relative backdrop-blur-md ring-4 ring-indigo-500/20 scale-[1.02] z-10 card-hover-lift group">
-                <div className="card-shine-inner" />
-
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-4 py-1 rounded-full uppercase tracking-wider shadow-xl flex items-center gap-1.5 whitespace-nowrap z-20 ring-2 ring-slate-950/30">
-                  <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950 animate-bounce-soft" />
-                  <span>{dict.pricing.recommendedBadge}</span>
-                </div>
-
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-2 mt-1">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      <Users className="w-3.5 h-3.5 icon-glow-blue" />
-                      {dict.pricing.enterpriseProBadge}
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl sm:text-2xl font-black text-white mt-3">{dict.pricing.enterpriseProTitle}</h3>
-                  <p className="text-xs text-slate-300 mt-1">
-                    {dict.pricing.enterpriseProDesc}
-                  </p>
-
-                  <div className="mt-4 pt-4 border-t border-indigo-800/60 flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-white">{dict.pricing.enterpriseProPrice}</span>
-                    <span className="text-sm font-bold text-slate-300">{dict.pricing.enterpriseProPeriod}</span>
-                    <span className="text-xs font-black text-amber-300 ml-auto bg-amber-950/70 px-2.5 py-0.5 rounded-md border border-amber-500/40">
-                      {dict.pricing.enterpriseProRate}
-                    </span>
-                  </div>
-
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-200">
-                    <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber" />
-                      <span>{dict.pricing.enterpriseProF1}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-indigo-200">
-                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 animate-spin-slow" />
-                      <span>{dict.pricing.enterpriseProF2}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseProF3}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseProF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-emerald-300">
-                      <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseProF5}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{dict.pricing.enterpriseProF6}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-8 flex flex-col gap-2.5 relative z-10">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise75")}
-                    className="w-full py-4 px-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-amber-500/40 animate-cta-loop"
-                  >
-                    <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
-                    <span>Activer Business Pro (Offert)</span>
-                    <Crown className="w-4 h-4 shrink-0" />
-                  </button>
-                </div>
-              </div>
-
-              {/* PACK 3 : ENTREPRISE PREMIUM */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative backdrop-blur-md card-hover-lift card-shine">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      <Crown className="w-3.5 h-3.5 icon-glow-amber animate-bounce-soft" />
-                      {dict.pricing.enterprisePremiumBadge}
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl font-extrabold text-white mt-3">{dict.pricing.enterprisePremiumTitle}</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {dict.pricing.enterprisePremiumDesc}
-                  </p>
-
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-white">{dict.pricing.enterprisePremiumPrice}</span>
-                    <span className="text-sm font-bold text-slate-400">{dict.pricing.enterprisePremiumPeriod}</span>
-                    <span className="text-xs font-black text-emerald-400 ml-auto bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
-                      {dict.pricing.enterprisePremiumRate}
-                    </span>
-                  </div>
-
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2.5 font-bold text-white">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 icon-glow-amber" />
-                      <span>{dict.pricing.enterprisePremiumF1}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5 font-bold text-emerald-300">
-                      <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{dict.pricing.enterprisePremiumF2}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{dict.pricing.enterprisePremiumF3}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{dict.pricing.enterprisePremiumF4}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{dict.pricing.enterprisePremiumF5}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{dict.pricing.enterprisePremiumF6}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-8 flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPlanPayment("enterprise200")}
-                    className="w-full py-3.5 sm:py-4 px-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 active:scale-[0.98] text-white font-black rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md card-hover-lift"
-                  >
-                    <Crown className="w-4 h-4 text-amber-300 animate-bounce-soft shrink-0" />
-                    <span>Activer Entreprise Premium (Offert)</span>
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Accord-Cadre & Grandes Écoles */}
-            <div className="mt-10 p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-blue-950/70 via-indigo-950/70 to-purple-950/70 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left backdrop-blur-md">
-              <div className="space-y-1 max-w-xl">
-                <span className="text-[10.5px] font-black uppercase tracking-wider text-amber-300 block">
-                  {dict.businessSection.customVolumeBadge}
-                </span>
-                <h4 className="text-base sm:text-lg font-black text-white">
-                  {dict.businessSection.customVolumeTitle}
-                </h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {dict.businessSection.customVolumeDesc}
-                </p>
-              </div>
-              <a
-                href="https://wa.me/2250700510524?text=Bonjour%20INNOVA%20GROUP,%20notre%20organisation%20souhaite%20un%20devis%20B2B%20sur-mesure%20pour%20plus%20de%20200%20profils%20sur%20MonCV.ai."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer group"
-              >
-                <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>{dict.businessSection.customVolumeCta}</span>
-                <ChevronRight className="w-4 h-4 text-emerald-200" />
-              </a>
-            </div>
-
-            {/* Accès Recruteur Box */}
-            <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                  <Building className="w-5 h-5" />
-                </div>
-                <div>
-                  <h5 className="font-bold text-sm text-white">{dict.businessSection.recruiterBoxTitle}</h5>
-                  <p className="text-xs text-slate-300">{dict.businessSection.recruiterBoxDesc}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleOpenBusinessAuth}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer shrink-0"
-              >
-                <span>{dict.businessSection.recruiterBoxCta}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-slate-400">
-              <div className="flex items-center gap-2 font-medium">
-                <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{dict.businessSection.securityNote}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-400">
-                <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>{dict.businessSection.invoiceNote}</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingBusinessSection
+          onSelectPack={(slug) => handleSelectWavePack(slug)}
+          onOpenBusinessAuth={handleOpenBusinessAuth}
+        />
 
         {/* ========================================================================= */}
         {/* 9. CONTACT & SUPPORT INNOVA GROUP */}
@@ -2171,26 +1624,14 @@ export default function HomePage() {
         </div>
       </footer>
 
-      <MobileMoneyModal
-        isOpen={isPaymentOpen}
-        onClose={() => setIsPaymentOpen(false)}
+      <WavePaymentClaimModal
+        isOpen={isWaveModalOpen}
+        onClose={() => setIsWaveModalOpen(false)}
+        defaultPackCode={selectedWavePack}
         onSuccess={() => {
-          setIsPaymentOpen(false);
-          const u = StorageManager.getUser();
-          const isBiz =
-            u?.accountType === "business" ||
-            StorageManager.isBusinessAccount() ||
-            selectedPlanPrice?.startsWith("enterprise") ||
-            selectedPlanPrice === "cyber15";
-
-          if (isBiz) {
-            router.push("/dashboard?tab=business");
-          } else {
-            router.push("/dashboard");
-          }
+          setIsWaveModalOpen(false);
+          router.push("/dashboard");
         }}
-        defaultPlan={selectedPlanPrice}
-        initialWaveOpened={isPaymentWaveOpened}
       />
 
       <AuthModal

@@ -414,7 +414,7 @@ export const fr: TranslationDictionary = {
     recruiterBoxDesc: "Créez ou connectez votre Espace Organisation pour piloter votre équipe, vos crédits et vos factures normalisées.",
     recruiterBoxCta: "Accéder à l'Espace Organisation",
     securityNote: "Paiement 100% sécurisé via Wave & Mobile Money (zéro prélèvement automatique)",
-    invoiceNote: "Factures délivrées par INNOVA GROUP SARL (RCCM CI-ABJ-03-2024-B12-04871)",
+    invoiceNote: "Factures délivrées par INNOVA GROUP SARL (RCCM CI-BKE-2019-A-228)",
   },
 
   testimonials: {

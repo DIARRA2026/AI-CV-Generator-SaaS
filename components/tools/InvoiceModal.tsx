@@ -93,7 +93,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               </div>
               <p className="text-xs font-bold text-slate-700 mt-2">INNOVA GROUP SARL</p>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                RCCM : CI-ABJ-03-2024-B12-04892<br />
+                RCCM : CI-BKE-2019-A-228<br />
                 Régime d Imposition : Réel Simplifié / Services Numériques<br />
                 Boulevard de la République, Plateau, Abidjan, Côte d Ivoire<br />
                 Email : innovagroup225@gmail.com | Tél : +225 07 00 51 05 24

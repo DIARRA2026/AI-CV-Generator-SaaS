@@ -124,6 +124,7 @@ export default function TermsPage() {
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
               <li><strong>Éditeur et Développeur :</strong> INNOVA GROUP</li>
+              <li><strong>Immatriculation Légale :</strong> RCCM CI-BKE-2019-A-228</li>
               <li><strong>Activité :</strong> Ingénierie logicielle, intelligence artificielle et solutions numériques pour l'emploi</li>
               <li><strong>Contact Support :</strong> innovagroup225@gmail.com / support@moncv.ai</li>
               <li><strong>Assistance Directe :</strong> WhatsApp Service Client INNOVA GROUP (+225 07 00 51 05 24) 7j/7</li>

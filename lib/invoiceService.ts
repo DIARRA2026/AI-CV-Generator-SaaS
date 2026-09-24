@@ -1,11 +1,11 @@
-﻿import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
 import { supabaseAdmin } from "./supabaseAdmin";
 import { Invoice } from "./types";
 
 export const INNOVA_GROUP_INFO = {
   nom: "INNOVA GROUP SARL",
   service: "MonCV.ai — Plateforme Numérique d IA pour l Emploi",
-  rccm: "CI-ABJ-03-2024-B12-00000",
+  rccm: "CI-BKE-2019-A-228",
   ifu: "2400000X",
   siege: "Abidjan, Cocody Riviera Palmeraie, Côte d Ivoire",
   telephone: "+225 07 00 00 00 00",

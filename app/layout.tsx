@@ -56,7 +56,7 @@ export default function RootLayout({
               MonCV.ai — Une solution développée et éditée par <span className="font-bold text-slate-900 dark:text-white">INNOVA GROUP SARL</span>
             </p>
             <p className="text-[11px] text-slate-400">
-              RCCM : CI-ABJ-03-2024-B12-04892 · IFU : 2400000X · Abidjan, Côte d Ivoire · Tél / WhatsApp : +225 07 00 51 05 24
+              RCCM : CI-BKE-2019-A-228 · IFU : 2400000X · Abidjan, Côte d Ivoire · Tél / WhatsApp : +225 07 00 51 05 24
             </p>
             <div className="flex justify-center items-center gap-4 text-[11px] pt-1">
               <a href="/terms" className="hover:underline">Conditions Générales d Utilisation</a>

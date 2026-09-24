@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -255,7 +255,7 @@ export const LandingBusinessSection: React.FC<LandingBusinessSectionProps> = ({
           </div>
           <div className="flex items-center gap-2 text-slate-400">
             <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-            <span>Factures délivrées par INNOVA GROUP SARL (RCCM CI-ABJ-03-2024-B12-04871)</span>
+            <span>Factures délivrées par INNOVA GROUP SARL (RCCM CI-BKE-2019-A-228)</span>
           </div>
         </div>
       </div>

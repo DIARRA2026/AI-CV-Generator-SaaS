@@ -45,6 +45,8 @@ import {
   Check,
   Zap,
   X,
+  Printer,
+  PlusCircle,
 } from "lucide-react";
 import { StorageManager, RegisteredUser, UserSession } from "@/lib/storage";
 import {
@@ -54,9 +56,12 @@ import {
   SystemDiagnosticCheck,
   SystemMetricSummary,
   TransactionRecord,
+  Invoice,
 } from "@/lib/types";
 import { AdminService } from "@/lib/adminService";
 import { AdminWaveClaimsTab } from "@/components/admin/AdminWaveClaimsTab";
+import { InvoiceService, INNOVA_GROUP_INFO } from "@/lib/invoiceService";
+import { InvoiceModal } from "@/components/tools/InvoiceModal";
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -93,8 +98,27 @@ export default function AdminConsolePage() {
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<
-    "overview" | "claims" | "users" | "business" | "transactions" | "diagnostics" | "maintenance"
+    "overview" | "claims" | "transactions" | "invoices" | "users" | "business" | "diagnostics" | "maintenance"
   >("overview");
+
+  // Données Factures de Souscription
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState<boolean>(false);
+  const [invoiceSearch, setInvoiceSearch] = useState<string>("");
+  const [invoicePlanFilter, setInvoicePlanFilter] = useState<string>("all");
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState<boolean>(false);
+
+  // Modal Création Manuelle de Facture
+  const [isManualInvoiceOpen, setIsManualInvoiceOpen] = useState<boolean>(false);
+  const [manualInvClient, setManualInvClient] = useState<string>("");
+  const [manualInvEmail, setManualInvEmail] = useState<string>("");
+  const [manualInvPhone, setManualInvPhone] = useState<string>("");
+  const [manualInvCompany, setManualInvCompany] = useState<string>("");
+  const [manualInvRccm, setManualInvRccm] = useState<string>("");
+  const [manualInvPlan, setManualInvPlan] = useState<PlanTier>("2500");
+  const [manualInvAmount, setManualInvAmount] = useState<string>("2500");
+  const [manualInvPayment, setManualInvPayment] = useState<string>("Paiement Mobile Money (Vérifié)");
 
   // Données
   const [metrics, setMetrics] = useState<SystemMetricSummary | null>(null);
@@ -162,17 +186,22 @@ export default function AdminConsolePage() {
 
   // Fermeture des modales avec la touche Échap
   useEffect(() => {
-    if (!editPlanModalOpen && !resetPassModalOpen && !manualModalOpen) return;
+    if (!editPlanModalOpen && !resetPassModalOpen && !manualModalOpen && !isManualInvoiceOpen && !isInvoiceModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (editPlanModalOpen) setEditPlanModalOpen(false);
         if (resetPassModalOpen) setResetPassModalOpen(false);
         if (manualModalOpen) setManualModalOpen(false);
+        if (isManualInvoiceOpen) setIsManualInvoiceOpen(false);
+        if (isInvoiceModalOpen) {
+          setIsInvoiceModalOpen(false);
+          setSelectedInvoice(null);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editPlanModalOpen, resetPassModalOpen, manualModalOpen]);
+  }, [editPlanModalOpen, resetPassModalOpen, manualModalOpen, isManualInvoiceOpen, isInvoiceModalOpen]);
 
   // Vérifier l'état d'authentification admin côté serveur
   const checkAuth = async (initialCheck = false) => {
@@ -328,6 +357,82 @@ export default function AdminConsolePage() {
     }
   };
 
+  // Charger les factures de souscription sauvegardées (Supabase & Console)
+  const loadInvoices = async () => {
+    setInvoicesLoading(true);
+    try {
+      const allInvoices = await InvoiceService.getAllInvoices();
+      setInvoices(allInvoices);
+    } catch (e) {
+      console.warn("Erreur chargement factures:", e);
+    } finally {
+      setInvoicesLoading(false);
+    }
+  };
+
+  // Création manuelle d'une facture de souscription depuis la console
+  const handleCreateManualInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualInvClient.trim()) return;
+
+    try {
+      const planNames: Record<PlanTier, { nom: string; price: number; credits: number }> = {
+        free: { nom: "Formule Découverte", price: 0, credits: 0 },
+        "1500": { nom: "Pack Essentiel (1 Candidat)", price: 1500, credits: 150 },
+        "2500": { nom: "Pack Candidature Pro (2 Candidats)", price: 2500, credits: 350 },
+        "5000": { nom: "Pack VIP & Portfolio (4 Candidats)", price: 5000, credits: 800 },
+        cyber15: { nom: "Pack Cyber 15 (15 Profils RH)", price: 15000, credits: 2500 },
+        enterprise30: { nom: "Pack Starter PME (30 Candidats)", price: 20000, credits: 5000 },
+        enterprise75: { nom: "Pack Business Pro (75 Candidats)", price: 45000, credits: 15000 },
+        enterprise200: { nom: "Pack Entreprise Premium (200 Candidats)", price: 100000, credits: 50000 },
+      };
+
+      const selectedPlanInfo = planNames[manualInvPlan] || { nom: `Pack ${manualInvPlan}`, credits: 350, price: 2500 };
+      const amount = Number(manualInvAmount) || selectedPlanInfo.price;
+
+      const created = await InvoiceService.createInvoice({
+        clientNom: manualInvClient.trim(),
+        clientEmail: manualInvEmail.trim() || undefined,
+        clientTelephone: manualInvPhone.trim() || undefined,
+        clientRccm: manualInvRccm.trim() || undefined,
+        packSlug: manualInvPlan,
+        packNom: selectedPlanInfo.nom,
+        credits: selectedPlanInfo.credits,
+        montantFcfa: amount,
+        modePaiement: manualInvPayment || "Paiement Direct Console Admin",
+      });
+
+      showToast(`Facture ${created.numero} créée et enregistrée avec succès`, "success");
+      setIsManualInvoiceOpen(false);
+      setManualInvClient("");
+      setManualInvEmail("");
+      setManualInvPhone("");
+      setManualInvCompany("");
+      setManualInvRccm("");
+      await loadInvoices();
+    } catch (err: any) {
+      showToast(err.message || "Erreur création facture", "error");
+    }
+  };
+
+  // Exporter les factures au format CSV (OHADA)
+  const handleExportInvoices = () => {
+    const csvContent = InvoiceService.exportInvoicesCsv(invoices);
+    if (!csvContent) {
+      showToast("Aucune facture à exporter", "info");
+      return;
+    }
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `moncv_factures_souscriptions_ohada_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Export CSV des factures généré avec succès", "success");
+  };
+
   // Charger toutes les données du dashboard admin
   const loadAdminData = () => {
     try {
@@ -342,6 +447,7 @@ export default function AdminConsolePage() {
 
       setMaintenanceMode(AdminService.isMaintenanceMode());
       loadTransactions();
+      loadInvoices();
     } catch (e) {
       console.error("Erreur chargement données admin", e);
     }
@@ -580,6 +686,49 @@ export default function AdminConsolePage() {
       return matchesSearch && matchesStatus && matchesPlan;
     });
   }, [transactions, txSearch, txStatusFilter, txPlanFilter]);
+
+  // Filtrage et statistiques des factures de souscription
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      const q = invoiceSearch.toLowerCase().trim();
+      const matchesSearch =
+        q === "" ||
+        inv.numero.toLowerCase().includes(q) ||
+        (inv.clientNom && inv.clientNom.toLowerCase().includes(q)) ||
+        (inv.clientEmail && inv.clientEmail.toLowerCase().includes(q)) ||
+        (inv.clientTelephone && inv.clientTelephone.includes(q)) ||
+        (inv.clientEntreprise && inv.clientEntreprise.toLowerCase().includes(q)) ||
+        (inv.referencePaiement && inv.referencePaiement.toLowerCase().includes(q));
+
+      const matchesPlan =
+        invoicePlanFilter === "all" ||
+        inv.packSlug === invoicePlanFilter ||
+        (invoicePlanFilter === "b2b" && (inv.packSlug?.startsWith("enterprise") || inv.packSlug === "cyber15")) ||
+        (invoicePlanFilter === "b2c" && ["1500", "2500", "5000"].includes(inv.packSlug || ""));
+
+      return matchesSearch && matchesPlan;
+    });
+  }, [invoices, invoiceSearch, invoicePlanFilter]);
+
+  const invoiceStats = useMemo(() => {
+    let totalXof = 0;
+    let b2cCount = 0;
+    let b2bCount = 0;
+    for (const inv of invoices) {
+      totalXof += (inv.total || inv.montant || inv.montantFcfa || 0);
+      if (inv.packSlug?.startsWith("enterprise") || inv.packSlug === "cyber15") {
+        b2bCount++;
+      } else {
+        b2cCount++;
+      }
+    }
+    return {
+      totalCount: invoices.length,
+      totalVolumeXof: totalXof,
+      b2cCount,
+      b2bCount,
+    };
+  }, [invoices]);
 
   // =========================================================================
   // ÉCRAN DE VERROUILLAGE & ACCÈS SÉCURISÉ (SI NON AUTHENTIFIÉ)
@@ -901,6 +1050,22 @@ export default function AdminConsolePage() {
               {txStats.pending}
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("invoices");
+            loadInvoices();
+          }}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "invoices"
+              ? "border-indigo-500 text-indigo-400 bg-indigo-500/5 font-black"
+              : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+          }`}
+        >
+          <FileText className="w-4 h-4 text-indigo-400" />
+          <span>Factures de Souscription ({invoices.length})</span>
         </button>
 
         <button
@@ -1532,6 +1697,319 @@ export default function AdminConsolePage() {
                                 </button>
                               )}
                             </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* ONGLET : FACTURES DE SOUSCRIPTION & REÇUS FISCAUX (OHADA / DGI) */}
+        {/* ================================================================= */}
+        {activeTab === "invoices" && (
+          <div className="space-y-6">
+            {/* Bannière d'en-tête Factures */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Facturation Conforme OHADA</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-mono">
+                    RCCM : CI-BKE-2019-A-228
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  Factures de Souscription & Reçus Fiscaux
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                  Toutes les souscriptions candidates et professionnelles sont automatiquement enregistrées, horodatées et persistées dans la console avec leur reçu officiel normalisé.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 z-10">
+                <button
+                  type="button"
+                  onClick={() => setIsManualInvoiceOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Nouvelle Facture Manuelle</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportInvoices}
+                  className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  title="Exporter toutes les factures en CSV pour la comptabilité OHADA"
+                >
+                  <Download className="w-4 h-4 text-slate-400" />
+                  <span>Export CSV OHADA</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadInvoices}
+                  disabled={invoicesLoading}
+                  className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition-all cursor-pointer"
+                  title="Actualiser le registre des factures"
+                >
+                  <RefreshCw className={`w-4 h-4 ${invoicesLoading ? "animate-spin text-indigo-400" : ""}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Cards Facturation */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Volume Total Facturé</p>
+                  <h3 className="text-xl font-black text-white mt-1">
+                    {invoiceStats.totalVolumeXof.toLocaleString("fr-FR")} <span className="text-xs font-bold text-indigo-400">FCFA</span>
+                  </h3>
+                  <p className="text-[11px] text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Recouvrement 100% Mobile Money</span>
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-indigo-400" />
+                </div>
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Factures Émises</p>
+                  <h3 className="text-xl font-black text-white mt-1">
+                    {invoiceStats.totalCount} <span className="text-xs font-normal text-slate-400">pièces</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium mt-1">
+                    Registres Console & Supabase
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-400" />
+                </div>
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Factures B2C (Candidats)</p>
+                  <h3 className="text-xl font-black text-white mt-1">
+                    {invoiceStats.b2cCount} <span className="text-xs font-normal text-slate-400">souscriptions</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium mt-1">
+                    Packs 1 500, 2 500 & 5 000 FCFA
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-emerald-400" />
+                </div>
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Factures B2B (Entreprises)</p>
+                  <h3 className="text-xl font-black text-white mt-1">
+                    {invoiceStats.b2bCount} <span className="text-xs font-normal text-slate-400">contrats</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium mt-1">
+                    Packs Cyber 15 à Entreprise 200k
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                  <Building className="w-6 h-6 text-purple-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Barre de recherche et filtres de factures */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={invoiceSearch}
+                  onChange={(e) => setInvoiceSearch(e.target.value)}
+                  placeholder="Rechercher par n° facture (INV-...), nom client, email, téléphone, entreprise, réf paiement..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+                <select
+                  value={invoicePlanFilter}
+                  onChange={(e) => setInvoicePlanFilter(e.target.value)}
+                  className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="all">Toutes les formules ({invoices.length})</option>
+                  <option value="b2c">Formules Candidats B2C</option>
+                  <option value="b2b">Formules Entreprises B2B</option>
+                  <option value="1500">Pack Essentiel (1 500 FCFA)</option>
+                  <option value="2500">Pack Pro (2 500 FCFA)</option>
+                  <option value="5000">Pack VIP (5 000 FCFA)</option>
+                  <option value="cyber15">Cyber 15 (15 000 FCFA)</option>
+                  <option value="enterprise30">Starter RH (30 000 FCFA)</option>
+                  <option value="enterprise75">Business RH (75 000 FCFA)</option>
+                  <option value="enterprise200">Entreprise Illimitée (200 000 FCFA)</option>
+                </select>
+
+                <span className="text-xs text-slate-400 font-bold px-3 py-2 bg-slate-800/60 rounded-xl border border-slate-700/60 whitespace-nowrap">
+                  {filteredInvoices.length} affichée(s)
+                </span>
+              </div>
+            </div>
+
+            {/* Tableau des factures de souscription */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] font-black uppercase text-slate-400 tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-4">N° Facture & Émission</th>
+                      <th className="py-3.5 px-4">Client / Bénéficiaire</th>
+                      <th className="py-3.5 px-4">Formule Souscrite</th>
+                      <th className="py-3.5 px-4">Montant TTC</th>
+                      <th className="py-3.5 px-4">Mode de Règlement & Statut</th>
+                      <th className="py-3.5 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-medium">
+                    {filteredInvoices.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center text-slate-500">
+                          <FileText className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                          <p className="font-bold text-sm text-slate-400">Aucune facture de souscription trouvée</p>
+                          <p className="text-xs mt-1">
+                            {invoiceSearch || invoicePlanFilter !== "all"
+                              ? "Modifiez votre recherche ou réinitialisez les filtres."
+                              : "Les factures seront automatiquement générées lors des abonnements ou via le bouton ci-dessus."}
+                          </p>
+                          {(invoiceSearch || invoicePlanFilter !== "all") && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInvoiceSearch("");
+                                setInvoicePlanFilter("all");
+                              }}
+                              className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                            >
+                              Réinitialiser les filtres
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInvoices.map((inv) => (
+                        <tr key={inv.id || inv.numero} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <div className="font-mono font-black text-indigo-300 flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>{inv.numero}</span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 block mt-0.5">
+                              {inv.creeLe
+                                ? new Date(inv.creeLe).toLocaleDateString("fr-FR", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "N/A"}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-white flex items-center gap-2">
+                              <span>{inv.clientNom || "Client MonCV.ai"}</span>
+                              {inv.clientEntreprise && (
+                                <span className="px-1.5 py-0.2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[10px] font-bold">
+                                  {inv.clientEntreprise}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                              {inv.clientEmail && <span className="font-mono">{inv.clientEmail}</span>}
+                              {inv.clientTelephone && (
+                                <span className="text-slate-500">• Tél: {inv.clientTelephone}</span>
+                              )}
+                            </div>
+                            {inv.clientRccm && (
+                              <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                                RCCM Client: {inv.clientRccm}
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                inv.packSlug?.startsWith("enterprise") || inv.packSlug === "cyber15"
+                                  ? "bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                                  : inv.packSlug === "5000"
+                                  ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                  : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                              }`}
+                            >
+                              {inv.packSlug?.startsWith("enterprise") || inv.packSlug === "cyber15" ? (
+                                <Building className="w-3 h-3" />
+                              ) : (
+                                <Crown className="w-3 h-3" />
+                              )}
+                              <span>{inv.packNom || `Formule ${inv.packSlug}`}</span>
+                            </span>
+                            {inv.credits > 0 && (
+                              <span className="text-[10px] text-slate-500 block mt-0.5 font-bold">
+                                {inv.credits.toLocaleString()} crédits IA inclus
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="text-sm font-black text-white font-mono">
+                              {(inv.total || inv.montant || inv.montantFcfa || 0).toLocaleString("fr-FR")}
+                            </span>
+                            <span className="text-[11px] font-bold text-indigo-400 ml-1">FCFA</span>
+                            <span className="text-[10px] text-slate-500 block">TVA incluse / OHADA</span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>{inv.statut === "paye" || !inv.statut ? "Payé / Réglé" : inv.statut}</span>
+                            </span>
+                            <span className="text-[11px] text-slate-400 block mt-0.5">
+                              {inv.modePaiement || "Paiement Mobile Money (Vérifié)"}
+                            </span>
+                            {inv.referencePaiement && (
+                              <span className="text-[10px] text-slate-500 font-mono block truncate max-w-[180px]" title={inv.referencePaiement}>
+                                Réf: {inv.referencePaiement}
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedInvoice(inv);
+                                setIsInvoiceModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
+                              title="Consulter et imprimer la facture officielle normalisée OHADA"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                              <span>Voir / Imprimer</span>
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -2482,6 +2960,212 @@ export default function AdminConsolePage() {
           </div>
         </div>
       )}
+
+      {/* Modal Création Manuelle de Facture OHADA */}
+      {isManualInvoiceOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsManualInvoiceOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">
+                    Créer une Facture de Souscription
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    Conforme OHADA • RCCM CI-BKE-2019-A-228
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsManualInvoiceOpen(false)}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Enregistre officiellement une souscription dans la console SuperAdmin et dans la base Supabase avec émission immédiate du reçu fiscal déductible.
+            </p>
+
+            <form onSubmit={handleCreateManualInvoice} className="space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Nom Complet du Client / Bénéficiaire <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={manualInvClient}
+                    onChange={(e) => setManualInvClient(e.target.value)}
+                    placeholder="Ex: Jean-Marc Koffi"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Email Client
+                  </label>
+                  <input
+                    type="email"
+                    value={manualInvEmail}
+                    onChange={(e) => setManualInvEmail(e.target.value)}
+                    placeholder="client@gmail.com"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Téléphone (Mobile Money)
+                  </label>
+                  <input
+                    type="tel"
+                    value={manualInvPhone}
+                    onChange={(e) => setManualInvPhone(e.target.value)}
+                    placeholder="+225 07 00 00 00 00"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Nom Entreprise (Si B2B)
+                  </label>
+                  <input
+                    type="text"
+                    value={manualInvCompany}
+                    onChange={(e) => setManualInvCompany(e.target.value)}
+                    placeholder="Ex: Ivoire Solutions SARL"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    RCCM Entreprise (Optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={manualInvRccm}
+                    onChange={(e) => setManualInvRccm(e.target.value)}
+                    placeholder="Ex: CI-ABJ-2023-B-1234"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Formule Souscrite <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    value={manualInvPlan}
+                    onChange={(e) => {
+                      const p = e.target.value as PlanTier;
+                      setManualInvPlan(p);
+                      const prices: Record<string, string> = {
+                        "1500": "1500",
+                        "2500": "2500",
+                        "5000": "5000",
+                        cyber15: "15000",
+                        enterprise30: "20000",
+                        enterprise75: "45000",
+                        enterprise200: "100000",
+                      };
+                      if (prices[p]) setManualInvAmount(prices[p]);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    <optgroup label="Candidats (B2C)">
+                      <option value="1500">Pack Essentiel (1 500 FCFA)</option>
+                      <option value="2500">Pack Pro (2 500 FCFA)</option>
+                      <option value="5000">Pack VIP Illimité (5 000 FCFA)</option>
+                    </optgroup>
+                    <optgroup label="Recruteurs & Entreprises (B2B)">
+                      <option value="cyber15">Cyber 15 (15 000 FCFA)</option>
+                      <option value="enterprise30">Starter PME 30 (20 000 FCFA)</option>
+                      <option value="enterprise75">Business RH 75 (45 000 FCFA)</option>
+                      <option value="enterprise200">Entreprise Illimitée 200 (100 000 FCFA)</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Montant Net Facturé (FCFA) <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={manualInvAmount}
+                    onChange={(e) => setManualInvAmount(e.target.value)}
+                    placeholder="2500"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Mode de Règlement
+                  </label>
+                  <select
+                    value={manualInvPayment}
+                    onChange={(e) => setManualInvPayment(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    <option value="Paiement Mobile Money (Vérifié)">Paiement Mobile Money (Wave / OM / MTN / Moov)</option>
+                    <option value="Virement Bancaire OHADA">Virement Bancaire OHADA</option>
+                    <option value="Chèque d'Entreprise">Chèque d'Entreprise</option>
+                    <option value="Paiement Comptant Guichet">Paiement Comptant Guichet</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsManualInvoiceOpen(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Générer & Sauvegarder</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Visualisation & Impression Facture Normalisée */}
+      <InvoiceModal
+        invoice={selectedInvoice}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false);
+          setSelectedInvoice(null);
+        }}
+      />
     </div>
   );
 }

@@ -460,14 +460,21 @@ export interface Invoice {
   compteType: CompteType;
   clientNom: string;
   clientEmail?: string | null;
+  clientTelephone?: string | null;
+  clientEntreprise?: string | null;
   clientRccm?: string | null;
   clientIfu?: string | null;
   packSlug: string;
   packNom: string;
   credits: number;
   montantFcfa: number;
+  modePaiement?: string | null;
+  referencePaiement?: string | null;
+  statut?: "payee" | "paye" | "en_attente" | "annulee" | "annule";
   pdfUrl?: string | null;
   creeLe: string;
+  total?: number;
+  montant?: number;
 }
 
 

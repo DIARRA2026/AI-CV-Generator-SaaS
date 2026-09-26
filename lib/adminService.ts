@@ -1172,10 +1172,28 @@ export class AdminService {
         subscription: subInfo,
       });
 
+      // Création et sauvegarde de la facture dans la console
+      const regUser = StorageManager.getRegisteredUsers().find(
+        (u) => u.email.toLowerCase().trim() === normEmail
+      );
+      if (planTier !== "free") {
+        StorageManager.createSubscriptionInvoice({
+          userEmail: normEmail,
+          userName: regUser ? `${regUser.firstName} ${regUser.lastName}`.trim() : normEmail,
+          phone: regUser?.phone,
+          companyName: regUser?.business?.companyName,
+          rccm: regUser?.business?.rccm,
+          planTier,
+          amount: subInfo.amount,
+          paymentMethod: "Attribution Console SuperAdmin",
+          transactionRef: subInfo.transactionRef,
+        });
+      }
+
       this.logAction(
         "UPGRADE_USER_PLAN",
         normEmail,
-        `Formule modifiée vers "${planTier.toUpperCase()}" avec succès`,
+        `Formule modifiée vers "${planTier.toUpperCase()}" avec succès (Facture de souscription émise)`,
         "success"
       );
 

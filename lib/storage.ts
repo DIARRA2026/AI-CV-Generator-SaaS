@@ -1,5 +1,5 @@
 import { initialResumeData, createEmptyResume } from "./initialData";
-import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo, UserRole } from "./types";
+import { PlanTier, ResumeData, AccountType, BusinessProfile, UserSubscriptionInfo, UserRole, Invoice } from "./types";
 
 const STORAGE_KEY = "moncv_resumes_v1";
 const ACTIVE_ID_KEY = "moncv_active_id";
@@ -7,6 +7,7 @@ const USER_KEY = "moncv_user_session_v1";
 export const USERS_REGISTRY_KEY = "moncv_registered_users_v1";
 export const LEGACY_USERS_REGISTRY_KEY = "moncv_registered_users";
 const PENDING_SUB_KEY = "moncv_pending_subscription_v1";
+export const INVOICES_STORAGE_KEY = "moncv_invoices_registry_v1";
 
 /**
  * Calcul d'empreinte SHA-256 synchrone pour la protection cryptographique
@@ -893,6 +894,21 @@ export class StorageManager {
         }
       }
 
+      // Génération et sauvegarde immédiate de la facture de souscription dans la console
+      if (tier !== "free" && user?.email) {
+        this.createSubscriptionInvoice({
+          userEmail: user.email,
+          userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+          phone: user.phone,
+          companyName: user.business?.companyName,
+          rccm: user.business?.rccm,
+          planTier: tier,
+          amount: subInfo.amount,
+          paymentMethod: subInfo.paymentMethod,
+          transactionRef: subInfo.transactionRef,
+        });
+      }
+
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
       }
@@ -1361,5 +1377,124 @@ export class StorageManager {
       localStorage.removeItem(this.getActiveIdKey());
     }
     return resumes;
+  }
+
+  // =========================================================================
+  // GESTION ET SAUVEGARDE DES FACTURES DE SOUSCRIPTION DANS LA CONSOLE
+  // =========================================================================
+
+  static getInvoices(): Invoice[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(INVOICES_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  static saveInvoices(invoices: Invoice[]): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(invoices));
+      window.dispatchEvent(new Event("storage"));
+    } catch (e) {
+      console.error("Erreur sauvegarde factures", e);
+    }
+  }
+
+  static saveInvoice(invoice: Invoice): void {
+    const list = this.getInvoices();
+    const idx = list.findIndex((i) => i.id === invoice.id || i.numero === invoice.numero);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...invoice };
+    } else {
+      list.unshift(invoice);
+    }
+    this.saveInvoices(list);
+  }
+
+  static createSubscriptionInvoice(params: {
+    userEmail: string;
+    userName?: string;
+    phone?: string;
+    companyName?: string;
+    rccm?: string;
+    ifu?: string;
+    planTier: PlanTier;
+    amount?: number;
+    paymentMethod?: string;
+    transactionRef?: string;
+    date?: string;
+  }): Invoice {
+    const list = this.getInvoices();
+    const planNames: Record<PlanTier, { nom: string; price: number; credits: number }> = {
+      free: { nom: "Formule Découverte", price: 0, credits: 0 },
+      "1500": { nom: "Pack Essentiel (1 Candidat)", price: 1500, credits: 150 },
+      "2500": { nom: "Pack Candidature Pro (2 Candidats)", price: 2500, credits: 350 },
+      "5000": { nom: "Pack VIP & Portfolio (4 Candidats)", price: 5000, credits: 800 },
+      cyber15: { nom: "Pack Cyber 15 (15 Profils RH)", price: 15000, credits: 2500 },
+      enterprise30: { nom: "Pack Starter PME (30 Candidats)", price: 20000, credits: 5000 },
+      enterprise75: { nom: "Pack Business Pro (75 Candidats)", price: 45000, credits: 15000 },
+      enterprise200: { nom: "Pack Entreprise Premium (200 Candidats)", price: 100000, credits: 50000 },
+    };
+
+    const info = planNames[params.planTier] || { nom: `Pack ${params.planTier}`, price: params.amount || 0, credits: 100 };
+    const montantFcfa = params.amount !== undefined ? params.amount : info.price;
+    const year = new Date().getFullYear();
+    const seqNum = String(list.length + 1).padStart(4, "0");
+    const numero = `INV-${year}-${seqNum}`;
+    const isOrg = params.planTier.startsWith("enterprise") || params.planTier === "cyber15" || Boolean(params.companyName);
+
+    const invoice: Invoice = {
+      id: `inv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      numero,
+      compteId: params.userEmail,
+      compteType: isOrg ? "org" : "user",
+      clientNom: params.companyName || params.userName || params.userEmail.split("@")[0],
+      clientEmail: params.userEmail,
+      clientTelephone: params.phone || "+225 07 00 00 00 00",
+      clientRccm: params.rccm || null,
+      clientIfu: params.ifu || null,
+      packSlug: params.planTier,
+      packNom: info.nom,
+      credits: info.credits,
+      montantFcfa,
+      modePaiement: params.paymentMethod || "Paiement en ligne Mobile Money (Wave / MoMo)",
+      referencePaiement: params.transactionRef || `TRX-SUB-${Date.now()}`,
+      statut: "payee",
+      creeLe: params.date || new Date().toISOString(),
+    };
+
+    this.saveInvoice(invoice);
+    return invoice;
+  }
+
+  static ensureExistingInvoices(): Invoice[] {
+    const list = this.getInvoices();
+    const users = this.getRegisteredUsers();
+
+    users.forEach((u) => {
+      if (u.planTier && u.planTier !== "free") {
+        const hasInv = list.some((i) => i.clientEmail?.toLowerCase() === u.email.toLowerCase() && i.packSlug === u.planTier);
+        if (!hasInv) {
+          const newInv = this.createSubscriptionInvoice({
+            userEmail: u.email,
+            userName: `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
+            phone: u.phone,
+            companyName: u.business?.companyName,
+            rccm: u.business?.rccm,
+            planTier: u.planTier,
+            date: u.createdAt || new Date().toISOString(),
+            paymentMethod: "Abonnement Validé MonCV.ai",
+          });
+          list.unshift(newInv);
+        }
+      }
+    });
+
+    return this.getInvoices();
   }
 }

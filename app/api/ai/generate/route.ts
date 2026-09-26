@@ -4,6 +4,7 @@ import { ATSEngine } from "@/lib/ats-engine";
 import { ProfileType, ResumeData } from "@/lib/types";
 import { getServerAuthUser } from "@/lib/serverAuth";
 import { executerAction } from "@/lib/actionRunner";
+import { AISmartEngine } from "@/lib/ai-smart-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -19,22 +20,38 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json().catch(() => ({}));
+    const { type } = body;
+
+    if (!type) {
+      return NextResponse.json({ success: false, message: "Type d'action IA requis." }, { status: 400 });
+    }
+
     const auth = await getServerAuthUser(request);
+
+    // Les micro-assistants et générations locales sont accessibles immédiatement
+    // pour garantir une fluidité totale même en session visiteur
+    const allowedFreeTypes = ["summary", "experience_bullets", "skills", "full_cv", "cv_generate", "ats_analysis"];
+
     if (!auth.authenticated || !auth.user?.id) {
+      if (allowedFreeTypes.includes(type)) {
+        const directData = await generateIA(type, body);
+        return NextResponse.json({
+          success: true,
+          type,
+          remainingCredits: 999,
+          data: directData,
+        });
+      }
+
       return NextResponse.json(
-        { success: false, message: "Vous devez etre connecte pour utiliser l IA." },
+        { success: false, message: "Vous devez être connecté pour utiliser l'IA avancée." },
         { status: 401 }
       );
     }
 
     const compteId = auth.user.id;
     const compteType = "user" as const;
-    const body = await request.json().catch(() => ({}));
-    const { type } = body;
-
-    if (!type) {
-      return NextResponse.json({ success: false, message: "Type d action IA requis." }, { status: 400 });
-    }
 
     // Mapper l ancien nom de type vers la cle action_costs
     const ACTION_MAP: Record<string, string> = {
@@ -189,53 +206,54 @@ async function generateIA(type: string, body: Record<string, unknown>): Promise<
     };
   }
 
-  // Generation / réécriture CV
+  // Generation / réécriture CV ultra-intelligente
   if (type === "full_cv" || type === "cv_generate" || type === "cv_rewrite") {
     const { profession, experience, city, firstName, lastName, email, phone } = body as any;
     const cleanProf = (profession || "Commercial & Vente").trim();
-    const expLevel = experience || "mid";
+    const expLevel = (experience || "mid") as "entry" | "mid" | "senior" | "reconversion";
+    const smartResume = AISmartEngine.generateSmartResume(cleanProf, expLevel, city || "Abidjan", {
+      firstName,
+      lastName,
+      email,
+      phone,
+    });
     return {
-      generatedResume: {
-        personal: {
-          firstName: firstName || "Candidat", lastName: lastName || "MonCV",
-          email: email || "candidat@moncv.ai", phone: phone || "+225 07 00 00 00 00",
-          title: cleanProf, city: city || "Abidjan", country: "Cote d Ivoire",
-          summary: CVEngine.enhanceSummary("", cleanProf, "professional").main,
-        },
-        experiences: [{
-          id: "exp-ia-1-" + Date.now(),
-          role: cleanProf, company: "Groupe Panafricain / Entreprise Leader",
-          city: city || "Abidjan", startDate: "2022", endDate: "2024", current: false,
-          highlights: CVEngine.enhanceExperienceBullets(cleanProf, cleanProf, "Groupe Leader"),
-        }],
-        skills: [{
-          id: "sk-ia-1-" + Date.now(),
-          category: "Competences Cles",
-          items: ["Gestion de projet", "Negociation & Relation client", "Reporting & KPIs", "Leadership", "Organisation & Rigueur"],
-        }],
-      },
+      generatedResume: smartResume,
     };
   }
 
-  // Micro-assistants (gratuits)
+  // Micro-assistants (gratuits & instantanés)
   if (type === "summary") {
     const { prompt, roleTitle, profileType } = body as any;
-    const result = CVEngine.enhanceSummary((prompt || "").trim(), (roleTitle || "Professionnel qualifie").trim(), profileType || "professional");
+    const result = AISmartEngine.generateSummaryVariants(
+      (roleTitle || "Professionnel").trim(),
+      (prompt || "").trim(),
+      (profileType || "professional") as ProfileType
+    );
     return { main: result.main, variants: result.variants || [] };
   }
+
   if (type === "experience_bullets") {
     const { rawInput, role, company } = body as any;
-    const bullets = CVEngine.enhanceExperienceBullets(
-      (rawInput || role || "Missions operationnelles").trim(),
-      (role || "Poste occupe").trim(),
-      (company || "Entreprise").trim()
+    const bullets = AISmartEngine.transformToSTAR(
+      (rawInput || "").trim(),
+      (role || "Poste").trim(),
+      (company || "").trim()
     );
     return { bullets };
   }
+
   if (type === "skills") {
-    const { rawInput } = body as any;
+    const { rawInput, roleTitle } = body as any;
     const parsed = CVEngine.parseSkillsInput((rawInput || "").trim());
-    return { tools: parsed.tools, business: parsed.business, soft: parsed.soft };
+    const suggestions = AISmartEngine.getSuggestedSkills((roleTitle || rawInput || "Polyvalent").trim());
+    return {
+      tools: parsed.tools.length > 0 ? parsed.tools : suggestions.hardSkills.slice(0, 4),
+      business: parsed.business.length > 0 ? parsed.business : suggestions.hardSkills.slice(4),
+      soft: parsed.soft.length > 0 ? parsed.soft : suggestions.softSkills,
+      suggestedHard: suggestions.hardSkills,
+      suggestedSoft: suggestions.softSkills,
+    };
   }
 
   throw new Error("Type d action non supporte: " + type);

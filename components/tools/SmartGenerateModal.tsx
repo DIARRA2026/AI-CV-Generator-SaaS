@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ResumeData, TemplateId } from "@/lib/types";
 import { initialResumeData } from "@/lib/initialData";
 import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
+import { AISmartEngine } from "@/lib/ai-smart-engine";
 import {
   X,
   Wand2,
@@ -70,77 +71,32 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    await new Promise((res) => setTimeout(res, 1500));
+    await new Promise((res) => setTimeout(res, 900));
 
-    const expMap = {
-      junior: { years: "2021", endYear: "2024", role: "Assistant" },
-      mid: { years: "2018", endYear: "2024", role: "Responsable" },
-      senior: { years: "2015", endYear: "2024", role: "Directeur" },
-    };
-    const expData = expMap[experience];
+    const level = experience === "junior" ? "entry" : experience;
+    const smartData = AISmartEngine.generateSmartResume(
+      profession || "Professionnel Qualifié",
+      level,
+      city || "Abidjan",
+      {
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+      }
+    );
 
     const generated: ResumeData = {
-      ...initialResumeData,
+      ...smartData,
       title: firstName || lastName ? `CV de ${[firstName, lastName].filter(Boolean).join(" ")}` : "Mon CV Professionnel",
       personal: {
-        ...initialResumeData.personal,
-        firstName: firstName || "",
-        lastName: lastName || "",
-        email: email || "",
-        phone: phone || "",
-        city: city || "",
-        country: country || "Côte d'Ivoire",
-        title: profession || "Professionnel qualifié",
+        ...smartData.personal,
+        country: country || smartData.personal.country || "Côte d'Ivoire",
+        city: city || smartData.personal.city || "Abidjan",
         photoUrl: "",
       },
-      summary: `${expData.role} ${profession || "professionnel"} doté(e) d'une solide expérience dans le domaine. Reconnu(e) pour ${
-        experience === "senior"
-          ? "mon leadership stratégique et ma capacité à piloter des équipes performantes"
-          : experience === "mid"
-          ? "mon sens des responsabilités, ma rigueur et mon efficacité opérationnelle"
-          : "ma motivation, ma curiosité et ma capacité d'apprentissage rapide"
-      }. Orienté(e) résultats et passionné(e) par l'excellence professionnelle.`,
-      experiences: [
-        {
-          id: `exp-gen-1-${Date.now()}`,
-          role: `${expData.role} ${profession || ""}`.trim(),
-          company: "Entreprise / Structure",
-          city: city || "Abidjan",
-          startDate: expData.years,
-          endDate: "2024",
-          current: false,
-          highlights: [
-            "Gestion et coordination des activités quotidiennes avec rigueur et efficacité",
-            "Développement de stratégies innovantes ayant amélioré les performances de 25%",
-            "Collaboration avec les équipes internes et les partenaires externes",
-          ],
-        },
-        {
-          id: `exp-gen-2-${Date.now()}`,
-          role: `Chargé(e) de ${profession || "Missions"}`,
-          company: "Société / Organisation",
-          city: city || "Abidjan",
-          startDate: String(parseInt(expData.years) - 3),
-          endDate: expData.years,
-          current: false,
-          highlights: [
-            "Participation active au développement et suivi des projets stratégiques",
-            "Coordination entre les différents départements pour atteindre les objectifs fixés",
-          ],
-        },
-      ],
-      educations: [
-        {
-          id: `edu-gen-1-${Date.now()}`,
-          degree: experience === "senior" ? "Master" : experience === "mid" ? "Licence" : "BTS",
-          field: profession || "Gestion et Management",
-          school: "Université / Grande École",
-          city: city || "Abidjan",
-          year: String(parseInt(expData.years) - 2),
-        },
-      ],
       design: {
-        ...initialResumeData.design,
+        ...smartData.design,
         template: selectedTemplate as TemplateId,
         primaryColor: selectedColor,
         showPhoto: false,

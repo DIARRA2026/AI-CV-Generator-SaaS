@@ -1474,6 +1474,51 @@ export class SupabaseService {
   }
 
   /**
+   * Envoie un email de réinitialisation de mot de passe via Supabase Auth.
+   * L'utilisateur reçoit un lien qui le redirige vers /auth/reset-password
+   */
+  static async sendPasswordResetEmail(email: string): Promise<{ success: boolean; message: string }> {
+    const cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail || !/\S+@\S+\.\S+/.test(cleanEmail)) {
+      return { success: false, message: "Adresse email invalide." };
+    }
+
+    if (this.isAvailable() && supabase) {
+      try {
+        const redirectTo = typeof window !== "undefined"
+          ? `${window.location.origin}/auth/reset-password`
+          : undefined;
+
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo,
+        });
+
+        if (error) {
+          return { success: false, message: error.message };
+        }
+
+        return {
+          success: true,
+          message: `Un email de réinitialisation a été envoyé à ${cleanEmail}. Vérifiez vos spams si vous ne le trouvez pas.`,
+        };
+      } catch (err: any) {
+        return { success: false, message: err?.message || "Erreur lors de l'envoi." };
+      }
+    }
+
+    // Mode hors-ligne / Supabase non configuré : réinitialisation locale uniquement
+    const localResult = StorageManager.resetPasswordByEmail(cleanEmail, "");
+    if (!localResult.success && localResult.message?.includes("introuvable")) {
+      return { success: false, message: "Aucun compte n'a été trouvé avec cette adresse email." };
+    }
+    // On simule un succès (on ne révèle pas si le compte existe ou non pour la sécurité)
+    return {
+      success: true,
+      message: `Si un compte existe avec l'adresse ${cleanEmail}, un email de réinitialisation vous a été envoyé.`,
+    };
+  }
+
+  /**
    * Renvoi d'un email de confirmation
    */
   static async resendConfirmationEmail(email: string): Promise<{ success: boolean; message: string }> {

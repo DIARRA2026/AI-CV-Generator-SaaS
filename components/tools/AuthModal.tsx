@@ -333,9 +333,9 @@ export const AuthModal: React.FC<Props> = ({
     }
 
     if (mode === "forgot") {
-      if (newPassword.length < 6) e.newPassword = "Minimum 6 caractères";
-      if (newPassword !== confirmNewPassword) {
-        e.confirmNewPassword = "Les mots de passe ne correspondent pas";
+      // En mode "forgot", seul l'email est requis — le lien de réinitialisation sera envoyé par email
+      if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+        e.email = "Veuillez saisir votre adresse email pour recevoir le lien de réinitialisation";
       }
     }
 
@@ -704,28 +704,29 @@ export const AuthModal: React.FC<Props> = ({
       return;
     }
 
-    // MODE 3 : MOT DE PASSE OUBLIÉ (Modification fonctionnelle avec l'email du compte)
+    // MODE 3 : MOT DE PASSE OUBLIÉ — Envoi d'un email de réinitialisation via Supabase
     if (mode === "forgot") {
-      const resetResult = StorageManager.resetPasswordByEmail(email, newPassword);
-
-      if (!resetResult.success) {
+      if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
         setIsLoading(false);
-        setErrors({ forgot: resetResult.message || "Erreur lors de la réinitialisation." });
+        setErrors({ email: "Veuillez saisir une adresse email valide." });
         return;
       }
 
-      setIsLoading(false);
-      setResetSuccessMessage("Votre mot de passe a été modifié avec succès !");
-      setPassword(newPassword);
-      setNewPassword("");
-      setConfirmNewPassword("");
+      const resetResult = await SupabaseService.sendPasswordResetEmail(email.trim());
 
-      setTimeout(() => {
-        switchMode("login", email);
-      }, 1200);
+      setIsLoading(false);
+
+      if (!resetResult.success) {
+        setErrors({ forgot: resetResult.message || "Erreur lors de l'envoi de l'email." });
+        return;
+      }
+
+      // Afficher le message de succès (email envoyé)
+      setResetSuccessMessage(resetResult.message || `Un email de réinitialisation a été envoyé à ${email}.`);
       return;
     }
   };
+
 
 
 
@@ -768,10 +769,10 @@ export const AuthModal: React.FC<Props> = ({
           </div>
 
           <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Vérifiez votre boîte email
+            Entrez votre code de vérification
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-            Un email contenant votre <strong>lien de confirmation</strong> sécurisé a été envoyé à :
+            Un email contenant un <strong>code à 6 chiffres</strong> a été envoyé à :
           </p>
 
           {/* Badge Email destinataire */}
@@ -779,47 +780,6 @@ export const AuthModal: React.FC<Props> = ({
             <Mail className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
             <span className="truncate">{emailVerificationPending}</span>
           </div>
-
-          {/* 3 Étapes claires */}
-          <div className="my-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2.5">
-            <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
-                1
-              </div>
-              <p className="text-xs text-slate-700 leading-snug">
-                <strong>Ouvrez votre boîte mail</strong> (vérifiez vos courriers indésirables / spams si nécessaire).
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
-                2
-              </div>
-              <p className="text-xs text-slate-700 leading-snug">
-                Cliquez sur le lien <span className="text-blue-700 font-bold">« Confirmer mon adresse email »</span>.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] font-black flex-shrink-0 mt-0.5">
-                3
-              </div>
-              <p className="text-xs text-slate-700 leading-snug">
-                <strong>Votre compte s'active automatiquement !</strong> Aucune autre action requise.
-              </p>
-            </div>
-          </div>
-
-          {/* Bouton direct vers le Webmail si détecté (ex: Gmail, Outlook...) */}
-          {webmail && (
-            <a
-              href={webmail.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mb-3 w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-200"
-            >
-              <span>Ouvrir {webmail.name}</span>
-              <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-            </a>
-          )}
 
           {/* Message de succès */}
           {otpSuccessMessage && (
@@ -837,34 +797,89 @@ export const AuthModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Bouton principal : J'ai cliqué sur le lien de confirmation */}
+          {/* 6 cases OTP — affichage principal */}
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 my-5">
+            {otpDigits.map((digit, idx) => (
+              <input
+                key={idx}
+                ref={(el) => {
+                  otpInputRefs.current[idx] = el;
+                }}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={1}
+                autoComplete="one-time-code"
+                autoFocus={idx === 0}
+                value={digit}
+                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                onPaste={handleOtpPaste}
+                aria-label={`Chiffre ${idx + 1}`}
+                disabled={isVerifyingOtp}
+                className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-2xl sm:text-3xl font-black rounded-xl border-2 transition-all outline-none ${
+                  digit
+                    ? "border-blue-600 bg-blue-50/40 text-blue-900 shadow-sm"
+                    : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
+                } focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:opacity-50`}
+              />
+            ))}
+          </div>
+
+          {/* Bouton principal : Vérifier mon compte */}
           <button
             type="button"
-            disabled={isCheckingLink}
-            onClick={handleCheckLinkConfirmed}
+            disabled={isVerifyingOtp || otpDigits.some((d) => !d)}
+            onClick={() => executeVerifyOtp()}
             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isCheckingLink ? (
+            {isVerifyingOtp ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Vérification de l'activation...</span>
+                <span>Vérification du code...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>J'ai cliqué sur le lien de confirmation</span>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Vérifier mon compte</span>
               </>
             )}
           </button>
 
-          {/* Indicateur de détection automatique en arrière-plan */}
-          <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>Détection automatique dès que vous cliquez sur le lien</span>
+          {/* Option secondaire : lien de confirmation */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={isCheckingLink}
+              onClick={handleCheckLinkConfirmed}
+              className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isCheckingLink ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Vérification de l'activation...</span>
+                </>
+              ) : (
+                <>
+                  <span>Vous avez reçu un lien plutôt qu'un code ? Cliquez ici</span>
+                  <ExternalLink className="w-3 h-3" />
+                </>
+              )}
+            </button>
           </div>
+
+          {/* Bouton direct vers le Webmail si détecté (ex: Gmail, Outlook...) */}
+          {webmail && (
+            <a
+              href={webmail.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-200"
+            >
+              <span>Ouvrir {webmail.name}</span>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            </a>
+          )}
 
           {/* Renvoyer l'email */}
           <div className="mt-4 pt-3 border-t border-slate-100">
@@ -887,70 +902,6 @@ export const AuthModal: React.FC<Props> = ({
               <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200 mt-2">
                 {resendEmailMessage}
               </p>
-            )}
-          </div>
-
-          {/* Option de secours rétractable : Vous avez plutôt reçu un code à 6 chiffres ? */}
-          <div className="mt-4 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setShowManualOtpInput((prev) => !prev)}
-              className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <span>Vous avez plutôt reçu un code à 6 chiffres ?</span>
-              {showManualOtpInput ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-
-            {showManualOtpInput && (
-              <div className="mt-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl animate-in fade-in duration-200">
-                <p className="text-xs text-slate-600 mb-3">
-                  Saisissez les 6 chiffres reçus par email :
-                </p>
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3">
-                  {otpDigits.map((digit, idx) => (
-                    <input
-                      key={idx}
-                      ref={(el) => {
-                        otpInputRefs.current[idx] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={1}
-                      autoComplete="one-time-code"
-                      value={digit}
-                      onChange={(e) => handleOtpChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      onPaste={handleOtpPaste}
-                      aria-label={`Chiffre ${idx + 1}`}
-                      disabled={isVerifyingOtp}
-                      className={`w-9 h-11 sm:w-10 sm:h-12 text-center text-xl sm:text-2xl font-black rounded-lg border-2 transition-all outline-none ${
-                        digit
-                          ? "border-blue-600 bg-blue-50/40 text-blue-900 shadow-sm"
-                          : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
-                      } focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:opacity-50`}
-                    />
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  disabled={isVerifyingOtp || otpDigits.some((d) => !d)}
-                  onClick={() => executeVerifyOtp()}
-                  className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {isVerifyingOtp ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Vérification du code...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Valider le code</span>
-                    </>
-                  )}
-                </button>
-              </div>
             )}
           </div>
 
@@ -1019,14 +970,14 @@ export const AuthModal: React.FC<Props> = ({
               ? dict.auth.loginTitle
               : mode === "register"
               ? dict.auth.registerTitle
-              : "Modifier votre mot de passe"}
+              : "Réinitialiser votre mot de passe"}
           </h2>
           <p className="text-slate-500 text-[10.5px] mt-0.5 max-w-xs mx-auto">
             {mode === "login"
               ? dict.auth.loginSubtitle
               : mode === "register"
               ? dict.auth.registerSubtitle
-              : "Indiquez l'email de votre compte pour redéfinir un mot de passe"}
+              : "Recevez un lien de réinitialisation par email en quelques secondes"}
           </p>
         </div>
 
@@ -1781,9 +1732,18 @@ export const AuthModal: React.FC<Props> = ({
               </div>
             )}
 
-            {/* === FORMULAIRE MOT DE PASSE OUBLIÉ === */}
+            {/* === FORMULAIRE MOT DE PASSE OUBLIÉ : EMAIL UNIQUEMENT === */}
             {mode === "forgot" && (
-              <div className="space-y-2.5 max-w-sm mx-auto py-1">
+              <div className="space-y-3 max-w-sm mx-auto py-1">
+                {/* Explication */}
+                <div className="flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <Mail className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-blue-800 leading-relaxed">
+                    Saisissez votre adresse email. Nous vous enverrons un <strong>lien sécurisé</strong> pour créer un nouveau mot de passe.
+                  </p>
+                </div>
+
+                {/* Champ Email */}
                 <div>
                   <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
                     Adresse Email du compte <span className="text-red-500">*</span>
@@ -1795,64 +1755,17 @@ export const AuthModal: React.FC<Props> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nom@exemple.com"
-                      autoComplete="off"
+                      autoComplete="email"
+                      autoFocus
                       className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 font-medium"
                     />
                   </div>
                   {errors.email && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.email}</p>}
                 </div>
-
-                <div>
-                  <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
-                    Nouveau Mot de Passe <span className="text-red-500">*</span>
-                  </label>
-                  <div className={`flex items-center gap-2 bg-slate-50 border rounded-xl px-3 py-2 transition-all ${errors.newPassword ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                    <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 6 caractères"
-                      autoComplete="new-password"
-                      className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer"
-                    >
-                      {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                  {errors.newPassword && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.newPassword}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
-                    Confirmer le Nouveau Mot de Passe <span className="text-red-500">*</span>
-                  </label>
-                  <div className={`flex items-center gap-2 bg-slate-50 border rounded-xl px-3 py-2 transition-all ${errors.confirmNewPassword ? "border-red-400 bg-red-50/20" : "border-slate-200 focus-within:border-blue-500 focus-within:bg-white"}`}>
-                    <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <input
-                      type={showConfirmNewPassword ? "text" : "password"}
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="Répétez le mot de passe"
-                      autoComplete="new-password"
-                      className="flex-1 bg-transparent text-xs focus:outline-none placeholder-slate-400 font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                      className="text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer"
-                    >
-                      {showConfirmNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                  {errors.confirmNewPassword && <p className="text-red-500 text-[9.5px] mt-0.5">{errors.confirmNewPassword}</p>}
-                </div>
               </div>
             )}
+
+
 
             {/* === SECTION D'ACTION ET VALIDATION === */}
             <div className="pt-1.5">
@@ -1880,7 +1793,7 @@ export const AuthModal: React.FC<Props> = ({
                         ? dict.auth.loggingIn
                         : mode === "register"
                         ? dict.auth.registering
-                        : "Mise à jour..."}
+                        : "Envoi en cours..."}
                     </span>
                   </>
                 ) : done ? (
@@ -1897,7 +1810,7 @@ export const AuthModal: React.FC<Props> = ({
                     ) : mode === "register" ? (
                       <Sparkles className="w-3.5 h-3.5" />
                     ) : (
-                      <KeyRound className="w-3.5 h-3.5" />
+                      <Mail className="w-3.5 h-3.5" />
                     )}
                     <span>
                       {mode === "login"
@@ -1906,11 +1819,12 @@ export const AuthModal: React.FC<Props> = ({
                         ? selectedPlan === "free"
                           ? dict.auth.submitRegister
                           : `${dict.auth.submitRegister} (${currentPlan?.price || ""})`
-                        : "Valider le mot de passe"}
+                        : "Recevoir le lien de réinitialisation"}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
+
               </button>
 
               {/* Indicateur de sécurité */}

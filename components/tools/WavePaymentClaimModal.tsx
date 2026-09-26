@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X, ExternalLink, CheckCircle2, AlertCircle, Upload,
   Zap, Clock, ShieldCheck, Image as ImageIcon, Trash2
 } from "lucide-react";
-import { CREDIT_PACKS, CREDIT_PACKS_ARRAY, getWaveLink } from "@/config/payments";
+import { CREDIT_PACKS, PACKS_B2C_ARRAY, getWaveLink } from "@/config/payments";
 import { compressImage } from "@/lib/image-utils";
 
 interface WavePaymentClaimModalProps {
@@ -25,6 +25,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
   onSuccess,
   orgId,
 }) => {
+  // ✅ Tous les hooks AVANT tout return conditionnel (Règles des Hooks React)
   const [selectedPackCode, setSelectedPackCode] = useState<string>(defaultPackCode);
   const [waveReference, setWaveReference] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string>("");
@@ -33,10 +34,44 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState(false);
 
+  // ✅ useEffect AVANT le return conditionnel
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleClose]);
+
+  // Sync defaultPackCode when it changes
+  useEffect(() => {
+    if (defaultPackCode) {
+      setSelectedPackCode(defaultPackCode);
+    }
+  }, [defaultPackCode]);
+
+  // Réinitialiser l'état à la fermeture
+  useEffect(() => {
+    if (!isOpen) {
+      setWaveReference("");
+      setScreenshotDataUrl("");
+      setScreenshotName("");
+      setErrorMessage(null);
+      setIsSubmittedSuccess(false);
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
+  // ✅ Maintenant on peut faire le return conditionnel
   if (!isOpen) return null;
 
-  // Filtrer les packs payants uniquement
-  const paidPacks = CREDIT_PACKS_ARRAY.filter((p) => p.priceFcfa > 0);
+  // Filtrer les packs payants uniquement (prixFcfa et non priceFcfa)
+  const paidPacks = PACKS_B2C_ARRAY.filter((p) => p.prixFcfa > 0);
   const currentPack = (CREDIT_PACKS as Record<string, any>)[selectedPackCode] || paidPacks[0];
   const waveUrl = currentPack ? getWaveLink(currentPack.code) || "" : "";
 
@@ -78,7 +113,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
           packSlug: currentPack.code,
           packCode: currentPack.code,
           pack_code: currentPack.code,
-          amountFcfa: currentPack.priceFcfa,
+          amountFcfa: currentPack.prixFcfa,
           waveReference: cleanRef,
           wave_reference: cleanRef,
           screenshotUrl: screenshotDataUrl || null,
@@ -87,8 +122,13 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
+        if (res.status === 401) {
+          // Utilisateur non connecté → rediriger vers auth
+          throw new Error("Veuillez vous connecter pour finaliser votre recharge.");
+        }
         throw new Error(data.message || data.error || "Erreur lors de l'enregistrement de votre demande.");
       }
 
@@ -96,35 +136,22 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
       if (onClaimSubmitted) onClaimSubmitted();
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      setErrorMessage(err.message || "Une erreur est survenue.");
+      setErrorMessage(err.message || "Une erreur est survenue. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div
         className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto"
         onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -137,13 +164,14 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
                 Recharge de crédits Wave
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Paiement direct 100% sécurisé via Wave Côte d'Ivoire
+                Paiement direct 100% sécurisé via Wave Côte d&apos;Ivoire
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            aria-label="Fermer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,23 +199,23 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
               </div>
               <div className="flex justify-between">
                 <span>Montant :</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{(currentPack.priceFcfa || 0).toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{(currentPack.prixFcfa || 0).toLocaleString("fr-FR")} FCFA</span>
               </div>
               <div className="flex justify-between">
                 <span>Référence Wave :</span>
                 <span className="font-mono text-blue-600 dark:text-blue-400">{waveReference}</span>
               </div>
               <div className="flex justify-between">
-                <span>Délai d'activation :</span>
+                <span>Délai d&apos;activation :</span>
                 <span className="font-semibold text-emerald-600">Généralement en moins de 15 min</span>
               </div>
             </div>
 
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition"
             >
-              Fermer & Retourner au tableau de bord
+              Fermer &amp; Retourner au tableau de bord
             </button>
           </div>
         ) : (
@@ -226,7 +254,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
                         </div>
                       </div>
                       <div className="mt-2 pt-1 border-t border-slate-200 dark:border-slate-700/60 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                        {(pack.priceFcfa || 0).toLocaleString("fr-FR")} F
+                        {(pack.prixFcfa || 0).toLocaleString("fr-FR")} F
                       </div>
                     </button>
                   );
@@ -235,33 +263,35 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
             </div>
 
             {/* Step 2: Pay on Wave */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                2. Effectuez le paiement de {(currentPack.priceFcfa || 0).toLocaleString("fr-FR")} FCFA sur Wave
-              </label>
-              <div className="p-4 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 rounded-xl space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="text-xs text-sky-800 dark:text-sky-200 space-y-1">
-                    <p className="font-semibold">
-                      Lien de paiement Wave officiel
-                    </p>
-                    <p className="text-[11px] text-sky-700 dark:text-sky-300">
-                      Montant exact : <strong>{(currentPack.priceFcfa || 0).toLocaleString("fr-FR")} FCFA</strong>. Ouvrez l'application Wave ou scannez le QR code.
-                    </p>
+            {currentPack && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  2. Effectuez le paiement de {(currentPack.prixFcfa || 0).toLocaleString("fr-FR")} FCFA sur Wave
+                </label>
+                <div className="p-4 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 rounded-xl space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-xs text-sky-800 dark:text-sky-200 space-y-1">
+                      <p className="font-semibold">
+                        Lien de paiement Wave officiel
+                      </p>
+                      <p className="text-[11px] text-sky-700 dark:text-sky-300">
+                        Montant exact : <strong>{(currentPack.prixFcfa || 0).toLocaleString("fr-FR")} FCFA</strong>. Ouvrez l&apos;application Wave ou scannez le QR code.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <a
-                  href={waveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 px-4 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition"
-                >
-                  <span>Payer {(currentPack.priceFcfa || 0).toLocaleString("fr-FR")} FCFA avec Wave</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  <a
+                    href={waveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-4 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+                  >
+                    <span>Payer {(currentPack.prixFcfa || 0).toLocaleString("fr-FR")} FCFA avec Wave</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Step 3: Transaction Reference */}
             <div className="space-y-2">
@@ -277,14 +307,14 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Vous trouverez cette référence dans votre SMS de confirmation ou l'historique Wave.
+                Vous trouverez cette référence dans votre SMS de confirmation ou l&apos;historique Wave.
               </p>
             </div>
 
             {/* Step 4: Screenshot Upload (Optional) */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>4. Capture d'écran Wave (Recommandé)</span>
+                <span>4. Capture d&apos;écran Wave (Recommandé)</span>
                 <span className="text-[10px] lowercase font-normal text-slate-400">Optionnel</span>
               </label>
 
@@ -349,7 +379,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-white" />
-                    Valider ma recharge ({currentPack.credits} crédits)
+                    Valider ma recharge ({currentPack?.credits ?? 0} crédits)
                   </>
                 )}
               </button>

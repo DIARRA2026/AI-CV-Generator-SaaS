@@ -1,21 +1,21 @@
-﻿"use client";
+"use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { PlanTier } from "@/lib/types";
-import { StorageManager } from "@/lib/storage";
+import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
 
 interface MobileMoneyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
   defaultPlan?: PlanTier;
   initialWaveOpened?: boolean;
 }
 
 /**
- * MobileMoneyModal — Désactivé & Remplacé par l'Accès Libre et Gratuit
- * Toutes les fonctionnalités (PDF HD, Word sans filigrane,
- * Lettres IA, Viviers RH) sont débloquées sans étape de paiement.
+ * MobileMoneyModal - Modal de paiement et recharge Wave CI officiel
+ * Affiche l'interface de paiement sécurisée Wave avec QR Code, lien direct
+ * et validation de transaction. Ne génère aucune facture au simple clic d'ouverture.
  */
 export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   isOpen,
@@ -23,16 +23,12 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   onSuccess,
   defaultPlan = "2500",
 }) => {
-  useEffect(() => {
-    if (isOpen) {
-      StorageManager.setPlanTier(defaultPlan, {
-        status: "active",
-        paymentMethod: "Accès Libre & Gratuit",
-      });
-      onSuccess?.();
-      onClose?.();
-    }
-  }, [isOpen, defaultPlan, onSuccess, onClose]);
-
-  return null;
+  return (
+    <WavePaymentClaimModal
+      isOpen={isOpen}
+      onClose={onClose}
+      defaultPackCode={defaultPlan}
+      onSuccess={onSuccess}
+    />
+  );
 };

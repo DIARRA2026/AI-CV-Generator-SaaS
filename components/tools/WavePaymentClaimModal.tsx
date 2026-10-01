@@ -145,6 +145,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
           packCode: currentPack.code,
           pack_code: currentPack.code,
           amountFcfa: currentPack.prixFcfa,
+          referenceTransaction: cleanRef,
           waveReference: cleanRef,
           wave_reference: cleanRef,
           screenshotUrl: screenshotDataUrl || null,
@@ -171,6 +172,12 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
         transactionRef: cleanRef,
       });
       StorageManager.clearPendingCheckoutPlan();
+
+      // Déclencher les événements de mise à jour des crédits et de la session
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("moncv_credits_updated"));
+        window.dispatchEvent(new Event("storage"));
+      }
 
       setIsSubmittedSuccess(true);
       if (onClaimSubmitted) onClaimSubmitted();

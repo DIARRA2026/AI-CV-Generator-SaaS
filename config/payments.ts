@@ -140,8 +140,21 @@ export const PACKS_B2C_ARRAY: CreditPack[] = Object.values(PACKS_B2C).sort((a, b
 export const PACKS_B2B_ARRAY: CreditPack[] = Object.values(PACKS_B2B).sort((a, b) => a.ordre - b.ordre);
 export const ALL_PACKS_ARRAY: CreditPack[] = [...PACKS_B2C_ARRAY, ...PACKS_B2B_ARRAY];
 
+const SLUG_ALIASES: Record<string, PackSlug> = {
+  free: "decouverte",
+  "1500": "essentiel",
+  "2500": "evolution",
+  "5000": "carriere",
+  cyber15: "revendeur",
+  enterprise30: "structure",
+  enterprise75: "business_pro",
+  enterprise200: "licence_etablissement",
+};
+
 export function getCreditPack(slug: string): CreditPack | null {
-  return ALL_PACKS[slug as PackSlug] ?? null;
+  if (!slug) return null;
+  const normalized = SLUG_ALIASES[slug.toLowerCase()] || (slug as PackSlug);
+  return ALL_PACKS[normalized] ?? null;
 }
 export function getWaveLink(slug: string): string | null {
   return getCreditPack(slug)?.waveLink ?? null;

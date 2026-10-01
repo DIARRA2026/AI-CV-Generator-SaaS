@@ -894,8 +894,15 @@ export class StorageManager {
         }
       }
 
-      // Génération et sauvegarde immédiate de la facture de souscription dans la console
-      if (tier !== "free" && user?.email) {
+      // Génération et sauvegarde de facture UNIQUEMENT lors d'un paiement réel vérifié
+      const isRealPayment =
+        Boolean(details?.transactionRef) &&
+        !details?.transactionRef?.startsWith("TRX-SUB-") &&
+        details?.paymentMethod &&
+        !details.paymentMethod.includes("Gratuit") &&
+        !details.paymentMethod.includes("Libre");
+
+      if (tier !== "free" && user?.email && details?.status === "active" && isRealPayment) {
         this.createSubscriptionInvoice({
           userEmail: user.email,
           userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
@@ -1389,7 +1396,32 @@ export class StorageManager {
       const raw = localStorage.getItem(INVOICES_STORAGE_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+
+      // Nettoyage automatique des fausses factures générées par les clics sans paiement
+      const cleaned = parsed.filter((inv) => {
+        const mode = (inv.modePaiement || "").toLowerCase();
+        const ref = (inv.referencePaiement || "").toUpperCase();
+        // Exclure les factures sans paiement réel
+        if (
+          mode.includes("libre") ||
+          mode.includes("gratuit") ||
+          mode.includes("accès libre") ||
+          mode.includes("abonnement validé")
+        ) {
+          return false;
+        }
+        if (ref.startsWith("TRX-SUB-") && !inv.claimId) {
+          return false;
+        }
+        return true;
+      });
+
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(cleaned));
+      }
+
+      return cleaned;
     } catch {
       return [];
     }
@@ -1473,28 +1505,6 @@ export class StorageManager {
   }
 
   static ensureExistingInvoices(): Invoice[] {
-    const list = this.getInvoices();
-    const users = this.getRegisteredUsers();
-
-    users.forEach((u) => {
-      if (u.planTier && u.planTier !== "free") {
-        const hasInv = list.some((i) => i.clientEmail?.toLowerCase() === u.email.toLowerCase() && i.packSlug === u.planTier);
-        if (!hasInv) {
-          const newInv = this.createSubscriptionInvoice({
-            userEmail: u.email,
-            userName: `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
-            phone: u.phone,
-            companyName: u.business?.companyName,
-            rccm: u.business?.rccm,
-            planTier: u.planTier,
-            date: u.createdAt || new Date().toISOString(),
-            paymentMethod: "Abonnement Validé MonCV.ai",
-          });
-          list.unshift(newInv);
-        }
-      }
-    });
-
     return this.getInvoices();
   }
 }

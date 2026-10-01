@@ -335,18 +335,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="hidden md:flex items-center gap-2 lg:gap-2.5">
             {/* Badge Crédits IA si utilisateur connecté */}
             {currentUser && (
-              <Link
-                href="/credits"
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenPayment) {
+                    onOpenPayment();
+                  } else {
+                    router.push("/credits");
+                  }
+                }}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-black text-amber-900 bg-amber-50 hover:bg-amber-100/90 border border-amber-300/80 rounded-xl transition-all cursor-pointer btn-press shadow-2xs"
                 title={
                   creditNearestExpiry
-                    ? `Solde : ${creditBalance ?? 0} crédits (Expire le ${new Date(creditNearestExpiry).toLocaleDateString("fr-FR")})`
-                    : `Solde : ${creditBalance ?? 0} crédits disponibles`
+                    ? `Solde : ${creditBalance ?? 0} crédits (Expire le ${new Date(creditNearestExpiry).toLocaleDateString("fr-FR")}) - Cliquer pour recharger`
+                    : `Solde : ${creditBalance ?? 0} crédits disponibles - Cliquer pour recharger`
                 }
               >
                 <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
                 <span>{creditBalance !== null ? `${creditBalance} crédits` : "Crédits"}</span>
-              </Link>
+              </button>
             )}
 
             {/* Sélecteur de Langue Desktop */}

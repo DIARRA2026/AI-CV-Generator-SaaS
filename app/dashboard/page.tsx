@@ -3,9 +3,11 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ResumeData, PlanTier } from "@/lib/types";
+import { ResumeData, PlanTier, Invoice } from "@/lib/types";
 import { StorageManager, UserSession } from "@/lib/storage";
 import { SupabaseService } from "@/lib/supabaseService";
+import { InvoiceService } from "@/lib/invoiceService";
+import { CreditService } from "@/lib/creditService";
 import { Navbar } from "@/components/Navbar";
 import { ShareModal } from "@/components/tools/ShareModal";
 import { MobileMoneyModal } from "@/components/tools/MobileMoneyModal";
@@ -52,6 +54,13 @@ import {
   Image as ImageIcon,
   X,
   AlertCircle,
+  Receipt,
+  CreditCard,
+  TrendingUp,
+  BookOpen,
+  ChevronRight,
+  Award,
+  Zap,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -77,6 +86,11 @@ export default function DashboardPage() {
 
   const [isBusinessAccount, setIsBusinessAccount] = useState(false);
   const [activeTab, setActiveTab] = useState<"business" | "candidate">("candidate");
+  const [candidateSubTab, setCandidateSubTab] = useState<"overview" | "resumes" | "invoices" | "tips">("overview");
+  const [userInvoices, setUserInvoices] = useState<Invoice[]>([]);
+  const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState<Invoice | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState("");
   const [isExportingDocxId, setIsExportingDocxId] = useState<string | null>(null);
   const [exportSuccessId, setExportSuccessId] = useState<string | null>(null);
@@ -118,6 +132,15 @@ export default function DashboardPage() {
       }
     } else if (params.get("tab") === "candidate") {
       setActiveTab("candidate");
+    }
+
+    const subtabParam = params.get("subtab") || params.get("view");
+    if (subtabParam === "invoices" || subtabParam === "factures" || hash === "#invoices") {
+      setCandidateSubTab("invoices");
+    } else if (subtabParam === "resumes" || subtabParam === "cvs" || hash === "#resumes") {
+      setCandidateSubTab("resumes");
+    } else if (subtabParam === "tips" || subtabParam === "conseils" || hash === "#tips") {
+      setCandidateSubTab("tips");
     }
 
     if (params.get("payment") === "success") {
@@ -240,6 +263,150 @@ export default function DashboardPage() {
     window.addEventListener("moncv_navigate_to_vivier", handleVivierNavEvent);
     return () => window.removeEventListener("moncv_navigate_to_vivier", handleVivierNavEvent);
   }, []);
+
+  const getPlanDetails = (tier?: string) => {
+    switch (tier) {
+      case "5000":
+        return {
+          name: "Pack VIP & Portfolio",
+          badgeColor: "bg-purple-100 text-purple-900 border-purple-300",
+          credits: 800,
+          candidates: 4,
+          price: "5 000 FCFA",
+          features: ["4 CVs ATS Débloqués", "Portfolio Web VIP", "Word (.docx) & PDF A4", "Support Prioritaire"],
+        };
+      case "2500":
+        return {
+          name: "Pack Candidature Pro",
+          badgeColor: "bg-blue-100 text-blue-900 border-blue-300",
+          credits: 350,
+          candidates: 2,
+          price: "2 500 FCFA",
+          features: ["2 CVs ATS Débloqués", "Portfolio Web Inclus", "Word (.docx) & PDF A4", "Méthode STAR IA"],
+        };
+      case "1500":
+        return {
+          name: "Pack Essentiel",
+          badgeColor: "bg-emerald-100 text-emerald-900 border-emerald-300",
+          credits: 150,
+          candidates: 1,
+          price: "1 500 FCFA",
+          features: ["1 CV ATS Débloqué", "Téléchargement Word & PDF", "Générateur STAR IA", "Accès 12 mois"],
+        };
+      case "cyber15":
+        return {
+          name: "Pack Cyber 15",
+          badgeColor: "bg-indigo-100 text-indigo-900 border-indigo-300",
+          credits: 2500,
+          candidates: 15,
+          price: "15 000 FCFA",
+          features: ["15 Profils RH", "Vivier Entreprise", "Facturation OHADA"],
+        };
+      case "enterprise30":
+        return {
+          name: "Pack Starter PME",
+          badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
+          credits: 5000,
+          candidates: 30,
+          price: "20 000 FCFA",
+          features: ["30 Profils Candidats", "Vivier RH Illimité", "Accès Multi-recruteur"],
+        };
+      case "enterprise75":
+        return {
+          name: "Pack Business Pro",
+          badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
+          credits: 15000,
+          candidates: 75,
+          price: "45 000 FCFA",
+          features: ["75 Profils Candidats", "Vivier RH Illimité", "Facturation Pro OHADA"],
+        };
+      case "enterprise200":
+        return {
+          name: "Pack Entreprise Premium",
+          badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
+          credits: 50000,
+          candidates: 200,
+          price: "100 000 FCFA",
+          features: ["200 Profils Candidats", "Audit RH dédié", "Marque blanche"],
+        };
+      default:
+        return {
+          name: "Formule Découverte",
+          badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
+          credits: 30,
+          candidates: 1,
+          price: "Gratuit",
+          features: ["30 crédits d'essai IA", "Modèles de CV ATS", "Aperçu en ligne direct"],
+        };
+    }
+  };
+
+  const planInfo = useMemo(() => getPlanDetails(currentUser?.planTier), [currentUser?.planTier]);
+  const effectiveCredits = creditBalance !== null ? creditBalance : planInfo.credits;
+
+  const displayName = useMemo(() => {
+    if (currentUser?.firstName) {
+      return `${currentUser.firstName} ${currentUser.lastName || ""}`.trim();
+    }
+    if (currentUser?.email) {
+      return currentUser.email.split("@")[0];
+    }
+    return "Candidat";
+  }, [currentUser]);
+
+  const loadUserInvoicesAndCredits = async (email?: string, userId?: string) => {
+    if (!email) return;
+    try {
+      setIsLoadingInvoices(true);
+      const allInvoices = await InvoiceService.getAllInvoices();
+      const cleanEmail = email.toLowerCase().trim();
+      const filtered = allInvoices.filter((inv) => {
+        const cEmail = (inv.clientEmail || "").toLowerCase().trim();
+        const compId = (inv.compteId || "").toLowerCase().trim();
+        return cEmail === cleanEmail || compId === cleanEmail;
+      });
+      setUserInvoices(filtered);
+    } catch (err) {
+      console.warn("Erreur chargement factures:", err);
+    } finally {
+      setIsLoadingInvoices(false);
+    }
+
+    try {
+      const targetId = userId || email;
+      const solde = await CreditService.getSolde(targetId, "user");
+      if (solde && typeof solde.solde === "number" && solde.solde >= 0) {
+        setCreditBalance(solde.solde);
+      }
+    } catch (err) {
+      console.warn("Erreur chargement solde crédits:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.email) {
+      loadUserInvoicesAndCredits(currentUser.email, currentUser.id);
+    }
+  }, [currentUser?.email, currentUser?.id, currentUser?.planTier]);
+
+  useEffect(() => {
+    const refreshData = () => {
+      if (currentUser?.email) {
+        loadUserInvoicesAndCredits(currentUser.email, currentUser.id);
+      }
+    };
+    window.addEventListener("moncv_credits_updated", refreshData);
+    window.addEventListener("storage", refreshData);
+    return () => {
+      window.removeEventListener("moncv_credits_updated", refreshData);
+      window.removeEventListener("storage", refreshData);
+    };
+  }, [currentUser]);
+
+  const handleOpenInvoice = (inv?: Invoice) => {
+    setSelectedInvoiceForModal(inv || (userInvoices.length > 0 ? userInvoices[0] : null));
+    setIsInvoiceOpen(true);
+  };
 
   const filteredResumes = useMemo(() => {
     if (!candidateSearchQuery.trim()) return resumes;
@@ -958,12 +1125,13 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-6 fade-in">
+              {/* Alerte si le compte dispose également d'un accès Entreprise */}
               {isBusinessAccount && (
                 <div className="p-4 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-2xl border border-indigo-900/60 shadow-md flex flex-wrap items-center justify-between gap-3 text-white">
                   <div className="flex items-center gap-2.5 text-xs">
                     <Building className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>
-                      Vous êtes en vue <strong>CV Personnel</strong>. Votre compte dispose d'un accès Vivier RH Entreprise actif.
+                      Vous êtes sur votre <strong>Tableau de Bord Candidat</strong>. Votre compte dispose également d'un accès Vivier RH Entreprise actif.
                     </span>
                   </div>
                   <button
@@ -977,303 +1145,1059 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {currentUser?.firstName || currentUser?.email?.split("@")[0] || "Mon Espace"}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">•</span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {resumes.length} {resumes.length > 1 ? "CVs enregistrés" : "CV enregistré"}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">•</span>
+              {/* 1. HERO HEADER CANDIDAT - Vrai Cockpit de Bienvenue */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+                  <div className="flex items-start gap-4">
+                    {/* Avatar Initiale du Candidat */}
+                    <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white font-black text-xl sm:text-2xl flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0 border-2 border-white">
+                      {(displayName[0] || "C").toUpperCase()}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Badge de la Formule */}
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border flex items-center gap-1 ${planInfo.badgeColor}`}>
+                          <Crown className="w-3 h-3 text-amber-500" />
+                          <span>{planInfo.name}</span>
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Compte Actif & Vérifié
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                          Conforme OHADA & ATS
+                        </span>
+                      </div>
+
+                      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Bonjour, {displayName} 👋
+                      </h1>
+                      <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+                        Bienvenue sur votre tableau de bord MonCV.ai. Pilotez vos candidatures, optimisez vos scores de recrutement avec l'IA et téléchargez vos documents aux formats officiels.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions Rapides En-tête */}
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsPaymentOpen(true)}
+                      className="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 font-black text-xs border border-amber-300/80 flex items-center gap-2 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                      title="Recharger vos crédits ou changer de pack"
+                    >
+                      <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
+                      <span>Recharger en crédits Wave</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => setIsSettingsOpen(true)}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline cursor-pointer"
+                      className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200/80 flex items-center gap-1.5 transition-all cursor-pointer"
+                      title={dict.nav.settings}
                     >
-                      <Settings className="w-3.5 h-3.5" />
-                      <span>{dict.nav.settings}</span>
+                      <Settings className="w-4 h-4 text-slate-600" />
+                      <span className="hidden sm:inline">Mon Compte</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingModal(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold rounded-2xl shadow-md shadow-blue-600/25 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{dict.dashboard.newCvButton}</span>
                     </button>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                    {dict.dashboard.myResumesTitle}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    {dict.dashboard.subtitle}
-                  </p>
+                </div>
+              </div>
+
+              {/* 2. CARTES KPIS & SOLDE DU COCKPIT CANDIDAT (4 Cartes Modernes) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* KPI 1 : Solde Crédits IA */}
+                <div className="p-5 bg-gradient-to-br from-amber-500/10 via-amber-50 to-white rounded-3xl border border-amber-200/80 shadow-xs flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-amber-400 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">
+                        Crédits IA Disponibles
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 flex items-baseline gap-1.5">
+                        <span>{effectiveCredits}</span>
+                        <span className="text-xs font-bold text-amber-700">Crédits</span>
+                      </div>
+                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                      <Zap className="w-5 h-5 fill-slate-950 text-slate-950" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-amber-900 font-medium pt-1 border-t border-amber-200/50">
+                    <span>Valables à vie</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsPaymentOpen(true)}
+                      className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-0.5 hover:underline cursor-pointer"
+                    >
+                      <span>+ Recharger</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 w-full lg:w-auto">
-                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2">
+                {/* KPI 2 : Mes CVs Enregistrés */}
+                <div className="p-5 bg-gradient-to-br from-blue-500/10 via-blue-50 to-white rounded-3xl border border-blue-200/80 shadow-xs flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-blue-400 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">
+                        Mes CVs Créés
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 flex items-baseline gap-1.5">
+                        <span>{resumes.length}</span>
+                        <span className="text-xs font-bold text-blue-700">{resumes.length > 1 ? "CVs" : "CV"}</span>
+                      </div>
+                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-blue-900 font-medium pt-1 border-t border-blue-200/50">
+                    <span>Formats Word & PDF A4</span>
                     <button
                       type="button"
-                      onClick={() => handleOpenJobApplication()}
-                      className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-[0.98]"
+                      onClick={() => setCandidateSubTab("resumes")}
+                      className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-0.5 hover:underline cursor-pointer"
                     >
-                      <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span>{dict.creator.jobAppBtn}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCoverLetter()}
-                      className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/80 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-[0.98]"
-                    >
-                      <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span>{dict.creator.coverLetterBtn}</span>
+                      <span>Gérer ({resumes.length})</span>
+                      <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
+                </div>
+
+                {/* KPI 3 : Score ATS & Conformité */}
+                <div className="p-5 bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-white rounded-3xl border border-emerald-200/80 shadow-xs flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-emerald-400 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">
+                        Optimisation ATS
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 flex items-baseline gap-1.5">
+                        <span>98%</span>
+                        <span className="text-xs font-bold text-emerald-700">Conforme</span>
+                      </div>
+                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                      <ShieldCheck className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-emerald-900 font-medium pt-1 border-t border-emerald-200/50">
+                    <span>Filtres RH internationaux</span>
+                    <button
+                      type="button"
+                      onClick={() => setCandidateSubTab("tips")}
+                      className="font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-0.5 hover:underline cursor-pointer"
+                    >
+                      <span>Guide ATS</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* KPI 4 : Factures OHADA & Règlements */}
+                <div className="p-5 bg-gradient-to-br from-indigo-500/10 via-indigo-50 to-white rounded-3xl border border-indigo-200/80 shadow-xs flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-indigo-400 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">
+                        Factures & Reçus OHADA
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 flex items-baseline gap-1.5">
+                        <span>{userInvoices.length}</span>
+                        <span className="text-xs font-bold text-indigo-700">{userInvoices.length > 1 ? "Factures" : "Facture"}</span>
+                      </div>
+                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+                      <Receipt className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-indigo-900 font-medium pt-1 border-t border-indigo-200/50">
+                    <span>INNOVA GROUP SARL</span>
+                    <button
+                      type="button"
+                      onClick={() => setCandidateSubTab("invoices")}
+                      className="font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-0.5 hover:underline cursor-pointer"
+                    >
+                      <span>Consulter</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. BARRE DE NAVIGATION DES ONGLETS CANDIDAT */}
+              <div className="flex items-center justify-between border-b border-slate-200 pb-1 gap-2 overflow-x-auto">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCandidateSubTab("overview")}
+                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                      candidateSubTab === "overview"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Vue d'ensemble (Cockpit)</span>
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => setIsCreatingModal(true)}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-md shadow-blue-600/20 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]"
+                    onClick={() => setCandidateSubTab("resumes")}
+                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                      candidateSubTab === "resumes"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
                   >
-                    <Plus className="w-4 h-4 shrink-0" />
-                    <span>{dict.dashboard.newCvButton}</span>
+                    <FileText className="w-4 h-4" />
+                    <span>Mes CVs</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-black ${
+                      candidateSubTab === "resumes" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                    }`}>
+                      {resumes.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCandidateSubTab("invoices")}
+                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                      candidateSubTab === "invoices"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Receipt className="w-4 h-4" />
+                    <span>Mes Factures OHADA</span>
+                    {userInvoices.length > 0 && (
+                      <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-black ${
+                        candidateSubTab === "invoices" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                      }`}>
+                        {userInvoices.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCandidateSubTab("tips")}
+                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                      candidateSubTab === "tips"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Guide & Conseils IA</span>
                   </button>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-5 sm:p-6 border border-purple-800/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
-                    <Globe className="w-6 h-6" />
+              {/* 4. CONTENU : ONGLET 1 - VUE D'ENSEMBLE (COCKPIT) */}
+              {candidateSubTab === "overview" && (
+                <div className="space-y-6">
+                  {/* Actions Rapides Intelligentes */}
+                  <div className="space-y-3">
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <span>Actions Rapides de Candidature</span>
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                      {/* Action 1 : Nouveau CV IA */}
+                      <div
+                        onClick={() => setIsCreatingModal(true)}
+                        className="p-5 bg-white rounded-3xl border border-slate-200/90 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xs">
+                          <Plus className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
+                            Nouveau CV IA
+                          </h3>
+                          <p className="text-xs text-slate-500 line-clamp-2">
+                            Création guidée avec structure professionnelle, mots-clés ATS et formats Word/PDF.
+                          </p>
+                        </div>
+                        <div className="text-xs font-bold text-blue-600 flex items-center gap-1 pt-1">
+                          <span>Créer un CV</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+
+                      {/* Action 2 : Lettre de Motivation STAR */}
+                      <div
+                        onClick={() => handleOpenCoverLetter()}
+                        className="p-5 bg-white rounded-3xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xs">
+                          <Wand2 className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                            Lettre STAR
+                          </h3>
+                          <p className="text-xs text-slate-500 line-clamp-2">
+                            Rédaction percutante basée sur la méthode STAR adaptée à l'offre et l'entreprise.
+                          </p>
+                        </div>
+                        <div className="text-xs font-bold text-indigo-600 flex items-center gap-1 pt-1">
+                          <span>Rédiger une lettre</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+
+                      {/* Action 3 : Demande d'Emploi Officielle */}
+                      <div
+                        onClick={() => handleOpenJobApplication()}
+                        className="p-5 bg-white rounded-3xl border border-slate-200/90 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-all shadow-xs">
+                          <Briefcase className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-amber-600 transition-colors">
+                            Demande d'Emploi
+                          </h3>
+                          <p className="text-xs text-slate-500 line-clamp-2">
+                            Modèle officiel et conforme pour candidatures spontanées ou concours publics.
+                          </p>
+                        </div>
+                        <div className="text-xs font-bold text-amber-600 flex items-center gap-1 pt-1">
+                          <span>Générer la demande</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+
+                      {/* Action 4 : Portfolio Web */}
+                      <Link
+                        href="/portfolio"
+                        target="_blank"
+                        className="p-5 bg-white rounded-3xl border border-slate-200/90 hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
+                          <Globe className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-purple-600 transition-colors">
+                            Portfolio Web
+                          </h3>
+                          <p className="text-xs text-slate-500 line-clamp-2">
+                            Page web interactive partageable sur LinkedIn ou par WhatsApp avec les recruteurs.
+                          </p>
+                        </div>
+                        <div className="text-xs font-bold text-purple-600 flex items-center gap-1 pt-1">
+                          <span>Voir mon portfolio</span>
+                          <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </Link>
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-extrabold text-base text-white">{dict.nav.portfolioWeb}</h2>
-                      <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
-                        {dict.common.vipBadge}
+
+                  {/* Portfolio Web Banner */}
+                  <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-5 sm:p-6 border border-purple-800/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
+                        <Globe className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="font-extrabold text-base text-white">{dict.nav.portfolioWeb}</h2>
+                          <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9.5px] font-black uppercase">
+                            {dict.common.vipBadge}
+                          </span>
+                        </div>
+                        <p className="text-xs text-purple-200/90 mt-0.5 max-w-xl">
+                          Transformez vos expériences professionnelles en un véritable site web interactif de prestige.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Link
+                        href="/portfolio"
+                        target="_blank"
+                        className="flex-1 sm:flex-initial px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-600/30 cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{dict.dashboard.portfolioDemoBtn}</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Mes CVs Récents OU Onboarding Guidé */}
+                  {resumes.length === 0 ? (
+                    <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center space-y-6 shadow-xs">
+                      <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto border border-blue-100 shadow-inner">
+                        <FileText className="w-10 h-10" />
+                      </div>
+                      <div className="space-y-2 max-w-md mx-auto">
+                        <h3 className="text-xl font-black text-slate-900">
+                          Bienvenue sur votre cockpit MonCV.ai !
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                          Vous n'avez pas encore créé de CV. Suivez ces 3 étapes simples pour lancer votre première candidature optimisée :
+                        </p>
+                      </div>
+
+                      {/* Roadmap 3 étapes */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 max-w-2xl mx-auto text-left">
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                          <div className="w-7 h-7 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center">
+                            1
+                          </div>
+                          <h4 className="font-bold text-xs text-slate-900">Intitulé & Expériences</h4>
+                          <p className="text-[11px] text-slate-500">
+                            Renseignez vos postes ou importez un texte brut.
+                          </p>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                          <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center">
+                            2
+                          </div>
+                          <h4 className="font-bold text-xs text-slate-900">Optimisation STAR IA</h4>
+                          <p className="text-[11px] text-slate-500">
+                            L'IA enrichit vos réalisations avec des verbes d'action.
+                          </p>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                          <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center">
+                            3
+                          </div>
+                          <h4 className="font-bold text-xs text-slate-900">Export Word & PDF</h4>
+                          <p className="text-[11px] text-slate-500">
+                            Téléchargez votre dossier 98% conforme ATS.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingModal(true)}
+                        className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold rounded-2xl text-sm shadow-lg shadow-blue-600/25 cursor-pointer inline-flex items-center gap-2 transition-all active:scale-[0.98]"
+                      >
+                        <Plus className="w-5 h-5" />
+                        <span>Créer mon premier CV maintenant</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                          <span>Mes CVs Récents ({Math.min(3, resumes.length)} sur {resumes.length})</span>
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={() => setCandidateSubTab("resumes")}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline cursor-pointer"
+                        >
+                          <span>Voir tous mes CVs ({resumes.length})</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {resumes.slice(0, 3).map((cv) => (
+                          <div
+                            key={cv.id}
+                            className="bg-white rounded-3xl border border-slate-200/90 p-5 flex flex-col justify-between hover:shadow-xl hover:border-blue-400 hover:-translate-y-0.5 transition-all duration-300 group"
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                  <FileText className="w-6 h-6" />
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
+                                  {cv.design.template}
+                                </span>
+                              </div>
+
+                              <h3 className="font-bold text-slate-900 text-base leading-tight mb-1 truncate" title={cv.title}>
+                                {cv.title}
+                              </h3>
+                              <p className="text-xs text-slate-500 line-clamp-1 mb-3">
+                                {cv.personal?.title || "Titre professionnel"}
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  ATS 98% Conforme
+                                </span>
+                                <span className="text-[10.5px] text-slate-400 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {new Date(cv.updatedAt).toLocaleDateString("fr-FR")}
+                                </span>
+                              </div>
+
+                              <div className="p-2.5 bg-purple-50/70 border border-purple-200/70 rounded-xl mb-4 flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-purple-900 flex items-center gap-1 truncate">
+                                  <Globe className="w-3 h-3 text-purple-600 shrink-0" />
+                                  <span className="truncate">moncv.ai/c/{cv.slug}</span>
+                                </span>
+                                <a
+                                  href={`/c/${cv.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-purple-700 hover:text-purple-900 font-bold flex items-center gap-0.5 text-[10.5px] shrink-0"
+                                >
+                                  <span>Voir</span>
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 pt-3 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenResume(cv)}
+                                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>{dict.dashboard.editCv}</span>
+                              </button>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleExportDocx(cv)}
+                                  disabled={isExportingDocxId === cv.id}
+                                  className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                                    exportSuccessId === cv.id
+                                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                      : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                                  }`}
+                                >
+                                  {isExportingDocxId === cv.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                                  ) : exportSuccessId === cv.id ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                  )}
+                                  <span className="truncate">
+                                    {exportSuccessId === cv.id ? "Téléchargé !" : "Télécharger Word"}
+                                  </span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicate(cv)}
+                                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
+                                  title={dict.dashboard.duplicateCv}
+                                >
+                                  <Copy className="w-3.5 h-3.5 text-slate-500" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dernière Facture OHADA (si disponible) */}
+                  {userInvoices.length > 0 && (
+                    <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl border border-indigo-900/60 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0">
+                          <Receipt className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm text-white">
+                              Dernière Facture OHADA : {userInvoices[0].numero}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[9.5px] font-black uppercase">
+                              Payée & Archivée
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300">
+                            Formule : <strong>{userInvoices[0].packNom}</strong> • Montant : <strong>{userInvoices[0].montantFcfa.toLocaleString("fr-FR")} FCFA</strong> • Émise le {new Date(userInvoices[0].creeLe).toLocaleDateString("fr-FR")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenInvoice(userInvoices[0])}
+                          className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Imprimer / Télécharger le reçu</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Conseils Express de Coaching IA */}
+                  <div className="bg-slate-100/80 rounded-3xl p-6 border border-slate-200/80 space-y-3">
+                    <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Conseils Express pour Décrocher des Entretiens</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-600">
+                      <div className="p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1">
+                        <strong className="text-slate-900 block font-bold">1. Chiffrez vos résultats</strong>
+                        <span>Utilisez des pourcentages, des montants ou des volumes pour rendre chaque expérience tangible.</span>
+                      </div>
+                      <div className="p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1">
+                        <strong className="text-slate-900 block font-bold">2. Alignez les mots-clés ATS</strong>
+                        <span>Reprenez exactement les compétences listées dans l'offre d'emploi cible.</span>
+                      </div>
+                      <div className="p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1">
+                        <strong className="text-slate-900 block font-bold">3. Joignez une demande formelle</strong>
+                        <span>En Afrique, joindre une lettre de demande d'emploi augmente de 60% la prise en compte du dossier.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. CONTENU : ONGLET 2 - MES CVS */}
+              {candidateSubTab === "resumes" && (
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                          {dict.dashboard.myResumesTitle} ({resumes.length})
+                        </h2>
+                        <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 font-bold text-xs rounded-full">
+                          ATS Conforme
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Gérez vos dossiers de candidature, téléchargez en Word .docx ou PDF A4 et partagez vos liens personnalisés.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingModal(true)}
+                      className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-2xl shadow-md shadow-blue-600/25 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{dict.dashboard.newCvButton}</span>
+                    </button>
+                  </div>
+
+                  {/* Barre de Recherche */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                    <div className="relative flex-1 w-full">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={candidateSearchQuery}
+                        onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                        placeholder="Rechercher par titre de poste, entreprise, ville ou modèle..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      />
+                      {candidateSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setCandidateSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                        >
+                          {dict.dashboard.searchReset}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-500 font-medium w-full sm:w-auto justify-between sm:justify-start">
+                      <span>
+                        Affichage : <strong>{filteredResumes.length}</strong> / {resumes.length}
                       </span>
                     </div>
-                    <p className="text-xs text-purple-200/90 mt-0.5 max-w-xl">
-                      Transformez vos expériences en un véritable site web interactif de prestige.
-                    </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Link
-                    href="/portfolio"
-                    target="_blank"
-                    className="flex-1 sm:flex-initial px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-600/30 cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>{dict.dashboard.portfolioDemoBtn}</span>
-                  </Link>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-black text-slate-900">{resumes.length}</div>
-                    <div className="text-[11px] font-medium text-slate-500">{dict.dashboard.statsTotalCvs}</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-black text-slate-900">
-                      {currentUser?.planTier === "5000"
-                        ? dict.pricing.candidateVipTitle
-                        : currentUser?.planTier === "2500"
-                        ? dict.pricing.candidateProTitle
-                        : currentUser?.planTier === "1500"
-                        ? dict.pricing.candidateEssentialTitle
-                        : currentUser?.planTier?.startsWith("enterprise")
-                        ? "Entreprise"
-                        : dict.pricing.candidateFreeTitle}
-                    </div>
-                    <div className="text-[11px] font-medium text-slate-500">{dict.dashboard.statsAtsScore}</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-black text-slate-900">{dict.creator.jobAppBtn}</div>
-                    <div className="text-[11px] font-medium text-slate-500">Word & PDF</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                    <Wand2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-black text-slate-900">{dict.creator.coverLetterBtn}</div>
-                    <div className="text-[11px] font-medium text-slate-500">STAR Method</div>
-                  </div>
-                </div>
-              </div>
-
-              {resumes.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-                  <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto">
-                    <FileText className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">{dict.dashboard.noCvsTitle}</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    {dict.dashboard.noCvsSubtitle}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setIsCreatingModal(true)}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs shadow-md cursor-pointer"
-                  >
-                    {dict.dashboard.createFirstCv}
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                  {resumes.map((cv) => (
-                    <div
-                      key={cv.id}
-                      className="bg-white rounded-3xl border border-slate-200/90 p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300 group relative"
-                    >
-                      <div>
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                            <FileText className="w-6 h-6" />
-                          </div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
-                            {cv.design.template}
-                          </span>
-                        </div>
-
-                        <h3 className="font-bold text-slate-900 text-base leading-tight mb-1">
-                          {cv.title}
+                  {resumes.length === 0 ? (
+                    <div className="py-16 text-center space-y-4 border-2 border-dashed border-slate-200 rounded-3xl p-8 bg-slate-50/50">
+                      <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto border border-blue-100">
+                        <FileText className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1 max-w-md mx-auto">
+                        <h3 className="text-lg font-black text-slate-900">
+                          {dict.dashboard.noCvsTitle}
                         </h3>
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-4">
-                          {cv.personal.title || "Titre professionnel"}
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {dict.dashboard.noCvsSubtitle}
                         </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingModal(true)}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs shadow-md cursor-pointer inline-flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>{dict.dashboard.createFirstCv}</span>
+                      </button>
+                    </div>
+                  ) : filteredResumes.length === 0 ? (
+                    <div className="py-12 text-center space-y-2 border border-slate-200 rounded-2xl bg-slate-50">
+                      <p className="text-sm font-bold text-slate-700">
+                        Aucun CV ne correspond à "{candidateSearchQuery}"
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCandidateSearchQuery("")}
+                        className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
+                      >
+                        {dict.dashboard.searchReset}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                      {filteredResumes.map((cv) => (
+                        <div
+                          key={cv.id}
+                          className="bg-white rounded-3xl border border-slate-200/90 p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300 group relative"
+                        >
+                          <div>
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
+                                {cv.design.template}
+                              </span>
+                            </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-3">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>
-                            {dict.dashboard.lastUpdated} {new Date(cv.updatedAt).toLocaleDateString("fr-FR")}
-                          </span>
-                        </div>
+                            <h3 className="font-bold text-slate-900 text-base leading-tight mb-1 truncate" title={cv.title}>
+                              {cv.title}
+                            </h3>
+                            <p className="text-xs text-slate-500 line-clamp-1 mb-3">
+                              {cv.personal?.title || "Titre professionnel"}
+                            </p>
 
-                        <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-2xl mb-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
-                              <Globe className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span>{dict.dashboard.portfolioBadge}</span>
+                            <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                              <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                ATS 98% Conforme
+                              </span>
+                              <span className="text-[10.5px] text-slate-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {new Date(cv.updatedAt).toLocaleDateString("fr-FR")}
+                              </span>
+                            </div>
+
+                            <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-2xl mb-4 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
+                                  <Globe className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                                  <span>{dict.dashboard.portfolioBadge}</span>
+                                </div>
+                              </div>
+
+                              <p className="text-[10.5px] text-purple-700 font-mono truncate">
+                                moncv.ai/c/{cv.slug}
+                              </p>
+
+                              <div className="pt-0.5">
+                                <a
+                                  href={`/c/${cv.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  <span>{dict.common.view}</span>
+                                </a>
+                              </div>
                             </div>
                           </div>
 
-                          <p className="text-[10.5px] text-purple-700 font-mono truncate">
-                            moncv.ai/c/{cv.slug}
-                          </p>
-
-                          <div className="pt-0.5">
-                            <a
-                              href={`/c/${cv.slug}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                          <div className="space-y-2 pt-4 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenResume(cv)}
+                              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                             >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              <span>{dict.common.view}</span>
-                            </a>
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>{dict.dashboard.editCv}</span>
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenJobApplication(cv)}
+                                className="py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 shadow-xs"
+                              >
+                                <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="truncate">{dict.creator.jobAppBtn}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenCoverLetter(cv)}
+                                className="py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-200 shadow-xs"
+                              >
+                                <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                <span className="truncate">{dict.creator.coverLetterBtn}</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => handleExportDocx(cv)}
+                                disabled={isExportingDocxId === cv.id}
+                                className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                                  exportSuccessId === cv.id
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                    : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                                }`}
+                              >
+                                {isExportingDocxId === cv.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                                ) : exportSuccessId === cv.id ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                )}
+                                <span className="truncate">
+                                  {exportSuccessId === cv.id ? "Téléchargé !" : dict.dashboard.downloadDocx}
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedForShare(cv)}
+                                className="py-2 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
+                                title={dict.dashboard.shareCv}
+                              >
+                                <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDuplicate(cv)}
+                                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
+                                title={dict.dashboard.duplicateCv}
+                              >
+                                <Copy className="w-3.5 h-3.5 text-slate-500" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(cv.id)}
+                                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-100 cursor-pointer"
+                                title={dict.dashboard.deleteCv}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                              </button>
+                            </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 6. CONTENU : ONGLET 3 - MES FACTURES OHADA */}
+              {candidateSubTab === "invoices" && (
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-6">
+                  {/* Bannière OHADA */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase">
+                          OHADA Conforme
+                        </span>
+                        <span className="text-xs text-slate-400">RCCM CI-BKE-2019-A-228 • IFU 2400000X</span>
                       </div>
+                      <h2 className="text-lg font-black text-white">
+                        Mes Factures & Reçus de Souscription
+                      </h2>
+                      <p className="text-xs text-slate-300 max-w-xl">
+                        Toutes vos souscriptions réglées par Wave ou Mobile Money sont archivées légalement par INNOVA GROUP SARL. Vous pouvez visualiser et télécharger vos factures normalisées à tout moment.
+                      </p>
+                    </div>
 
-                      <div className="space-y-2 pt-4 border-t border-slate-100">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenResume(cv)}
-                          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>{dict.dashboard.editCv}</span>
-                        </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsPaymentOpen(true)}
+                      className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                    >
+                      <Zap className="w-4 h-4 fill-slate-950" />
+                      <span>Nouvelle formule Wave</span>
+                    </button>
+                  </div>
 
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenJobApplication(cv)}
-                            className="py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 shadow-xs"
-                          >
-                            <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span className="truncate">{dict.creator.jobAppBtn}</span>
-                          </button>
+                  {userInvoices.length === 0 ? (
+                    <div className="py-12 text-center space-y-4 border-2 border-dashed border-slate-200 rounded-3xl p-8 bg-slate-50/50">
+                      <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto border border-indigo-100">
+                        <Receipt className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1 max-w-md mx-auto">
+                        <h3 className="text-lg font-black text-slate-900">
+                          Aucune facture pour le moment
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          Vous êtes actuellement sur la <strong>Formule Découverte Gratuite</strong> (30 crédits offerts). Lors de votre premier règlement par Wave ou Mobile Money, votre facture officielle OHADA sera immédiatement archivée et téléchargeable ici.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsPaymentOpen(true)}
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md cursor-pointer inline-flex items-center gap-2"
+                      >
+                        <Zap className="w-4 h-4 fill-white" />
+                        <span>Découvrir les offres à partir de 1 500 FCFA</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <th className="py-3 px-4 rounded-l-xl">N° Facture</th>
+                            <th className="py-3 px-4">Date d'émission</th>
+                            <th className="py-3 px-4">Formule Souscrite</th>
+                            <th className="py-3 px-4">Montant (FCFA)</th>
+                            <th className="py-3 px-4">Mode de Paiement</th>
+                            <th className="py-3 px-4">Statut</th>
+                            <th className="py-3 px-4 text-right rounded-r-xl">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {userInvoices.map((inv) => (
+                            <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
+                              <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                {inv.numero}
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-600">
+                                {new Date(inv.creeLe).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-slate-900">{inv.packNom}</div>
+                                <div className="text-[10.5px] text-slate-500">{inv.credits} crédits IA</div>
+                              </td>
+                              <td className="py-3.5 px-4 font-extrabold text-slate-900">
+                                {inv.montantFcfa.toLocaleString("fr-FR")} FCFA
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-600">
+                                {inv.modePaiement || "Wave Mobile Money"}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  Payée
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenInvoice(inv)}
+                                  className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-900 font-bold rounded-xl text-xs inline-flex items-center gap-1.5 transition-all border border-blue-200 cursor-pointer shadow-2xs"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                  <span>Télécharger / Imprimer</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                          <button
-                            type="button"
-                            onClick={() => handleOpenCoverLetter(cv)}
-                            className="py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-200 shadow-xs"
-                          >
-                            <Wand2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                            <span className="truncate">{dict.creator.coverLetterBtn}</span>
-                          </button>
-                        </div>
+              {/* 7. CONTENU : ONGLET 4 - GUIDE & CONSEILS ATS */}
+              {candidateSubTab === "tips" && (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-2">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-600" />
+                      <span>Guide d'Excellence & Optimisation ATS</span>
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+                      MonCV.ai intègre les critères d'évaluation des plus grands logiciels de recrutement au monde (Workday, Taleo, Greenhouse). Voici comment maximiser vos chances :
+                    </p>
+                  </div>
 
-                        <div className="flex items-center gap-1.5 pt-0.5">
-                          <button
-                            type="button"
-                            onClick={() => handleExportDocx(cv)}
-                            disabled={isExportingDocxId === cv.id}
-                            className={`flex-1 py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
-                              exportSuccessId === cv.id
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                            }`}
-                          >
-                            {isExportingDocxId === cv.id ? (
-                              <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
-                            ) : exportSuccessId === cv.id ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                            )}
-                            <span className="truncate">
-                              {exportSuccessId === cv.id ? "Téléchargé !" : dict.dashboard.downloadDocx}
-                            </span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setSelectedForShare(cv)}
-                            className="py-2 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
-                          >
-                            <Share2 className="w-3.5 h-3.5 text-slate-500" />
-                            <span>{dict.dashboard.shareCv}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicate(cv)}
-                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer"
-                          >
-                            <Copy className="w-3.5 h-3.5 text-slate-500" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(cv.id)}
-                            className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-100 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                          </button>
-                        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Conseil 1 */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-base shadow-xs">
+                        🎯
+                      </div>
+                      <h3 className="font-extrabold text-base text-slate-900">
+                        1. Passer les filtres ATS (Score 98%)
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Les robots ATS éliminent jusqu'à 75% des CVs à cause de polices exotiques, de tableaux imbriqués ou de colonnes graphiques complexes. Tous les modèles de MonCV.ai sont conçus pour être 100% lisibles par les parseurs de données RH.
+                      </p>
+                      <div className="p-3 bg-blue-50/60 rounded-xl text-[11px] text-blue-900 font-medium">
+                        💡 <strong>Astuce :</strong> Exportez toujours au format Word (.docx) ou PDF A4 standard généré depuis la plateforme.
                       </div>
                     </div>
-                  ))}
+
+                    {/* Conseil 2 */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-base shadow-xs">
+                        ⚡
+                      </div>
+                      <h3 className="font-extrabold text-base text-slate-900">
+                        2. La Méthode STAR pour chaque réalisation
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Ne listez pas simplement vos tâches quotidiennes. Utilisez la formule : <strong>Situation</strong>, <strong>Tâche</strong>, <strong>Action</strong> et <strong>Résultat mesuré</strong>. Un recruteur retient un chiffre : "+35% de productivité" ou "gestion d'un budget de 50M FCFA".
+                      </p>
+                      <div className="p-3 bg-indigo-50/60 rounded-xl text-[11px] text-indigo-900 font-medium">
+                        💡 <strong>Astuce :</strong> Utilisez le bouton "Optimiser avec l'IA" dans l'éditeur pour reformuler vos puces selon STAR.
+                      </div>
+                    </div>
+
+                    {/* Conseil 3 */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-black text-base shadow-xs">
+                        ✍️
+                      </div>
+                      <h3 className="font-extrabold text-base text-slate-900">
+                        3. L'importance de la Demande d'Emploi
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Dans les entreprises ivoiriennes et ouest-africaines, une demande manuscrite ou formelle est souvent requise en plus du CV. Notre générateur de demande d'emploi vous produit un document officiel prêt à signer en Word et PDF.
+                      </p>
+                      <div className="p-3 bg-amber-50/60 rounded-xl text-[11px] text-amber-900 font-medium">
+                        💡 <strong>Astuce :</strong> Cliquez sur "Demande d'emploi" depuis n'importe quel CV pour la générer en 5 secondes.
+                      </div>
+                    </div>
+
+                    {/* Conseil 4 */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black text-base shadow-xs">
+                        🌐
+                      </div>
+                      <h3 className="font-extrabold text-base text-slate-900">
+                        4. Votre Portfolio Web comme déclencheur d'entretien
+                      </h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        90% des candidats envoient un simple fichier PDF par email. Avec MonCV.ai, vous disposez d'un lien web interactif (ex: moncv.ai/c/votre-nom) responsive, adapté aux smartphones des directeurs et recruteurs.
+                      </p>
+                      <div className="p-3 bg-purple-50/60 rounded-xl text-[11px] text-purple-900 font-medium">
+                        💡 <strong>Astuce :</strong> Ajoutez votre lien dans la signature de vos emails et sur votre profil LinkedIn.
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1399,8 +2323,22 @@ export default function DashboardPage() {
 
       <InvoiceModal
         isOpen={isInvoiceOpen}
-        onClose={() => setIsInvoiceOpen(false)}
+        onClose={() => {
+          setIsInvoiceOpen(false);
+          setSelectedInvoiceForModal(null);
+        }}
+        invoice={selectedInvoiceForModal}
+        packSlug={selectedInvoiceForModal?.packSlug || currentUser?.planTier || "2500"}
+        clientNom={
+          selectedInvoiceForModal?.clientNom ||
+          currentUser?.business?.companyName ||
+          `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() ||
+          currentUser?.email?.split("@")[0] ||
+          "Client MonCV.ai"
+        }
+        clientEmail={selectedInvoiceForModal?.clientEmail || currentUser?.email || ""}
         user={currentUser}
+        planTier={selectedInvoiceForModal?.packSlug as any || currentUser?.planTier}
       />
 
       <MobileMoneyModal
@@ -1413,6 +2351,9 @@ export default function DashboardPage() {
           setCurrentUser(u);
           setIsBusinessAccount(isBiz);
           setBusinessQuota(StorageManager.getBusinessQuotaInfo());
+          if (u?.email) {
+            loadUserInvoicesAndCredits(u.email, u.id);
+          }
           if (isBiz) {
             setActiveTab("business");
           }
@@ -1436,6 +2377,9 @@ export default function DashboardPage() {
           setIsBusinessAccount(isBiz);
           setBusinessQuota(StorageManager.getBusinessQuotaInfo());
           setResumes(StorageManager.getResumes());
+          if (u?.email) {
+            loadUserInvoicesAndCredits(u.email, u.id);
+          }
           if (isBiz) {
             setActiveTab("business");
           }

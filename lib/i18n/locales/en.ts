@@ -45,7 +45,7 @@ export const en: TranslationDictionary = {
 
   nav: {
     atsBadge: "ATS & AI",
-    myCvs: "My Resumes",
+    myCvs: "Dashboard",
     newCv: "New Resume",
     portfolioWeb: "Web Portfolio",
     vip: "VIP",
@@ -55,7 +55,7 @@ export const en: TranslationDictionary = {
     adminConsole: "Admin Console",
     candidatePool: "Talent Pool",
     backToEnterprise: "← BACK TO ENTERPRISE SUITE",
-    backToDashboard: "← My Resumes",
+    backToDashboard: "← Dashboard",
     logout: "Log Out",
     settings: "Account Settings",
     menu: "Menu",

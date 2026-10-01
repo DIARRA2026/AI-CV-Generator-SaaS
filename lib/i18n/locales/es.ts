@@ -45,7 +45,7 @@ export const es: TranslationDictionary = {
 
   nav: {
     atsBadge: "ATS e IA",
-    myCvs: "Mis CVs",
+    myCvs: "Panel de control",
     newCv: "Nuevo CV",
     portfolioWeb: "Portafolio Web",
     vip: "VIP",
@@ -55,7 +55,7 @@ export const es: TranslationDictionary = {
     adminConsole: "Consola de Administración",
     candidatePool: "Base de Candidatos",
     backToEnterprise: "← VOLVER AL ESPACIO EMPRESARIAL",
-    backToDashboard: "← Mis CVs",
+    backToDashboard: "← Panel de control",
     logout: "Cerrar sesión",
     settings: "Configuración de la cuenta",
     menu: "Menú",

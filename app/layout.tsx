@@ -40,6 +40,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler";
 
 export default function RootLayout({
   children,
@@ -50,6 +51,7 @@ export default function RootLayout({
     <html lang="fr" className="scroll-smooth" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600 selection:text-white" suppressHydrationWarning>
         <LanguageProvider>
+          <AuthRedirectHandler />
           {children}
           <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 text-center text-xs text-slate-500 space-y-2 print:hidden">
             <p className="font-semibold text-slate-700 dark:text-slate-300">

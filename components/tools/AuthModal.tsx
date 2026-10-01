@@ -1036,7 +1036,7 @@ export const AuthModal: React.FC<Props> = ({
                   Pack {getCreditPack(selectedPlan)?.label || selectedPlan} sélectionné
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  Créez votre compte pour continuer vers le paiement Wave
+                  Créez votre compte pour continuer vers le paiement sécurisé KKiaPay
                 </span>
               </div>
             </div>

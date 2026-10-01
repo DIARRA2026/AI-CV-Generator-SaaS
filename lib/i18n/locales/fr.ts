@@ -256,8 +256,8 @@ export const fr: TranslationDictionary = {
       },
       {
         critere: "Tarif & Mode de Paiement Accessible",
-        sub: "Sans carte bancaire obligatoire, paiements Wave instantanés",
-        moncv: "Dès 1 500 F (Wave / MoMo)",
+        sub: "Sans carte bancaire obligatoire, Mobile Money & KKiaPay instantanés",
+        moncv: "Dès 1 500 F (KKiaPay / MoMo)",
         word: "99 000 F / an (Office)",
         canva: "15 000 F / mois (Carte CB)",
         free: "25 000 à 50 000 F",
@@ -360,7 +360,7 @@ export const fr: TranslationDictionary = {
     enterpriseStarterDesc: "Pour cybercafés, secrétariats publics & petits cabinets (1 siège).",
     enterpriseStarterF1: "1 500 crédits valables 12 mois",
     enterpriseStarterF2: "1 siège utilisateur dédié",
-    enterpriseStarterF3: "Recharge instantanée par Wave",
+    enterpriseStarterF3: "Recharge instantanée KKiaPay",
     enterpriseStarterF4: "Exports PDF & Word illimités",
     enterpriseStarterF5: "Facture normalisée OHADA (RCCM / IFU)",
     enterpriseStarterCta: "Activer Pack Revendeur (10 000 F)",
@@ -413,7 +413,7 @@ export const fr: TranslationDictionary = {
     recruiterBoxTitle: "Vous êtes un Cabinet RH, une Entreprise ou une École ?",
     recruiterBoxDesc: "Créez ou connectez votre Espace Organisation pour piloter votre équipe, vos crédits et vos factures normalisées.",
     recruiterBoxCta: "Accéder à l'Espace Organisation",
-    securityNote: "Paiement 100% sécurisé via Wave & Mobile Money (zéro prélèvement automatique)",
+    securityNote: "Paiement 100% sécurisé via KKiaPay (Mobile Money & Carte Bancaire, zéro prélèvement automatique)",
     invoiceNote: "Factures délivrées par INNOVA GROUP SARL (RCCM CI-BKE-2019-A-228)",
   },
 
@@ -499,8 +499,8 @@ export const fr: TranslationDictionary = {
         a: "Non, aucun abonnement ni prélèvement automatique. Vous achetez des packs de crédits prépayés valables 12 mois (1 an) par Mobile Money selon vos besoins. Vos crédits acquis ne sont jamais perdus du jour au lendemain.",
       },
       {
-        q: "Comment s'effectue le paiement par Mobile Money ?",
-        a: "Vous pouvez régler directement via l'application Wave Côte d'Ivoire (avec lien pré-rempli) ou par Orange Money, MTN et Moov via notre partenaire LigdiCash. Dès réception de votre déclaration de référence, vos crédits sont immédiatement activés et votre facture OHADA est générée.",
+        q: "Comment s'effectue le paiement par Mobile Money & Carte ?",
+        a: "Vous réglez en toute sécurité via l'agrégateur officiel KKiaPay avec Wave, Orange Money, MTN MoMo, Moov Money ou par Carte Bancaire. Dès confirmation du paiement par le serveur, vos crédits et votre formule sont immédiatement activés et votre facture normalisée OHADA est générée.",
       },
       {
         q: "Que se passe-t-il si la génération IA échoue ?",

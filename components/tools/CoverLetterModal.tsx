@@ -7,7 +7,7 @@ import { CVEngine } from "@/lib/cv-engine";
 import { downloadCoverLetterDocx } from "@/lib/letter-docx-export";
 import { X, Sparkles, Copy, Check, Download, RefreshCw, Wand2, FileText, ChevronDown, Zap } from "lucide-react";
 import { CreditActionConfirmModal } from "./CreditActionConfirmModal";
-import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import { CREDIT_ACTIONS_COST } from "@/config/payments";
 
 interface CoverLetterModalProps {
@@ -29,7 +29,7 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [currentBalance, setCurrentBalance] = useState<number>(0);
-  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
+  const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -314,15 +314,17 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({
         actionLabel="Rédaction de Lettre de Motivation IA"
         actionDescription={`Génération complète et personnalisée pour le poste de ${targetJob} chez ${targetCompany}.`}
         currentBalance={currentBalance}
-        onOpenRecharge={() => setIsWaveModalOpen(true)}
+        onOpenRecharge={() => setIsKKiaPayModalOpen(true)}
         isGenerating={isGenerating}
       />
 
-      {/* Modal Recharge Wave */}
-      <WavePaymentClaimModal
-        isOpen={isWaveModalOpen}
-        onClose={() => setIsWaveModalOpen(false)}
-        onClaimSubmitted={() => {
+      {/* Modal Recharge KKiaPay */}
+      <KKiaPayWidgetModal
+        isOpen={isKKiaPayModalOpen}
+        onClose={() => setIsKKiaPayModalOpen(false)}
+        planId="essentiel"
+        onSuccess={() => {
+          setIsKKiaPayModalOpen(false);
           fetch("/api/credits")
             .then((r) => r.json())
             .then((d) => setCurrentBalance(d.summary?.balance ?? 0));

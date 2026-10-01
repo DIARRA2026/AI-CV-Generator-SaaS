@@ -145,7 +145,7 @@ export const CreditActionConfirmModal: React.FC<CreditActionConfirmModalProps> =
                     className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition"
                   >
                     <Zap className="w-4 h-4 fill-white" />
-                    Recharger mes crédits via Wave
+                    Recharger mes crédits (KKiaPay)
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (

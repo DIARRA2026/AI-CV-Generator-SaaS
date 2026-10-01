@@ -5,7 +5,7 @@ import { ResumeData, ATSAnalysisResult } from "@/lib/types";
 import { ATSEngine } from "@/lib/ats-engine";
 import { X, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Wand2, ArrowRight, Zap } from "lucide-react";
 import { CreditActionConfirmModal } from "./CreditActionConfirmModal";
-import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import { CREDIT_ACTIONS_COST } from "@/config/payments";
 
 interface ATSOptimizerModalProps {
@@ -28,7 +28,7 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
   const [result, setResult] = useState<ATSAnalysisResult | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [currentBalance, setCurrentBalance] = useState<number>(0);
-  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
+  const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -278,15 +278,17 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
         actionLabel="Audit et Score de Compatibilité ATS IA"
         actionDescription="Analyse approfondie de votre CV par l'intelligence artificielle face aux exigences du poste et optimisation des mots-clés."
         currentBalance={currentBalance}
-        onOpenRecharge={() => setIsWaveModalOpen(true)}
+        onOpenRecharge={() => setIsKKiaPayModalOpen(true)}
         isGenerating={isAnalyzing}
       />
 
-      {/* Modal Recharge Wave */}
-      <WavePaymentClaimModal
-        isOpen={isWaveModalOpen}
-        onClose={() => setIsWaveModalOpen(false)}
-        onClaimSubmitted={() => {
+      {/* Modal Recharge KKiaPay */}
+      <KKiaPayWidgetModal
+        isOpen={isKKiaPayModalOpen}
+        onClose={() => setIsKKiaPayModalOpen(false)}
+        planId="essentiel"
+        onSuccess={() => {
+          setIsKKiaPayModalOpen(false);
           fetch("/api/credits")
             .then((r) => r.json())
             .then((d) => setCurrentBalance(d.summary?.balance ?? 0));

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -46,7 +46,7 @@ export const LandingPricingSection: React.FC<LandingPricingSectionProps> = ({
             Tarifs clairs et transparents en FCFA
           </h2>
           <p className="text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
-            Zéro abonnement mensuel, zéro prélèvement récurrent. Rechargez en toute liberté via Mobile Money (Wave, Orange Money) avec une validité de 12 mois.
+            Formules 30 jours et recharges de crédits. Réglez en toute sécurité via KKiaPay (Mobile Money Wave, Orange, MTN, Moov et Carte Bancaire) avec activation immédiate vérifiée par le serveur.
           </p>
         </div>
 

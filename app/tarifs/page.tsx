@@ -66,7 +66,7 @@ export default function TarifsPage() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 fill-blue-600" />
-            Crédits prépayés — Aucun abonnement — Règlement Wave
+            Crédits prépayés — Aucun prélèvement caché — Règlement sécurisé KKiaPay
           </div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
             Tarifs clairs et transparents en FCFA <br />
@@ -75,7 +75,7 @@ export default function TarifsPage() {
             </span>
           </h1>
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
-            Rechargez vos crédits en toute liberté avec Wave ou Orange Money. Validité 12 mois, zéro prélèvement récurrent, facture normalisée OHADA délivrée sur chaque achat.
+            Rechargez vos crédits en toute liberté via KKiaPay (Wave, MTN, Orange, Moov & Carte Bancaire). Activation instantanée vérifiée par le serveur, zéro prélèvement récurrent, facture normalisée OHADA délivrée sur chaque achat.
           </p>
         </div>
 
@@ -234,7 +234,7 @@ export default function TarifsPage() {
                           : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                       }`}
                     >
-                      Acheter par Wave
+                      <span>Souscrire avec KKiaPay</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   )}
@@ -301,12 +301,12 @@ export default function TarifsPage() {
         {/* Commercial Guarantees */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto font-black text-lg">
-              🌊
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto font-black text-lg">
+              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Paiement Mobile Money Sécurisé</h4>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Paiement Sécurisé KKiaPay</h4>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Payez instantanément par Wave ou Orange Money depuis votre téléphone sans frais cachés.
+              Réglez en toute sécurité via Mobile Money (Wave, MTN, Orange, Moov) ou Carte bancaire avec vérification serveur immédiate.
             </p>
           </div>
 

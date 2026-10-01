@@ -251,7 +251,7 @@ export const LandingBusinessSection: React.FC<LandingBusinessSectionProps> = ({
         <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-slate-400">
           <div className="flex items-center gap-2 font-medium">
             <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Paiement 100% sécurisé via Wave & Mobile Money (zéro prélèvement automatique)</span>
+            <span>Paiement 100% sécurisé via KKiaPay (Mobile Money & Carte Bancaire, zéro prélèvement automatique)</span>
           </div>
           <div className="flex items-center gap-2 text-slate-400">
             <FileText className="w-4 h-4 text-blue-400 shrink-0" />

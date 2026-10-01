@@ -90,6 +90,7 @@ export default function DashboardPage() {
   const [userInvoices, setUserInvoices] = useState<Invoice[]>([]);
   const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState<Invoice | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState("");
   const [isExportingDocxId, setIsExportingDocxId] = useState<string | null>(null);
@@ -383,6 +384,28 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.warn("Erreur chargement solde crédits:", err);
+    }
+
+    try {
+      if (userId) {
+        const { supabase: client } = await import("@/lib/supabaseClient");
+        if (client) {
+          const { data: sub } = await client
+            .from("subscriptions")
+            .select("expires_at")
+            .eq("user_id", userId)
+            .eq("status", "active")
+            .order("expires_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (sub?.expires_at) {
+            setSubscriptionExpiresAt(sub.expires_at);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Erreur chargement expiration abonnement:", err);
     }
   };
 
@@ -1164,6 +1187,15 @@ export default function DashboardPage() {
                           <Crown className="w-3 h-3 text-amber-500" />
                           <span>{planInfo.name}</span>
                         </span>
+                        {subscriptionExpiresAt && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] font-bold flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-blue-600" />
+                              Abonnement actif jusqu'au {new Date(subscriptionExpiresAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>
+                          </>
+                        )}
                         <span className="text-slate-300">•</span>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -1191,10 +1223,10 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setIsPaymentOpen(true)}
                       className="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 font-black text-xs border border-amber-300/80 flex items-center gap-2 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
-                      title="Recharger vos crédits ou changer de pack"
+                      title="Renouveler votre formule ou recharger vos crédits"
                     >
                       <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
-                      <span>Recharger en crédits Wave</span>
+                      <span>Renouveler mon abonnement</span>
                     </button>
 
                     <button
@@ -2029,7 +2061,7 @@ export default function DashboardPage() {
                         Mes Factures & Reçus de Souscription
                       </h2>
                       <p className="text-xs text-slate-300 max-w-xl">
-                        Toutes vos souscriptions réglées par Wave ou Mobile Money sont archivées légalement par INNOVA GROUP SARL. Vous pouvez visualiser et télécharger vos factures normalisées à tout moment.
+                        Toutes vos souscriptions réglées par Mobile Money ou Carte Bancaire sont archivées légalement par INNOVA GROUP SARL. Vous pouvez visualiser et télécharger vos factures normalisées à tout moment.
                       </p>
                     </div>
 
@@ -2039,7 +2071,7 @@ export default function DashboardPage() {
                       className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer whitespace-nowrap self-start sm:self-auto"
                     >
                       <Zap className="w-4 h-4 fill-slate-950" />
-                      <span>Nouvelle formule Wave</span>
+                      <span>Renouveler / Changer de formule</span>
                     </button>
                   </div>
 
@@ -2053,7 +2085,7 @@ export default function DashboardPage() {
                           Aucune facture pour le moment
                         </h3>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                          Vous êtes actuellement sur la <strong>Formule Découverte Gratuite</strong> (30 crédits offerts). Lors de votre premier règlement par Wave ou Mobile Money, votre facture officielle OHADA sera immédiatement archivée et téléchargeable ici.
+                          Vous êtes actuellement sur la <strong>Formule Découverte Gratuite</strong> (30 crédits offerts). Lors de votre premier règlement par Mobile Money ou Carte, votre facture officielle OHADA sera immédiatement archivée et téléchargeable ici.
                         </p>
                       </div>
                       <button
@@ -2096,7 +2128,7 @@ export default function DashboardPage() {
                                 {inv.montantFcfa.toLocaleString("fr-FR")} FCFA
                               </td>
                               <td className="py-3.5 px-4 text-slate-600">
-                                {inv.modePaiement || "Wave Mobile Money"}
+                                {inv.modePaiement || "Mobile Money"}
                               </td>
                               <td className="py-3.5 px-4">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">

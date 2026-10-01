@@ -80,63 +80,72 @@ function makePack(
   return {
     slug, nom, segment, prixFcfa, credits, validiteMois, sieges, ordre,
     actif: true, misEnAvant, cible, prixCreditFcfa, avantages,
-    waveLink: prixFcfa > 0 ? WAVE_BASE + prixFcfa : null,
+    waveLink: null, // Décision 1 : Retrait des liens statiques non vérifiables
     label: nom, code: slug, priceFcfa: prixFcfa,
-    validityDays: validiteMois ? validiteMois * 30 : null,
+    validityDays: 30, // 30 jours par formule mensuelle
     unitPriceFcfa: prixCreditFcfa, recommended: misEnAvant,
     description: cible, features: avantages,
   };
 }
 
 const PACKS_B2C: Record<string, CreditPack> = {
-  decouverte: makePack('decouverte', 'Decouverte', 'b2c', 0, 30, null, 1, 1, false,
-    'Tout utilisateur qui cree un compte', 0,
-    ['30 credits offerts a l inscription', 'Genere 1 CV + 1 lettre + 1 analyse ATS',
-     'Creation manuelle illimitee', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
-  essentiel: makePack('essentiel', 'Essentiel', 'b2c', 1500, 120, 12, 1, 2, false,
+  decouverte: makePack('decouverte', 'Découverte', 'b2c', 0, 30, null, 1, 1, false,
+    'Tout utilisateur qui crée un compte', 0,
+    ['30 crédits offerts à l inscription', 'Génère 1 CV + 1 lettre + 1 analyse ATS',
+     'Création manuelle illimitée', 'Export PDF et Word sans filigrane', 'Facture normalisée OHADA']),
+  essentiel: makePack('essentiel', 'Essentiel', 'b2c', 1500, 120, 1, 1, 2, false,
     'Candidat en recherche active', 12.5,
-    ['120 credits valables 12 mois', 'Soit 12 CV complets ou 24 lettres',
-     '12,5 F le credit', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
-  evolution: makePack('evolution', 'Evolution', 'b2c', 2500, 250, 12, 1, 3, false,
+    ['120 crédits valables 30 jours', 'Soit 12 CV complets ou 24 lettres de motivation',
+     '12,5 F le crédit', 'Export PDF et Word sans filigrane', 'Facture normalisée OHADA']),
+  pro: makePack('evolution', 'Pro', 'b2c', 2500, 250, 1, 1, 3, false,
     'Candidat qui multiplie les candidatures', 10,
-    ['250 credits valables 12 mois', 'Soit 25 CV complets ou 50 lettres',
-     '10 F le credit (economie 20%)', 'Traductions Anglais incluses',
-     'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
-  carriere: makePack('carriere', 'Carriere', 'b2c', 5000, 600, 12, 1, 4, true,
+    ['250 crédits valables 30 jours', 'Soit 25 CV complets ou 50 lettres de motivation',
+     '10 F le crédit (économie 20%)', 'Traductions Anglais incluses',
+     'Export PDF et Word sans filigrane', 'Facture normalisée OHADA']),
+  vip: makePack('carriere', 'VIP & Portfolio', 'b2c', 5000, 600, 1, 1, 4, true,
     'Candidat exigeant, reconversion, international', 8.33,
-    ['600 credits valables 12 mois', 'Soit 60 CV complets - photo IA incluse',
-     '8,33 F le credit - meilleur rapport B2C', 'Photo de profil IA',
-     'Traductions Anglais illimitees', 'Export PDF et Word sans filigrane', 'Facture normalisee OHADA']),
+    ['600 crédits valables 30 jours', 'Soit 60 CV complets — photo IA incluse',
+     '8,33 F le crédit — meilleur rapport B2C', 'Portfolio Web professionnel inclus',
+     'Traductions Anglais illimitées', 'Export PDF et Word sans filigrane', 'Facture normalisée OHADA']),
 };
+
+// Aliases pour compatibilité
+(PACKS_B2C as any).evolution = PACKS_B2C.pro;
+(PACKS_B2C as any).carriere = PACKS_B2C.vip;
 
 const PACKS_B2B: Record<string, CreditPack> = {
   revendeur: makePack('revendeur', 'Revendeur', 'b2b', 10000, 1500, 12, 1, 5, false,
     'Agence RH, cabinet, point de vente', 6.67,
-    ['1 500 credits valables 12 mois', 'Soit 150 profils complets',
-     '6,67 F le credit', 'Compte structure avec nom de l agence',
-     'Recharge en un clic', 'Facture normalisee OHADA']),
+    ['1 500 crédits valables 12 mois', 'Soit 150 profils complets',
+     '6,67 F le crédit', 'Compte structure avec nom de l agence',
+     'Recharge en un clic', 'Facture normalisée OHADA']),
   structure: makePack('structure', 'Structure', 'b2b', 25000, 5000, 12, 3, 6, false,
-    'PME, ONG, structure educative', 5,
-    ['Tout Revendeur +', '5 000 credits valables 12 mois', '5,00 F le credit',
-     '3 utilisateurs simultanes', 'Logo et couleurs de la structure',
-     'Export groupe CSV', 'Facture normalisee OHADA']),
+    'PME, ONG, structure éducative', 5,
+    ['Tout Revendeur +', '5 000 crédits valables 12 mois', '5,00 F le crédit',
+     '3 utilisateurs simultanés', 'Logo et couleurs de la structure',
+     'Export groupé CSV', 'Facture normalisée OHADA']),
   business_pro: makePack('business_pro', 'Business Pro', 'b2b', 60000, 15000, 12, 10, 7, true,
-    'Entreprise RH, cabinet conseil, ecole', 4,
-    ['Tout Structure +', '15 000 credits valables 12 mois', '4,00 F le credit',
-     '10 utilisateurs simultanes', 'Tableau de bord analytics',
-     'Import en lot (CSV)', 'Support WhatsApp prioritaire', 'Facture normalisee OHADA']),
-  licence_etablissement: makePack('licence_etablissement', 'Licence Etablissement', 'b2b', 150000, 50000, 12, null, 8, false,
-    'Grande ecole, universite', 3,
-    ['Tout Business Pro +', '50 000 credits valables 12 mois', '3,00 F le credit',
-     'Utilisateurs illimites', 'Espaces par promotion', 'Gestionnaire de compte dedie',
-     'Devis sur bon de commande', 'Facture normalisee OHADA']),
+    'Entreprise RH, cabinet conseil, école', 4,
+    ['Tout Structure +', '15 000 crédits valables 12 mois', '4,00 F le crédit',
+     '10 utilisateurs simultanés', 'Tableau de bord analytics',
+     'Import en lot (CSV)', 'Support WhatsApp prioritaire', 'Facture normalisée OHADA']),
+  licence_etablissement: makePack('licence_etablissement', 'Licence Établissement', 'b2b', 150000, 50000, 12, null, 8, false,
+    'Grande école, université', 3,
+    ['Tout Business Pro +', '50 000 crédits valables 12 mois', '3,00 F le crédit',
+     'Utilisateurs illimités', 'Espaces par promotion', 'Gestionnaire de compte dédié',
+     'Devis sur bon de commande', 'Facture normalisée OHADA']),
 };
 
 export const ALL_PACKS: Record<string, CreditPack> = {
   ...PACKS_B2C, ...PACKS_B2B,
 };
 
-export const PACKS_B2C_ARRAY: CreditPack[] = Object.values(PACKS_B2C).sort((a, b) => a.ordre - b.ordre);
+export const PACKS_B2C_ARRAY: CreditPack[] = [
+  PACKS_B2C.decouverte,
+  PACKS_B2C.essentiel,
+  PACKS_B2C.pro,
+  PACKS_B2C.vip,
+];
 export const PACKS_B2B_ARRAY: CreditPack[] = Object.values(PACKS_B2B).sort((a, b) => a.ordre - b.ordre);
 export const ALL_PACKS_ARRAY: CreditPack[] = [...PACKS_B2C_ARRAY, ...PACKS_B2B_ARRAY];
 
@@ -145,6 +154,8 @@ const SLUG_ALIASES: Record<string, PackSlug> = {
   "1500": "essentiel",
   "2500": "evolution",
   "5000": "carriere",
+  pro: "evolution",
+  vip: "carriere",
   cyber15: "revendeur",
   enterprise30: "structure",
   enterprise75: "business_pro",

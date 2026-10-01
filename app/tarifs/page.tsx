@@ -5,19 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack } from "@/config/payments";
-import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { StorageManager } from "@/lib/storage";
 import {
   Zap, Check, ShieldCheck, Sparkles, Building2, User,
-  Clock, ArrowRight, Download, FileText, CheckCircle2, Phone, ExternalLink
+  Clock, ArrowRight, Download, FileText, CheckCircle2, Phone, ExternalLink, CreditCard
 } from "lucide-react";
 
 export default function TarifsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"particuliers" | "entreprises">("particuliers");
-  const [selectedPackCode, setSelectedPackCode] = useState<string>("carriere");
-  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
+  const [selectedPackCode, setSelectedPackCode] = useState<string>("pro");
+  const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
@@ -49,9 +49,9 @@ export default function TarifsPage() {
       return;
     }
 
-    // 2. Utilisateur connecté : ouvrir directement l'interface de paiement Wave
+    // 2. Utilisateur connecté : ouvrir directement l'interface de paiement KKiaPay vérifiée serveur
     setSelectedPackCode(pack.slug);
-    setIsWaveModalOpen(true);
+    setIsKKiaPayModalOpen(true);
   };
 
 
@@ -332,20 +332,20 @@ export default function TarifsPage() {
         </div>
       </main>
 
-      <WavePaymentClaimModal
-        isOpen={isWaveModalOpen}
-        onClose={() => setIsWaveModalOpen(false)}
-        defaultPackCode={selectedPackCode}
+      <KKiaPayWidgetModal
+        isOpen={isKKiaPayModalOpen}
+        onClose={() => setIsKKiaPayModalOpen(false)}
+        planId={selectedPackCode}
         onNeedAuth={(pack) => {
-          setIsWaveModalOpen(false);
+          setIsKKiaPayModalOpen(false);
           StorageManager.setPendingCheckoutPlan(pack as any, true);
           setSelectedPackCode(pack);
           setIsAuthOpen(true);
         }}
-        onSuccess={() => {
-          setIsWaveModalOpen(false);
+        onSuccess={(pack) => {
+          setIsKKiaPayModalOpen(false);
           StorageManager.clearPendingCheckoutPlan();
-          router.push(`/dashboard?payment=success&pack=${selectedPackCode}`);
+          router.push(`/dashboard?payment=success&pack=${pack}`);
         }}
       />
 
@@ -360,7 +360,7 @@ export default function TarifsPage() {
           if (packToPay && packToPay !== "free") {
             setSelectedPackCode(packToPay);
             setTimeout(() => {
-              setIsWaveModalOpen(true);
+              setIsKKiaPayModalOpen(true);
             }, 300);
           } else {
             router.push("/dashboard");

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PlanTier } from "@/lib/types";
-import { WavePaymentClaimModal } from "./WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 
 interface MobileMoneyModalProps {
   isOpen: boolean;
@@ -13,9 +13,9 @@ interface MobileMoneyModalProps {
 }
 
 /**
- * MobileMoneyModal - Modal de paiement et recharge Wave CI officiel
- * Affiche l'interface de paiement sécurisée Wave avec QR Code, lien direct
- * et validation de transaction. Ne génère aucune facture au simple clic d'ouverture.
+ * MobileMoneyModal - Modal officiel de paiement sécurisé KKiaPay
+ * Connecté au serveur Next.js avec vérification transactionnelle
+ * RÈGLE 1 : Aucun lien statique, tout paiement est vérifié par le serveur.
  */
 export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   isOpen,
@@ -24,10 +24,10 @@ export const MobileMoneyModal: React.FC<MobileMoneyModalProps> = ({
   defaultPlan = "2500",
 }) => {
   return (
-    <WavePaymentClaimModal
+    <KKiaPayWidgetModal
       isOpen={isOpen}
       onClose={onClose}
-      defaultPackCode={defaultPlan}
+      planId={defaultPlan}
       onSuccess={onSuccess}
     />
   );

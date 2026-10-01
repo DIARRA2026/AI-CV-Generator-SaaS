@@ -13,6 +13,7 @@ import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 import { getDialCodeForCountry } from "@/lib/geoData";
 import { AccountType, PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
+import { getCreditPack } from "@/config/payments";
 
 export function getWebmailInfo(email: string): { name: string; url: string } | null {
   const domain = email.split("@")[1]?.toLowerCase() || "";
@@ -1022,6 +1023,27 @@ export const AuthModal: React.FC<Props> = ({
             </button>
           </div>
         )}
+
+        {/* Bannière explicative si une formule payante a été sélectionnée */}
+        {selectedPlan && selectedPlan !== "free" && mode !== "forgot" && (
+          <div className="mx-4 mb-2 p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600 shrink-0 fill-blue-600" />
+              <div className="text-left">
+                <span className="font-bold text-slate-900 block text-[11px]">
+                  Pack {getCreditPack(selectedPlan)?.label || selectedPlan} sélectionné
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  Créez votre compte pour continuer vers le paiement Wave
+                </span>
+              </div>
+            </div>
+            <span className="font-black text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded text-[11px] shrink-0">
+              {(getCreditPack(selectedPlan)?.prixFcfa || 0).toLocaleString("fr-FR")} F
+            </span>
+          </div>
+        )}
+
 
         {/* Corps de formulaire défilant avec fluidité */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">

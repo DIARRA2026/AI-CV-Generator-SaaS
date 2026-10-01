@@ -111,11 +111,17 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set("auth", "login");
       loginUrl.searchParams.set("redirect", pathname);
       
+      const planParam = request.nextUrl.searchParams.get("plan");
+      if (planParam) {
+        loginUrl.searchParams.set("plan", planParam);
+      }
+      
       const redirectResponse = NextResponse.redirect(loginUrl);
       redirectResponse.headers.set("X-Frame-Options", "DENY");
       redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
       return redirectResponse;
     }
+
   }
 
   return response;

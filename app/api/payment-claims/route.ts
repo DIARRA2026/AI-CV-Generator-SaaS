@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthUser } from "@/lib/serverAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getCreditPack } from "@/config/payments";
@@ -99,5 +99,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Enregistrer le statut d'abonnement en attente lié à l'utilisateur authentifié
+  const txRef = referenceTransaction?.trim() || `WAVE_CLAIM_${data.id.substring(0, 8)}`;
+  try {
+    await supabaseAdmin.from("subscriptions").upsert(
+      {
+        user_id: auth.user.id,
+        user_email: auth.user.email?.toLowerCase().trim() || null,
+        plan_tier: packSlug,
+        amount: pack.prixFcfa,
+        currency: "FCFA",
+        status: "pending",
+        payment_method: operateur === "wave" ? "Wave CI" : operateur,
+        phone_number: telephone?.trim() || null,
+        transaction_ref: txRef,
+        allowed_candidates: pack.sieges ?? 1,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "transaction_ref" }
+    );
+
+    await supabaseAdmin.from("transactions").insert({
+      user_id: auth.user.id,
+      plan_tier: packSlug,
+      amount_xof: pack.prixFcfa,
+      provider: operateur,
+      phone_number: telephone?.trim() || null,
+      reference_code: txRef,
+      status: "pending",
+    });
+  } catch (syncErr) {
+    console.warn("[payment-claims] Erreur synchronisation subscription pending:", syncErr);
+  }
+
   return NextResponse.json({ success: true, claim: data });
 }
+

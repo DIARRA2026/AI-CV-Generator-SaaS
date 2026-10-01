@@ -1,19 +1,24 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack } from "@/config/payments";
 import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
+import { AuthModal } from "@/components/tools/AuthModal";
+import { StorageManager } from "@/lib/storage";
 import {
   Zap, Check, ShieldCheck, Sparkles, Building2, User,
   Clock, ArrowRight, Download, FileText, CheckCircle2, Phone, ExternalLink
 } from "lucide-react";
 
 export default function TarifsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"particuliers" | "entreprises">("particuliers");
   const [selectedPackCode, setSelectedPackCode] = useState<string>("carriere");
   const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -35,9 +40,20 @@ export default function TarifsPage() {
 
   const handleSelectPack = (pack: CreditPack) => {
     if (pack.prixFcfa === 0) return;
+    const isAuth = StorageManager.isLoggedIn();
+    if (!isAuth) {
+      // 1. Sauvegarder la formule choisie avant d'orienter vers l'inscription
+      StorageManager.setPendingCheckoutPlan(pack.slug as any, true);
+      setSelectedPackCode(pack.slug);
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 2. Utilisateur connecté : ouvrir directement l'interface de paiement Wave
     setSelectedPackCode(pack.slug);
     setIsWaveModalOpen(true);
   };
+
 
   const currentPacks = activeTab === "particuliers" ? PACKS_B2C_ARRAY : PACKS_B2B_ARRAY;
 
@@ -320,7 +336,38 @@ export default function TarifsPage() {
         isOpen={isWaveModalOpen}
         onClose={() => setIsWaveModalOpen(false)}
         defaultPackCode={selectedPackCode}
+        onNeedAuth={(pack) => {
+          setIsWaveModalOpen(false);
+          StorageManager.setPendingCheckoutPlan(pack as any, true);
+          setSelectedPackCode(pack);
+          setIsAuthOpen(true);
+        }}
+        onSuccess={() => {
+          setIsWaveModalOpen(false);
+          StorageManager.clearPendingCheckoutPlan();
+          router.push(`/dashboard?payment=success&pack=${selectedPackCode}`);
+        }}
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        defaultPlan={selectedPackCode as any}
+        onSuccess={(chosenPlan) => {
+          setIsAuthOpen(false);
+          const pending = StorageManager.getPendingCheckoutPlan();
+          const packToPay = pending?.plan || chosenPlan || selectedPackCode;
+          if (packToPay && packToPay !== "free") {
+            setSelectedPackCode(packToPay);
+            setTimeout(() => {
+              setIsWaveModalOpen(true);
+            }, 300);
+          } else {
+            router.push("/dashboard");
+          }
+        }}
       />
     </div>
   );
 }
+

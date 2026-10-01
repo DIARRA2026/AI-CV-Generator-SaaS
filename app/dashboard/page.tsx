@@ -73,6 +73,7 @@ export default function DashboardPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [paymentSuccessToast, setPaymentSuccessToast] = useState<string | null>(null);
 
   const [isBusinessAccount, setIsBusinessAccount] = useState(false);
   const [activeTab, setActiveTab] = useState<"business" | "candidate">("candidate");
@@ -119,7 +120,19 @@ export default function DashboardPage() {
       setActiveTab("candidate");
     }
 
+    if (params.get("payment") === "success") {
+      const packCode = params.get("pack") || "votre formule";
+      setPaymentSuccessToast(packCode);
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.5 },
+        });
+      } catch {}
+    }
   }, []);
+
 
   // Fermeture du modal de création avec la touche Echap
   useEffect(() => {
@@ -390,7 +403,29 @@ export default function DashboardPage() {
         candidateCount={resumes.length}
       />
 
+      {/* Bannière de confirmation de paiement réussi */}
+      {paymentSuccessToast && (
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white px-4 py-3 shadow-md sticky top-16 z-30 flex items-center justify-between gap-3 text-xs sm:text-sm animate-in slide-in-from-top-2 duration-300">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-100" />
+              <span>
+                <strong className="font-bold">Paiement validé avec succès !</strong> Votre formule <strong className="uppercase">{paymentSuccessToast}</strong> a été rattachée à votre compte et vos crédits sont maintenant disponibles.
+              </span>
+            </div>
+            <button
+              onClick={() => setPaymentSuccessToast(null)}
+              className="p-1 hover:bg-white/20 rounded-lg text-emerald-100 hover:text-white transition cursor-pointer"
+              aria-label="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {!isLoggedIn ? (
+
         <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
           <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-6">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-md shadow-blue-600/10 border border-blue-100">

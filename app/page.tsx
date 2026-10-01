@@ -257,6 +257,18 @@ export default function HomePage() {
   };
 
   const handleSelectWavePack = (packCode: string) => {
+    const isAuth = StorageManager.isLoggedIn();
+    if (!isAuth) {
+      // 1. Sauvegarder la formule choisie pour ne pas la perdre après l'inscription
+      StorageManager.setPendingCheckoutPlan(packCode as PlanTier, true);
+      setAuthDefaultPlan(packCode as PlanTier);
+      setSelectedWavePack(packCode);
+      // 2. Ouvrir la modale d'inscription / connexion
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 3. Utilisateur déjà authentifié : passer directement à l'étape de paiement
     setSelectedWavePack(packCode);
     setIsWaveModalOpen(true);
   };
@@ -267,6 +279,20 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search);
     const isConfirmed = params.get("confirmed") === "true";
     const hasHashToken = window.location.hash.includes("access_token=");
+
+    // 1. Détection des paramètres d'authentification et de formule dans l'URL
+    const planParam = params.get("plan");
+    const authParam = params.get("auth");
+
+    if (planParam) {
+      StorageManager.setPendingCheckoutPlan(planParam as PlanTier, true);
+      setAuthDefaultPlan(planParam as PlanTier);
+      setSelectedWavePack(planParam);
+    }
+
+    if (authParam === "register" || authParam === "login") {
+      setIsAuthOpen(true);
+    }
 
     if (!isConfirmed && !hasHashToken) return;
 
@@ -289,13 +315,14 @@ export default function HomePage() {
 
       // Reprendre automatiquement un paiement Wave qui attendait la validation du compte
       const pending = StorageManager.getPendingCheckoutPlan();
-      if (pending) {
-        StorageManager.clearPendingCheckoutPlan();
+      if (pending && pending.plan && pending.plan !== "free") {
         setTimeout(() => {
-          handleSelectWavePack(pending.plan || "evolution");
-        }, 400);
+          setSelectedWavePack(pending.plan);
+          setIsWaveModalOpen(true);
+        }, 500);
       }
     };
+
 
     processConfirmedAuth();
   }, []);
@@ -1627,9 +1654,16 @@ export default function HomePage() {
         isOpen={isWaveModalOpen}
         onClose={() => setIsWaveModalOpen(false)}
         defaultPackCode={selectedWavePack}
+        onNeedAuth={(pack) => {
+          setIsWaveModalOpen(false);
+          StorageManager.setPendingCheckoutPlan(pack as PlanTier, true);
+          setAuthDefaultPlan(pack as PlanTier);
+          setIsAuthOpen(true);
+        }}
         onSuccess={() => {
           setIsWaveModalOpen(false);
-          router.push("/dashboard");
+          StorageManager.clearPendingCheckoutPlan();
+          router.push(`/dashboard?payment=success&pack=${selectedWavePack}`);
         }}
       />
 
@@ -1637,7 +1671,6 @@ export default function HomePage() {
         isOpen={isAuthOpen}
         onClose={() => {
           setIsAuthOpen(false);
-          StorageManager.clearPendingCheckoutPlan();
         }}
         onSuccess={(chosenPlan, actionType) => {
           setIsAuthOpen(false);
@@ -1648,26 +1681,23 @@ export default function HomePage() {
           setCurrentUser(u);
           setIsBusinessAccount(isBiz);
 
+          // 1. Reprendre automatiquement la formule sélectionnée avant l'inscription/connexion
           const pending = StorageManager.getPendingCheckoutPlan();
-          StorageManager.clearPendingCheckoutPlan();
-
-          const targetPlan = (pending?.plan && pending.plan !== "free")
-            ? pending.plan
-            : (chosenPlan && chosenPlan !== "free")
-            ? chosenPlan
-            : null;
+          const targetPlan =
+            pending?.plan && pending.plan !== "free"
+              ? pending.plan
+              : chosenPlan && chosenPlan !== "free"
+              ? chosenPlan
+              : null;
 
           if (targetPlan) {
-            StorageManager.setPlanTier(targetPlan, {
-              status: "active",
-              paymentMethod: "Accès Libre & Gratuit",
-            });
-            if (isBiz) {
-              router.push("/dashboard?tab=business");
-            } else {
-              router.push("/create");
-            }
+            // L'utilisateur a choisi une formule : ouvrir immédiatement le paiement Wave pour son compte
+            setSelectedWavePack(targetPlan);
+            setTimeout(() => {
+              setIsWaveModalOpen(true);
+            }, 300);
           } else {
+            // Utilisateur gratuit sans plan payant sélectionné : diriger vers son espace
             if (isBiz) {
               router.push("/dashboard?tab=business");
             } else {
@@ -1679,6 +1709,7 @@ export default function HomePage() {
         defaultAccountType={authAccountType}
         defaultPlan={authDefaultPlan}
       />
+
 
       <LiveSocialProofToast />
     </div>

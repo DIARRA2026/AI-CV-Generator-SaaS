@@ -156,6 +156,24 @@ export function getCreditPack(slug: string): CreditPack | null {
   const normalized = SLUG_ALIASES[slug.toLowerCase()] || (slug as PackSlug);
   return ALL_PACKS[normalized] ?? null;
 }
+
+export function getCreditPackByAmount(amount: number): CreditPack | null {
+  if (!amount || amount <= 0) return null;
+  const match = ALL_PACKS_ARRAY.find((p) => p.prixFcfa === amount);
+  return match ?? null;
+}
+
+export const PACK_TO_LEGACY_TIER: Record<string, string> = {
+  decouverte: "free",
+  essentiel: "1500",
+  evolution: "2500",
+  carriere: "5000",
+  revendeur: "cyber15",
+  structure: "enterprise30",
+  business_pro: "enterprise75",
+  licence_etablissement: "enterprise200",
+};
+
 export function getWaveLink(slug: string): string | null {
   return getCreditPack(slug)?.waveLink ?? null;
 }
@@ -182,3 +200,4 @@ export function getPaymentPlanConfig(slug: string) {
 }
 export function getPlanAmount(slug: string): number { return getCreditPack(slug)?.prixFcfa ?? 0; }
 export function getWavePaymentUrl(slug: string): string | null { return getWaveLink(slug); }
+

@@ -1,4 +1,4 @@
-﻿import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
 import { supabaseAdmin } from "./supabaseAdmin";
 import { SoldeCredits, CreditBatchV2, CreditLedgerEntryV2, PaymentClaimV2 } from "./types";
 import { getCreditPack } from "@/config/payments";
@@ -23,9 +23,32 @@ export class CreditService {
     if (!client || !compteId) {
       return { solde: 0, prochaineExpiration: null, nbLots: 0 };
     }
+
+    let resolvedId = compteId.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resolvedId);
+
+    // Si compteId est une adresse email, chercher le profile correspondant
+    if (!isUuid && resolvedId.includes("@")) {
+      try {
+        const { data: prof } = await client
+          .from("profiles")
+          .select("id")
+          .eq("email", resolvedId.toLowerCase())
+          .maybeSingle();
+
+        if (prof?.id) {
+          resolvedId = prof.id;
+        } else {
+          return { solde: 0, prochaineExpiration: null, nbLots: 0 };
+        }
+      } catch {
+        return { solde: 0, prochaineExpiration: null, nbLots: 0 };
+      }
+    }
+
     try {
       const { data } = await client.rpc("solde_credits", {
-        p_compte: compteId,
+        p_compte: resolvedId,
         p_type: compteType,
       });
       if (Array.isArray(data) && data.length > 0) {

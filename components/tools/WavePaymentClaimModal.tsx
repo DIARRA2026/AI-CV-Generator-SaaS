@@ -49,6 +49,7 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState(false);
+  const [isVerifiedImmediate, setIsVerifiedImmediate] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
 
@@ -163,9 +164,12 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
         throw new Error(data.message || data.error || "Erreur lors de l'enregistrement de votre demande.");
       }
 
-      // Synchronisation de l'abonnement localement
+      // Synchronisation de l'abonnement localement selon statut vérifié ou en attente
+      const isVerified = Boolean(data.verified);
+      setIsVerifiedImmediate(isVerified);
+
       StorageManager.setPlanTier(currentPack.code, {
-        status: "active",
+        status: isVerified ? "active" : "pending",
         amount: currentPack.prixFcfa,
         currency: "FCFA",
         paymentMethod: "Wave Côte d'Ivoire",
@@ -243,10 +247,12 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
             </div>
             <div className="space-y-1.5">
               <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                Paiement Enregistré &amp; Lié à Votre Compte !
+                {isVerifiedImmediate ? "Paiement Confirmé & Crédits Débloqués !" : "Paiement Enregistré & En Attente"}
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                Votre transaction pour le pack <strong>{currentPack.label}</strong> ({currentPack.credits} crédits) est validée.
+                {isVerifiedImmediate
+                  ? `Votre transaction pour le pack ${currentPack.label} (${currentPack.credits} crédits) est validée et disponible sur votre compte.`
+                  : `Votre déclaration pour le pack ${currentPack.label} (${currentPack.credits} crédits) est enregistrée. Vos crédits seront effectifs dès que Wave confirmera votre transaction.`}
               </p>
             </div>
 
@@ -272,8 +278,10 @@ export const WavePaymentClaimModal: React.FC<WavePaymentClaimModalProps> = ({
                 <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">{waveReference}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-                <span>Activation :</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Immédiate sur votre compte</span>
+                <span>Statut :</span>
+                <span className={isVerifiedImmediate ? "font-bold text-emerald-600 dark:text-emerald-400" : "font-bold text-amber-600 dark:text-amber-400"}>
+                  {isVerifiedImmediate ? "Immédiat (Crédits alloués)" : "En attente de confirmation Wave"}
+                </span>
               </div>
             </div>
 

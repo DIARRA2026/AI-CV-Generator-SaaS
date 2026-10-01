@@ -362,10 +362,11 @@ export default function DashboardPage() {
       setIsLoadingInvoices(true);
       const allInvoices = await InvoiceService.getAllInvoices();
       const cleanEmail = email.toLowerCase().trim();
+      const cleanUserId = (userId || "").toLowerCase().trim();
       const filtered = allInvoices.filter((inv) => {
         const cEmail = (inv.clientEmail || "").toLowerCase().trim();
         const compId = (inv.compteId || "").toLowerCase().trim();
-        return cEmail === cleanEmail || compId === cleanEmail;
+        return cEmail === cleanEmail || compId === cleanEmail || (cleanUserId && compId === cleanUserId);
       });
       setUserInvoices(filtered);
     } catch (err) {

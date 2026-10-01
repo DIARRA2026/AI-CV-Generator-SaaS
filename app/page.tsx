@@ -200,7 +200,7 @@ export default function HomePage() {
     setIsBusinessAccount(isBiz);
     setCurrentUser(user);
 
-    if (logged && !landingExplicit) {
+    if (logged) {
       if (isBiz) {
         router.replace("/dashboard?tab=business");
         return;
@@ -1706,17 +1706,7 @@ export default function HomePage() {
             return;
           }
 
-          // 2. CAS A : NOUVELLE INSCRIPTION -> Atterrir sur son espace pour créer son CV
-          if (actionType === "register") {
-            if (isBiz) {
-              router.push("/dashboard?tab=business");
-            } else {
-              router.push("/create");
-            }
-            return;
-          }
-
-          // 3. CAS B : CONNEXION / RECONNEXION -> Atterrir sur son espace (Dashboard)
+          // 2. NOUVELLE INSCRIPTION OU CONNEXION -> Atterrir sur le Tableau de Bord
           if (isBiz) {
             router.push("/dashboard?tab=business");
           } else {

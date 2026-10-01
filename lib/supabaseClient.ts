@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
 const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
@@ -44,15 +45,9 @@ const resilientFetch: typeof fetch = async (input, init) => {
   throw lastError;
 };
 
-// Instance singleton client Supabase avec persistance de session et tolérance réseau
+// Instance singleton client Supabase SSR avec gestion transparente des cookies et tolérance réseau
 export const supabase: SupabaseClient | null = isSupabaseConfigured()
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: "moncv_supabase_auth_session",
-      },
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
       global: {
         fetch: resilientFetch,
       },

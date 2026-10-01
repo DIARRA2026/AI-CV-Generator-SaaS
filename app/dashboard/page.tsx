@@ -187,7 +187,9 @@ export default function DashboardPage() {
       }
 
       if (!logged) {
-        setIsAuthOpen(true);
+        setIsAuthOpen(false);
+        router.replace("/login?redirect=/dashboard");
+        return;
       } else {
         setIsAuthOpen(false);
       }
@@ -614,7 +616,7 @@ export default function DashboardPage() {
             <div className="space-y-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsAuthOpen(true)}
+                onClick={() => router.push("/login?redirect=/dashboard")}
                 className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />

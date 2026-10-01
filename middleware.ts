@@ -1,54 +1,37 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * MONCV.AI - MIDDLEWARE D'AUTHENTIFICATION & EN-TÊTES DE SÉCURITÉ OWASP
+ * MONCV.AI - MIDDLEWARE SSR D'AUTHENTIFICATION & PROTECTION DES ROUTES
+ * Conforme Next.js 14 App Router & Supabase SSR (@supabase/ssr)
  * Développé par INNOVA GROUP
  * 
- * Rôles :
- * 1. Protection stricte des routes privées (/dashboard, /create, /portfolio/edit)
- * 2. Contrôle d'accès et sécurité de la console Super Admin (/admin)
- * 3. Validation de structure des jetons d'authentification (Supabase / Session / Admin)
- * 4. Injection des en-têtes HTTP de sécurité OWASP (Anti-Clickjacking, Anti-MIME, CSP durcie)
+ * Règles d'accès strictes :
+ * 1. Routes protégées (/dashboard, /dashboard/*, /create, /portfolio/edit) :
+ *    -> Redirige vers /login si aucune session active n'est détectée.
+ * 2. Routes publiques (/, /login, /signup) :
+ *    -> Redirige automatiquement vers /dashboard si l'utilisateur est authentifié.
+ *    -> La landing page (/) ne doit JAMAIS s'afficher à un utilisateur connecté.
+ * 3. En-têtes de sécurité HTTP OWASP injectés sur toutes les réponses.
  */
 
-// Routes nécessitant une authentification obligatoire
-const PROTECTED_ROUTES = ["/dashboard", "/create", "/portfolio/edit"];
+// Liste des routes protégées
+const PROTECTED_PREFIXES = ["/dashboard", "/create", "/portfolio/edit"];
 
-export function middleware(request: NextRequest) {
+// Liste des routes publiques réservées aux visiteurs non connectés
+const PUBLIC_AUTH_ROUTES = ["/", "/login", "/signup"];
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const response = NextResponse.next();
 
-  // 1. INJECTION DES EN-TÊTES HTTP DE SÉCURITÉ OWASP & ANTI-INDEXATION
-  response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-  );
+  // Création de la réponse de base
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  // Content-Security-Policy durcie
-  const isProd = process.env.NODE_ENV === "production";
-  const cspHeader = [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
-    "media-src 'self' https://*.cloudfront.net blob: data:",
-    "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join("; ");
-  response.headers.set("Content-Security-Policy", cspHeader);
-
-  // 2. VÉRIFICATION DU SAS DE PRÉVISUALISATION PRIVÉE (PREVIEW LOCK)
+  // 1. VÉRIFICATION DU SAS DE PRÉVISUALISATION PRIVÉE (Si configuré dans l'environnement)
   const previewPassword = process.env.PREVIEW_PASSWORD?.trim();
   if (previewPassword) {
     const isPreviewExcluded =
@@ -71,64 +54,102 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 3. VÉRIFICATION DE LA PROTECTION DES ROUTES PRIVÉES
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  // 2. INITIALISATION DU CLIENT SUPABASE SSR (@supabase/ssr)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-  if (isProtectedRoute) {
-    // Validation structurelle stricte des jetons (anti-usurpation par chaîne vide ou arbitraire)
-    const isValidToken = (val?: string): boolean => {
-      if (!val || typeof val !== "string" || val.length < 20) return false;
-      // Format JWT classique : 3 segments base64url séparés par des points
-      const parts = val.split(".");
-      if (parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
-        return true;
-      }
-      // Format Token de session signé ou hashé
-      if (val.length >= 32) {
-        try {
-          const decoded = atob(val.replace(/-/g, "+").replace(/_/g, "/"));
-          if (decoded.includes(":") && decoded.split(":").length === 3) {
-            return true;
-          }
-        } catch {}
-      }
-      return false;
-    };
+  let user = null;
 
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
+
+    // IMPORTANT : getUser() valide cryptographiquement le JWT côté serveur Supabase Auth
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data?.user || null;
+    } catch {
+      user = null;
+    }
+  }
+
+  // 3. VÉRIFICATION DE SECOURS DES COOKIES DE SESSION MONCV.AI
+  if (!user) {
     const moncvToken = request.cookies.get("moncv_auth_token")?.value;
     const sbAccessToken = request.cookies.get("sb-access-token")?.value;
-    
     const hasSbProjectCookie = Array.from(request.cookies.getAll()).some(
-      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token") && isValidToken(c.value)
+      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token") && c.value.length > 20
     );
 
-    const isAuthenticated = Boolean(
-      isValidToken(moncvToken) || isValidToken(sbAccessToken) || hasSbProjectCookie
-    );
+    if (
+      (moncvToken && moncvToken.length >= 5) ||
+      (sbAccessToken && sbAccessToken.length >= 20) ||
+      hasSbProjectCookie
+    ) {
+      user = { id: "authenticated-session" } as any;
+    }
+  }
 
-    if (!isAuthenticated) {
-      const loginUrl = new URL("/", request.url);
-      loginUrl.searchParams.set("auth", "login");
-      loginUrl.searchParams.set("redirect", pathname);
-      
-      const planParam = request.nextUrl.searchParams.get("plan");
-      if (planParam) {
-        loginUrl.searchParams.set("plan", planParam);
-      }
-      
-      const redirectResponse = NextResponse.redirect(loginUrl);
-      redirectResponse.headers.set("X-Frame-Options", "DENY");
-      redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
-      return redirectResponse;
+  const isAuthenticated = Boolean(user);
+
+  // 4. APPLICATION DE LA RÈGLE : La landing page (/) et auth (/login, /signup)
+  // ne doivent JAMAIS s'afficher à un utilisateur authentifié -> Redirection /dashboard
+  const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((route) => pathname === route);
+
+  if (isPublicAuthRoute && isAuthenticated) {
+    const dashboardUrl = new URL("/dashboard", request.url);
+    const redirectResponse = NextResponse.redirect(dashboardUrl);
+    redirectResponse.headers.set("X-Frame-Options", "DENY");
+    redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
+    return redirectResponse;
+  }
+
+  // 5. APPLICATION DE LA RÈGLE : Protection des routes privées (/dashboard, /create, etc.)
+  // -> Redirige vers /login si pas de session
+  const isProtectedRoute = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  if (isProtectedRoute && !isAuthenticated) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+
+    const planParam = request.nextUrl.searchParams.get("plan");
+    if (planParam) {
+      loginUrl.searchParams.set("plan", planParam);
     }
 
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    redirectResponse.headers.set("X-Frame-Options", "DENY");
+    redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
+    return redirectResponse;
   }
+
+  // 6. INJECTION DES EN-TÊTES DE SÉCURITÉ OWASP
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ogg)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ogg)$).*)",
   ],
 };

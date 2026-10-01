@@ -1,12 +1,12 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
 
 export const dynamic = "force-dynamic";
 
 /**
- * ROUTE HANDLER : CONFIRMATION D'EMAIL & RÉCUPÉRATION SUPABASE
- * GET /auth/confirm?token_hash=...&type=signup|recovery&next=/
+ * ROUTE HANDLER : CONFIRMATION D'EMAIL & RÉCUPÉRATION SUPABASE SSR
+ * GET /auth/confirm?token_hash=...&type=signup|recovery&next=/dashboard
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,23 +14,35 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("token");
   const code = searchParams.get("code");
   const type = (searchParams.get("type") as EmailOtpType) || "signup";
-  const defaultNext = type === "recovery" ? "/auth/reset-password" : "/create";
+  const defaultNext = type === "recovery" ? "/auth/reset-password" : "/dashboard";
   const rawNext = searchParams.get("next");
   const next = !rawNext || rawNext === "/" ? defaultNext : rawNext;
-
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseKey) {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const dest = type === "recovery" ? "/auth/reset-password" : `${next}?confirmed=true`;
+    let response = NextResponse.redirect(new URL(dest, request.url));
+
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
 
     // 1. Gestion du flux PKCE avec code d'autorisation
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (!error) {
-        const dest = type === "recovery" ? "/auth/reset-password" : `${next}?confirmed=true`;
-        return NextResponse.redirect(new URL(dest, request.url));
+        return response;
       }
     }
 
@@ -42,8 +54,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (!error) {
-        const dest = type === "recovery" ? "/auth/reset-password" : `${next}?confirmed=true`;
-        return NextResponse.redirect(new URL(dest, request.url));
+        return response;
       }
     } else if (token) {
       // 3. Gestion avec token brut + email
@@ -56,8 +67,7 @@ export async function GET(request: NextRequest) {
         });
 
         if (!error) {
-          const dest = type === "recovery" ? "/auth/reset-password" : `${next}?confirmed=true`;
-          return NextResponse.redirect(new URL(dest, request.url));
+          return response;
         }
       }
     }

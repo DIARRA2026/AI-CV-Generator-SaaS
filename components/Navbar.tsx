@@ -15,12 +15,13 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface NavbarProps {
   onOpenPayment?: (plan?: PlanTier) => void;
-  onOpenAuth?: () => void;
+  onOpenAuth?: (mode?: "login" | "register") => void;
   isEnterprisePage?: boolean;
   isEditorPage?: boolean;
   onCandidatePoolClick?: () => void;
   candidateCount?: number;
 }
+
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenPayment,
@@ -153,13 +154,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (StorageManager.isLoggedIn()) {
       router.push("/dashboard?new=true");
     } else if (onOpenAuth) {
-      onOpenAuth();
+      onOpenAuth("register");
     } else {
       setAuthMode("register");
-      setTargetRedirect("/dashboard?new=true");
+      setTargetRedirect("/create");
       setIsAuthOpen(true);
     }
   };
+
 
   // Fermer le menu déroulant lors d'un clic extérieur
   useEffect(() => {
@@ -356,15 +358,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={() => {
                     if (onOpenAuth) {
-                      onOpenAuth();
+                      onOpenAuth("login");
                     } else {
                       setAuthMode("login");
+                      setTargetRedirect("/dashboard");
                       setIsAuthOpen(true);
                     }
                   }}
                   className="px-3 py-2 text-xs lg:text-sm font-semibold text-slate-700 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-all cursor-pointer btn-press"
                   title="Se connecter"
                 >
+
                   {dict.auth.loginTab || "Connexion"}
                 </button>
 
@@ -644,8 +648,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       onClick={() => {
                         setIsMobileDrawerOpen(false);
-                        setAuthMode("login");
-                        setIsAuthOpen(true);
+                        if (onOpenAuth) {
+                          onOpenAuth("login");
+                        } else {
+                          setAuthMode("login");
+                          setTargetRedirect("/dashboard");
+                          setIsAuthOpen(true);
+                        }
                       }}
                       className="py-2 px-3 text-center text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl cursor-pointer btn-press"
                     >
@@ -654,13 +663,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       onClick={() => {
                         setIsMobileDrawerOpen(false);
-                        setAuthMode("register");
-                        setIsAuthOpen(true);
+                        if (onOpenAuth) {
+                          onOpenAuth("register");
+                        } else {
+                          setAuthMode("register");
+                          setTargetRedirect("/create");
+                          setIsAuthOpen(true);
+                        }
                       }}
                       className="py-2 px-3 text-center text-xs font-bold text-white bg-blue-600 rounded-xl cursor-pointer btn-press shadow-xs"
                     >
                       {dict.auth.registerTab}
                     </button>
+
                   </div>
                 </div>
               )}
@@ -910,22 +925,26 @@ export const Navbar: React.FC<NavbarProps> = ({
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onSuccess={(chosenPlan) => {
+        onSuccess={(chosenPlan, actionType) => {
           setIsAuthOpen(false);
           const u = StorageManager.getUser();
           setCurrentUser(u);
-          if (chosenPlan && chosenPlan !== "free" && onOpenPayment) {
-            onOpenPayment(chosenPlan);
+          const pending = StorageManager.getPendingCheckoutPlan();
+          if (pending && pending.plan && pending.plan !== "free" && onOpenPayment) {
+            onOpenPayment(pending.plan);
+            return;
+          }
+          if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
+            router.push("/dashboard?tab=business");
+          } else if (actionType === "register") {
+            router.push("/create");
           } else {
-            if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
-              router.push("/dashboard?tab=business");
-            } else {
-              router.push(targetRedirect || "/dashboard");
-            }
+            router.push(targetRedirect || "/dashboard");
           }
         }}
         defaultMode={authMode}
       />
+
 
       {/* Modale Paramètres de Compte Client */}
       <AccountSettingsModal

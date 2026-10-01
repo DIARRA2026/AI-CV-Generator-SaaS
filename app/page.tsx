@@ -79,7 +79,9 @@ export default function HomePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
   const [authDefaultPlan, setAuthDefaultPlan] = useState<PlanTier>("free");
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [activeTemplate, setActiveTemplate] = useState("modern");
+
   const [previewModalProfile, setPreviewModalProfile] = useState<DemoProfileConfig | null>(null);
   const [activeColor, setActiveColor] = useState("#2563eb");
   const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -320,8 +322,14 @@ export default function HomePage() {
           setSelectedWavePack(pending.plan);
           setIsWaveModalOpen(true);
         }, 500);
+      } else {
+        // Redirection directe du nouvel inscrit vers son espace pour créer son CV
+        setTimeout(() => {
+          router.push("/create?confirmed=true");
+        }, 600);
       }
     };
+
 
 
     processConfirmedAuth();
@@ -333,8 +341,12 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-600 selection:text-white font-sans overflow-x-hidden">
       <Navbar
         onOpenPayment={() => handleSelectWavePack("carriere")}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={(mode) => {
+          setAuthMode(mode || "login");
+          setIsAuthOpen(true);
+        }}
       />
+
 
       {/* Bannière de confirmation d'email réussie */}
       {showConfirmedBanner && (
@@ -1683,32 +1695,39 @@ export default function HomePage() {
 
           // 1. Reprendre automatiquement la formule sélectionnée avant l'inscription/connexion
           const pending = StorageManager.getPendingCheckoutPlan();
-          const targetPlan =
-            pending?.plan && pending.plan !== "free"
-              ? pending.plan
-              : chosenPlan && chosenPlan !== "free"
-              ? chosenPlan
-              : null;
+          const hasExplicitPaidPlan = Boolean(pending?.plan && pending.plan !== "free");
 
-          if (targetPlan) {
+          if (hasExplicitPaidPlan && pending) {
             // L'utilisateur a choisi une formule : ouvrir immédiatement le paiement Wave pour son compte
-            setSelectedWavePack(targetPlan);
+            setSelectedWavePack(pending.plan);
             setTimeout(() => {
               setIsWaveModalOpen(true);
             }, 300);
-          } else {
-            // Utilisateur gratuit sans plan payant sélectionné : diriger vers son espace
+            return;
+          }
+
+          // 2. CAS A : NOUVELLE INSCRIPTION -> Atterrir sur son espace pour créer son CV
+          if (actionType === "register") {
             if (isBiz) {
               router.push("/dashboard?tab=business");
             } else {
-              router.push("/dashboard");
+              router.push("/create");
             }
+            return;
+          }
+
+          // 3. CAS B : CONNEXION / RECONNEXION -> Atterrir sur son espace (Dashboard)
+          if (isBiz) {
+            router.push("/dashboard?tab=business");
+          } else {
+            router.push("/dashboard");
           }
         }}
-        defaultMode="register"
+        defaultMode={authMode}
         defaultAccountType={authAccountType}
         defaultPlan={authDefaultPlan}
       />
+
 
 
       <LiveSocialProofToast />

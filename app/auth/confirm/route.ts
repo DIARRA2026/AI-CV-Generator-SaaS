@@ -14,8 +14,10 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("token");
   const code = searchParams.get("code");
   const type = (searchParams.get("type") as EmailOtpType) || "signup";
-  const defaultNext = type === "recovery" ? "/auth/reset-password" : "/";
-  const next = searchParams.get("next") ?? defaultNext;
+  const defaultNext = type === "recovery" ? "/auth/reset-password" : "/create";
+  const rawNext = searchParams.get("next");
+  const next = !rawNext || rawNext === "/" ? defaultNext : rawNext;
+
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

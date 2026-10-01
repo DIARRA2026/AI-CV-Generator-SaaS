@@ -232,9 +232,10 @@ export const AuthModal: React.FC<Props> = ({
         }
         setTimeout(() => {
           setEmailVerificationPending(null);
-          onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
+          onSuccess(res.planTier || StorageManager.getPlanTier(), "register");
           onClose();
         }, 600);
+
       }
     }, 3500);
 
@@ -450,7 +451,7 @@ export const AuthModal: React.FC<Props> = ({
 
     await new Promise((r) => setTimeout(r, 600));
     setEmailVerificationPending(null);
-    onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
+    onSuccess(res.planTier || StorageManager.getPlanTier(), "register");
     onClose();
   };
 
@@ -473,9 +474,10 @@ export const AuthModal: React.FC<Props> = ({
       }
       await new Promise((r) => setTimeout(r, 600));
       setEmailVerificationPending(null);
-      onSuccess(res.planTier || StorageManager.getPlanTier(), "login");
+      onSuccess(res.planTier || StorageManager.getPlanTier(), "register");
       onClose();
     } else {
+
       setOtpError(
         res.message ||
           "Votre adresse email n'est pas encore activée. Veuillez ouvrir votre boîte mail, cliquer sur le lien de confirmation reçu, puis réessayez."

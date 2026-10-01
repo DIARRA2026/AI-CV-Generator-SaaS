@@ -507,7 +507,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer btn-press"
                       >
                         <Crown className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>Recharger des crédits Wave</span>
+                        <span>Formules & Abonnements</span>
                       </Link>
 
                       <button
@@ -793,10 +793,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <Crown className="w-4 h-4 text-amber-500" />
-                      <span>Tarifs & Packs Wave</span>
+                      <span>Tarifs & Formules</span>
                     </div>
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Sans abonnement
+                      Mobile Money & Carte
                     </span>
                   </Link>
 

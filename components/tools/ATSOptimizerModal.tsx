@@ -30,7 +30,14 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
   const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handlePromptAnalyze = async () => {
     if (!jobText.trim()) return;
@@ -93,14 +100,7 @@ export const ATSOptimizerModal: React.FC<ATSOptimizerModalProps> = ({
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  if (!isOpen) return null;
 
   return (
     <div

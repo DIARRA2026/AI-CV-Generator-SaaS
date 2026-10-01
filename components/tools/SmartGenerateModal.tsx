@@ -62,8 +62,6 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
   const [country, setCountry] = useState("Côte d'Ivoire");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  if (!isOpen) return null;
-
   const COLORS = [
     "#2563eb", "#7c3aed", "#0f172a", "#1e3a8a",
     "#059669", "#dc2626", "#b45309", "#0e7490",
@@ -134,6 +132,8 @@ export const SmartGenerateModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div

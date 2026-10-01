@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { LiveSocialProofToast } from "@/components/tools/LiveSocialProofToast";
 import { PlanTier, AccountType } from "@/lib/types";
@@ -73,8 +73,8 @@ const COLOR_PALETTE = [
 ];
 
 export default function HomePage() {
-  const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
-  const [selectedWavePack, setSelectedWavePack] = useState<string>("carriere");
+  const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
+  const [selectedPack, setSelectedPack] = useState<string>("pro");
   const [pricingTab, setPricingTab] = useState<"particuliers" | "entreprises">("particuliers");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authAccountType, setAuthAccountType] = useState<AccountType>("candidate");
@@ -258,21 +258,21 @@ export default function HomePage() {
     setIsAuthOpen(true);
   };
 
-  const handleSelectWavePack = (packCode: string) => {
+  const handleSelectPack = (packCode: string) => {
     const isAuth = StorageManager.isLoggedIn();
     if (!isAuth) {
       // 1. Sauvegarder la formule choisie pour ne pas la perdre après l'inscription
       StorageManager.setPendingCheckoutPlan(packCode as PlanTier, true);
       setAuthDefaultPlan(packCode as PlanTier);
-      setSelectedWavePack(packCode);
+      setSelectedPack(packCode);
       // 2. Ouvrir la modale d'inscription / connexion
       setIsAuthOpen(true);
       return;
     }
 
-    // 3. Utilisateur déjà authentifié : passer directement à l'étape de paiement
-    setSelectedWavePack(packCode);
-    setIsWaveModalOpen(true);
+    // 3. Utilisateur déjà authentifié : passer directement à l'étape de paiement KKiaPay
+    setSelectedPack(packCode);
+    setIsKKiaPayModalOpen(true);
   };
 
   // Traitement automatique au retour de confirmation d'email (lien Supabase /auth/confirm?next=/?confirmed=true)
@@ -289,7 +289,7 @@ export default function HomePage() {
     if (planParam) {
       StorageManager.setPendingCheckoutPlan(planParam as PlanTier, true);
       setAuthDefaultPlan(planParam as PlanTier);
-      setSelectedWavePack(planParam);
+      setSelectedPack(planParam);
     }
 
     if (authParam === "register" || authParam === "login") {
@@ -315,12 +315,12 @@ export default function HomePage() {
         }
       }
 
-      // Reprendre automatiquement un paiement Wave qui attendait la validation du compte
+      // Reprendre automatiquement un paiement KKiaPay qui attendait la validation du compte
       const pending = StorageManager.getPendingCheckoutPlan();
       if (pending && pending.plan && pending.plan !== "free") {
         setTimeout(() => {
-          setSelectedWavePack(pending.plan);
-          setIsWaveModalOpen(true);
+          setSelectedPack(pending.plan);
+          setIsKKiaPayModalOpen(true);
         }, 500);
       } else {
         // Redirection directe du nouvel inscrit vers son espace pour créer son CV
@@ -340,7 +340,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-600 selection:text-white font-sans overflow-x-hidden">
       <Navbar
-        onOpenPayment={() => handleSelectWavePack("carriere")}
+        onOpenPayment={() => handleSelectPack("pro")}
         onOpenAuth={(mode) => {
           setAuthMode(mode || "login");
           setIsAuthOpen(true);
@@ -443,7 +443,7 @@ export default function HomePage() {
 
             {/* Sous-titre */}
             <p className="mt-4 text-xs sm:text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal text-center px-1">
-              Créez, modifiez et téléchargez vos CVs en PDF HD et Word DOCX gratuitement et sans filigrane. Boostez vos chances d'embauche avec l'IA grâce à nos crédits prépayés rechargeables par Mobile Money (Wave, Orange Money) — zéro abonnement, zéro engagement.
+              Créez, modifiez et téléchargez vos CVs aux formats officiels PDF et Word (.docx). Boostez vos chances d'embauche avec l'IA (STAR & score ATS) grâce à nos formules flexibles réglables par Mobile Money (Wave, MTN, Orange, Moov) et Carte Bancaire.
             </p>
 
             {/* CTAs d'action */}
@@ -525,7 +525,7 @@ export default function HomePage() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
-                  <span>Paiement Wave sans abonnement</span>
+                  <span>Paiement Mobile Money Sécurisé (KKiaPay)</span>
                 </span>
               </div>
             </div>
@@ -1336,7 +1336,7 @@ export default function HomePage() {
         {/* 6. TARIFS : PACKS DE CRÉDITS PRÉPAYÉS & ZÉRO ABONNEMENT */}
         {/* ========================================================================= */}
         <LandingPricingSection
-          onSelectPack={(slug) => handleSelectWavePack(slug)}
+          onSelectPack={(slug) => handleSelectPack(slug)}
           onStartCreation={handleStartCreation}
         />
 
@@ -1418,7 +1418,7 @@ export default function HomePage() {
         {/* 8-BIS. SECTION OFFRES BUSINESS & ENTREPRISES */}
         {/* ========================================================================= */}
         <LandingBusinessSection
-          onSelectPack={(slug) => handleSelectWavePack(slug)}
+          onSelectPack={(slug) => handleSelectPack(slug)}
           onOpenBusinessAuth={handleOpenBusinessAuth}
         />
 
@@ -1662,20 +1662,20 @@ export default function HomePage() {
         }}
       />
 
-      <WavePaymentClaimModal
-        isOpen={isWaveModalOpen}
-        onClose={() => setIsWaveModalOpen(false)}
-        defaultPackCode={selectedWavePack}
-        onNeedAuth={(pack) => {
-          setIsWaveModalOpen(false);
-          StorageManager.setPendingCheckoutPlan(pack as PlanTier, true);
-          setAuthDefaultPlan(pack as PlanTier);
+      <KKiaPayWidgetModal
+        isOpen={isKKiaPayModalOpen}
+        onClose={() => setIsKKiaPayModalOpen(false)}
+        planId={selectedPack}
+        onNeedAuth={(plan) => {
+          setIsKKiaPayModalOpen(false);
+          StorageManager.setPendingCheckoutPlan(plan as PlanTier, true);
+          setAuthDefaultPlan(plan as PlanTier);
           setIsAuthOpen(true);
         }}
-        onSuccess={() => {
-          setIsWaveModalOpen(false);
+        onSuccess={(confirmedPlanId) => {
+          setIsKKiaPayModalOpen(false);
           StorageManager.clearPendingCheckoutPlan();
-          router.push(`/dashboard?payment=success&pack=${selectedWavePack}`);
+          router.push(`/dashboard?payment=success&plan=${confirmedPlanId || selectedPack}`);
         }}
       />
 
@@ -1698,10 +1698,10 @@ export default function HomePage() {
           const hasExplicitPaidPlan = Boolean(pending?.plan && pending.plan !== "free");
 
           if (hasExplicitPaidPlan && pending) {
-            // L'utilisateur a choisi une formule : ouvrir immédiatement le paiement Wave pour son compte
-            setSelectedWavePack(pending.plan);
+            // L'utilisateur a choisi une formule : ouvrir immédiatement le paiement KKiaPay pour son compte
+            setSelectedPack(pending.plan);
             setTimeout(() => {
-              setIsWaveModalOpen(true);
+              setIsKKiaPayModalOpen(true);
             }, 300);
             return;
           }

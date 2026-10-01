@@ -129,8 +129,6 @@ export const AccountSettingsModal: React.FC<Props> = ({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   // Handle Logo Upload
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -263,6 +261,8 @@ export const AccountSettingsModal: React.FC<Props> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   const initials = `${firstName ? firstName[0] : "U"}${lastName ? lastName[0] : ""}`.toUpperCase();
 

@@ -20,8 +20,6 @@ export const ScanConvertModal: React.FC<Props> = ({ isOpen, onClose, resumeData 
   const [isDone, setIsDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
-
   const handleFile = (file: File) => {
     if (file) {
       setSelectedFile(file);
@@ -160,6 +158,8 @@ export const ScanConvertModal: React.FC<Props> = ({ isOpen, onClose, resumeData 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div

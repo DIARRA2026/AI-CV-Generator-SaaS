@@ -36,11 +36,12 @@ import { CountryCityPicker } from "@/components/tools/CountryCityPicker";
 
 export const JobApplicationModal: React.FC<Props> = ({ isOpen, onClose, resumeData }) => {
   const p = resumeData?.personal || ({} as any);
+  const pCountry = resumeData?.personal?.country;
 
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [companyCity, setCompanyCity] = useState("");
-  const [country, setCountry] = useState(p.country || "Côte d'Ivoire");
+  const [country, setCountry] = useState(pCountry || "Côte d'Ivoire");
   const [destinataire, setDestinataire] = useState(DESTINATAIRES[2]);
   const [jobDescription, setJobDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -49,11 +50,9 @@ export const JobApplicationModal: React.FC<Props> = ({ isOpen, onClose, resumeDa
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
-    setCountry(p.country || "Côte d'Ivoire");
+    setCountry(pCountry || "Côte d'Ivoire");
     setLetter("");
-  }, [p]);
-
-  if (!isOpen) return null;
+  }, [pCountry]);
 
   const canGenerate = jobTitle.trim() && company.trim();
 
@@ -209,6 +208,8 @@ Veuillez agréer, ${civilite} l'expression de mes salutations distinguées.
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div

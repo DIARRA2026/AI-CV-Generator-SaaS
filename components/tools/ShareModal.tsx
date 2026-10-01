@@ -37,8 +37,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
   }, [resumeData.slug, resumeData.id, isOpen]);
 
-  if (!isOpen) return null;
-
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl);
     setIsCopied(true);
@@ -61,6 +59,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div

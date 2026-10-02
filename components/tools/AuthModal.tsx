@@ -42,67 +42,90 @@ export interface PlanOption {
   highlight: boolean;
 }
 
+export function normalizePlanId(planId?: string | null): PlanTier {
+  if (!planId) return "free";
+  const p = planId.toLowerCase().trim();
+  if (p === "decouverte" || p === "free" || p === "0") return "free";
+  if (p === "essentiel" || p === "1500") return "1500";
+  if (p === "pro" || p === "2500" || p === "evolution") return "2500";
+  if (p === "vip" || p === "5000" || p === "carriere") return "5000";
+  if (p === "revendeur" || p === "cyber15" || p === "10000") return "cyber15";
+  if (p === "structure" || p === "enterprise30" || p === "25000") return "enterprise30";
+  if (p === "business_pro" || p === "enterprise75" || p === "60000") return "enterprise75";
+  if (p === "licence_etablissement" || p === "enterprise200" || p === "150000") return "enterprise200";
+  return "free";
+}
+
 export const CANDIDATE_PLANS: PlanOption[] = [
   {
     id: "free",
     name: "Formule Découverte",
     price: "0 FCFA",
-    badge: "Accès Libre",
-    desc: "Assistant IA inclus, prévisualisation en direct avec filigrane, sans carte bancaire.",
+    badge: "30 Crédits",
+    desc: "30 crédits IA offerts • Exports PDF & Word illimités sans filigrane • Création manuelle illimitée.",
     highlight: false,
   },
   {
     id: "1500",
     name: "Pack Essentiel",
     price: "1 500 FCFA",
-    badge: "1 Candidat",
-    desc: "Export PDF HD vectoriel sans filigrane + Téléchargements PDF & Word illimités.",
+    badge: "120 Crédits",
+    desc: "120 crédits IA valables 30 jours • 12 CV complets ou 24 lettres de motivation • Facture OHADA.",
     highlight: false,
   },
   {
     id: "2500",
-    name: "Pack Candidature Pro",
+    name: "Pack Pro",
     price: "2 500 FCFA",
     badge: "Recommandé ★",
-    desc: "CV sans filigrane + Lettre de motivation IA + Demande d'emploi officielle (jusqu'à 2 profils).",
+    desc: "250 crédits IA valables 30 jours • 25 CV complets ou 50 lettres • Traductions Anglais incluses.",
     highlight: true,
   },
   {
     id: "5000",
     name: "Pack VIP & Portfolio",
     price: "5 000 FCFA",
-    badge: "Prestige VIP",
-    desc: "Tous les outils débloqués + Site Web Portfolio en ligne avec QR Code HD (4 profils).",
+    badge: "600 Crédits",
+    desc: "600 crédits IA valables 30 jours • Portfolio Web en ligne avec QR Code • Photo IA de profil.",
     highlight: false,
   },
 ];
 
 export const BUSINESS_PLANS: (PlanOption & { perProfile?: string })[] = [
   {
+    id: "cyber15",
+    name: "Pack Revendeur",
+    price: "10 000 FCFA",
+    perProfile: "6,67 F / crédit",
+    badge: "1 500 Crédits",
+    desc: "1 500 crédits valables 12 mois • Agence RH, cabinet & point de vente • Facture normalisée OHADA.",
+    highlight: false,
+  },
+  {
     id: "enterprise30",
-    name: "Pack Starter PME",
-    price: "20 000 FCFA",
-    perProfile: "~667 F / profil",
-    badge: "30 Candidats",
-    desc: "Idéal pour petites structures, startups & promotions de 20-30 apprenants (30 profils complets débloqués).",
+    name: "Pack Structure",
+    price: "25 000 FCFA",
+    perProfile: "5,00 F / crédit",
+    badge: "5 000 Crédits",
+    desc: "5 000 crédits valables 12 mois • 3 utilisateurs simultanés • PME, ONG & centres de formation.",
     highlight: false,
   },
   {
     id: "enterprise75",
     name: "Pack Business Pro",
-    price: "45 000 FCFA",
-    perProfile: "600 F / profil",
+    price: "60 000 FCFA",
+    perProfile: "4,00 F / crédit",
     badge: "Recommandé ★",
-    desc: "La formule reine pour cabinets de recrutement, agences d'intérim & DRH actives (75 profils complets).",
+    desc: "15 000 crédits valables 12 mois • 10 utilisateurs simultanés • Import lot CSV • Support prioritaire.",
     highlight: true,
   },
   {
     id: "enterprise200",
-    name: "Pack Entreprise Premium",
-    price: "100 000 FCFA",
-    perProfile: "500 F / profil (-67%)",
-    badge: "200 Candidats",
-    desc: "Pour grandes entreprises, ONG internationales, universités & réseaux de cybercafés (200 profils complets).",
+    name: "Licence Établissement",
+    price: "150 000 FCFA",
+    perProfile: "3,00 F / crédit",
+    badge: "50 000 Crédits",
+    desc: "50 000 crédits valables 12 mois • Utilisateurs illimités • Grandes écoles, universités & réseaux.",
     highlight: false,
   },
 ];
@@ -120,10 +143,23 @@ export const AuthModal: React.FC<Props> = ({
   isOpen, onClose, onSuccess, defaultMode = "register", defaultAccountType = "candidate", defaultPlan = "free",
 }) => {
   const [mode, setMode] = useState<"login" | "register" | "forgot">(defaultMode);
-  const [accountType, setAccountType] = useState<AccountType>(defaultAccountType);
-  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(
-    defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free")
-  );
+  const [accountType, setAccountType] = useState<AccountType>(() => {
+    if (defaultAccountType === "business") return "business";
+    const pending = typeof window !== "undefined" ? StorageManager.getPendingCheckoutPlan()?.plan : null;
+    const planToUse = (defaultPlan && defaultPlan !== "free" ? defaultPlan : null) || pending;
+    if (planToUse) {
+      const norm = normalizePlanId(planToUse);
+      if (["cyber15", "enterprise30", "enterprise75", "enterprise200"].includes(norm)) {
+        return "business";
+      }
+    }
+    return defaultAccountType || "candidate";
+  });
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(() => {
+    const pending = typeof window !== "undefined" ? StorageManager.getPendingCheckoutPlan()?.plan : null;
+    const planToUse = (defaultPlan && defaultPlan !== "free" ? defaultPlan : null) || pending || defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free");
+    return normalizePlanId(planToUse);
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -266,8 +302,18 @@ export const AuthModal: React.FC<Props> = ({
       setConfirmNewPassword("");
       setCountry("Côte d'Ivoire");
       setCity("");
-      setAccountType(defaultAccountType || "candidate");
-      setSelectedPlan(defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free"));
+      const pending = typeof window !== "undefined" ? StorageManager.getPendingCheckoutPlan()?.plan : null;
+      const planToSet = (defaultPlan && defaultPlan !== "free" ? defaultPlan : null) || pending || defaultPlan || (defaultAccountType === "business" ? "enterprise75" : "free");
+      const normalizedPlan = normalizePlanId(planToSet);
+      setSelectedPlan(normalizedPlan);
+      if (
+        defaultAccountType === "business" ||
+        ["cyber15", "enterprise30", "enterprise75", "enterprise200"].includes(normalizedPlan)
+      ) {
+        setAccountType("business");
+      } else {
+        setAccountType(defaultAccountType || "candidate");
+      }
       setCompanyName("");
       setCompanyType("Cabinet de Recrutement");
       setManagerRole("Responsable RH / Recrutement");
@@ -928,7 +974,9 @@ export const AuthModal: React.FC<Props> = ({
   }
 
   const activePlans = accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS;
-  const currentPlan = activePlans.find((p) => p.id === selectedPlan) || activePlans[0];
+  const currentPlan =
+    activePlans.find((p) => normalizePlanId(p.id) === normalizePlanId(selectedPlan)) ||
+    activePlans[0];
 
   return (
     <div
@@ -1036,12 +1084,12 @@ export const AuthModal: React.FC<Props> = ({
                   Pack {getCreditPack(selectedPlan)?.label || selectedPlan} sélectionné
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  Créez votre compte pour continuer vers le paiement sécurisé KKiaPay
+                  {getCreditPack(selectedPlan)?.credits || 250} crédits IA ({accountType === "business" ? "12 mois" : "30 jours"}) • Règlement sécurisé KKiaPay
                 </span>
               </div>
             </div>
             <span className="font-black text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded text-[11px] shrink-0">
-              {(getCreditPack(selectedPlan)?.prixFcfa || 0).toLocaleString("fr-FR")} F
+              {(getCreditPack(selectedPlan)?.prixFcfa || 0).toLocaleString("fr-FR")} FCFA
             </span>
           </div>
         )}
@@ -1168,7 +1216,7 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("candidate");
-                      if (selectedPlan.startsWith("enterprise")) {
+                      if (selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15") {
                         setSelectedPlan("free");
                       }
                       setErrors({});
@@ -1187,7 +1235,7 @@ export const AuthModal: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       setAccountType("business");
-                      if (!selectedPlan.startsWith("enterprise")) {
+                      if (!selectedPlan.startsWith("enterprise") && selectedPlan !== "cyber15") {
                         setSelectedPlan("enterprise75");
                       }
                       setErrors({});
@@ -1218,9 +1266,9 @@ export const AuthModal: React.FC<Props> = ({
                     </span>
                   </div>
 
-                  <div className={`grid gap-2 ${accountType === "business" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                     {(accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS).map((p) => {
-                      const isSelected = selectedPlan === p.id;
+                      const isSelected = normalizePlanId(selectedPlan) === normalizePlanId(p.id);
                       return (
                         <div
                           key={p.id}
@@ -1247,7 +1295,7 @@ export const AuthModal: React.FC<Props> = ({
                                 >
                                   {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                 </div>
-                                <span className="text-[11px] font-black text-slate-900 truncate">
+                                <span className="text-[11px] font-black text-slate-900 leading-tight">
                                   {p.name}
                                 </span>
                               </div>

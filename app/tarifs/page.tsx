@@ -28,6 +28,22 @@ export default function TarifsPage() {
       } else if (hash === "#particuliers") {
         setActiveTab("particuliers");
       }
+
+      const params = new URLSearchParams(window.location.search);
+      const checkout = params.get("checkout") || params.get("plan");
+      if (checkout && checkout !== "free" && checkout !== "decouverte") {
+        setSelectedPackCode(checkout);
+        if (checkout === "revendeur" || checkout === "structure" || checkout === "business_pro" || checkout === "licence_etablissement") {
+          setActiveTab("entreprises");
+        }
+        const isAuth = StorageManager.isLoggedIn();
+        if (isAuth) {
+          setIsKKiaPayModalOpen(true);
+        } else {
+          StorageManager.setPendingCheckoutPlan(checkout as any, true);
+          setIsAuthOpen(true);
+        }
+      }
     }
   }, []);
 
@@ -352,6 +368,13 @@ export default function TarifsPage() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
+        defaultMode="register"
+        defaultAccountType={
+          activeTab === "entreprises" ||
+          ["revendeur", "structure", "business_pro", "licence_etablissement"].includes(selectedPackCode)
+            ? "business"
+            : "candidate"
+        }
         defaultPlan={selectedPackCode as any}
         onSuccess={(chosenPlan) => {
           setIsAuthOpen(false);

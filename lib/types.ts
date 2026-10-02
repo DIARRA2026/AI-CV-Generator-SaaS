@@ -98,7 +98,15 @@ export interface BusinessProfile {
   logoUrl?: string;
 }
 
-export type PlanTier = "free" | "1500" | "2500" | "5000" | "cyber15" | "enterprise30" | "enterprise75" | "enterprise200";
+export type PlanTier =
+  | "free"
+  | "1500"
+  | "2500"
+  | "5000"
+  | "cyber15"
+  | "enterprise30"
+  | "enterprise75"
+  | "enterprise200";
 
 export type SubscriptionStatus = "pending" | "active" | "cancelled" | "expired";
 
@@ -258,7 +266,7 @@ export interface SystemMetricSummary {
   paidUsersCount: number;
   conversionRate: number; // en %
   totalRevenueFcfa: number;
-  revenueByPlan: Record<PlanTier, { count: number; revenueFcfa: number }>;
+  revenueByPlan: Partial<Record<PlanTier, { count: number; revenueFcfa: number }>> & Record<string, { count: number; revenueFcfa: number }>;
   activeSubscriptionsCount: number;
   averageAtsScore: number;
   totalTransactions?: number;

@@ -23,16 +23,36 @@ import {
 import { SupabaseService } from "@/lib/supabaseService";
 import { StorageManager } from "@/lib/storage";
 import { PlanTier, AccountType } from "@/lib/types";
+import { getCreditPack } from "@/config/payments";
+import { CANDIDATE_PLANS, BUSINESS_PLANS, normalizePlanId } from "@/components/tools/AuthModal";
 
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const redirectParam = searchParams.get("redirect") || "/dashboard";
-  const planParam = (searchParams.get("plan") as PlanTier) || null;
+  const planParam = (searchParams.get("plan") || searchParams.get("checkout") as PlanTier) || null;
   const initialType = (searchParams.get("type") as AccountType) || "candidate";
 
-  const [accountType, setAccountType] = useState<AccountType>(initialType);
+  const [accountType, setAccountType] = useState<AccountType>(() => {
+    if (initialType === "business") return "business";
+    const pending = typeof window !== "undefined" ? StorageManager.getPendingCheckoutPlan()?.plan : null;
+    const plan = normalizePlanId(planParam || pending);
+    if (["cyber15", "enterprise30", "enterprise75", "enterprise200"].includes(plan)) {
+      return "business";
+    }
+    return initialType;
+  });
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(() => {
+    const pending = typeof window !== "undefined" ? StorageManager.getPendingCheckoutPlan()?.plan : null;
+    const planToSet = (planParam && planParam !== "free" ? planParam : null) || pending || planParam || (initialType === "business" ? "enterprise75" : "free");
+    return normalizePlanId(planToSet);
+  });
+
+  const activePlans = accountType === "business" ? BUSINESS_PLANS : CANDIDATE_PLANS;
+  const currentPlan =
+    activePlans.find((p) => normalizePlanId(p.id) === normalizePlanId(selectedPlan)) ||
+    activePlans[0];
 
   // Champs Candidat
   const [firstName, setFirstName] = useState("");
@@ -144,7 +164,8 @@ function SignupForm() {
         password,
         firstName: accountType === "candidate" ? firstName.trim() : managerName.trim(),
         lastName: accountType === "candidate" ? lastName.trim() : "",
-        selectedPlan: planParam || "free",
+        selectedPlan: selectedPlan,
+        planTier: selectedPlan,
         companyName: accountType === "business" ? companyName.trim() : undefined,
         companyType: accountType === "business" ? companyType : undefined,
         managerRole: accountType === "business" ? "Responsable Recrutement" : undefined,
@@ -285,8 +306,9 @@ function SignupForm() {
   const finalizeRegistration = () => {
     setSuccessMessage("Compte validé avec succès ! Bienvenue sur MonCV.ai.");
 
-    if (planParam && planParam !== "free") {
-      StorageManager.setPendingCheckoutPlan(planParam, true);
+    if (selectedPlan && selectedPlan !== "free") {
+      StorageManager.setPendingCheckoutPlan(selectedPlan, true);
+      StorageManager.setPlanTier(selectedPlan);
     }
 
     const sessionUser = StorageManager.getUser();
@@ -298,7 +320,9 @@ function SignupForm() {
     window.dispatchEvent(new Event("storage"));
 
     setTimeout(() => {
-      if (accountType === "business") {
+      if (selectedPlan && selectedPlan !== "free") {
+        router.replace(`/tarifs?checkout=${selectedPlan}`);
+      } else if (accountType === "business") {
         router.replace("/dashboard?tab=business");
       } else {
         router.replace("/dashboard");
@@ -313,7 +337,7 @@ function SignupForm() {
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* En-tête */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center z-10 space-y-3">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center z-10 space-y-3">
         <Link
           href="/"
           className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md hover:bg-white/15 transition-all shadow-lg shadow-black/20"
@@ -335,7 +359,7 @@ function SignupForm() {
       </div>
 
       {/* Carte principale */}
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-lg z-10 px-4 sm:px-0">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-xl z-10 px-4 sm:px-0">
         <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           {/* Si étape de validation OTP */}
           {isOtpPending ? (
@@ -440,7 +464,12 @@ function SignupForm() {
               <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setAccountType("candidate")}
+                  onClick={() => {
+                    setAccountType("candidate");
+                    if (selectedPlan.startsWith("enterprise") || selectedPlan === "cyber15") {
+                      setSelectedPlan("free");
+                    }
+                  }}
                   className={`py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     accountType === "candidate"
                       ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
@@ -452,7 +481,12 @@ function SignupForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAccountType("business")}
+                  onClick={() => {
+                    setAccountType("business");
+                    if (!selectedPlan.startsWith("enterprise") && selectedPlan !== "cyber15") {
+                      setSelectedPlan("enterprise75");
+                    }
+                  }}
                   className={`py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     accountType === "business"
                       ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md shadow-amber-500/30"
@@ -462,6 +496,109 @@ function SignupForm() {
                   <Building className="w-4 h-4" />
                   <span>Entreprise (Recruteur)</span>
                 </button>
+              </div>
+
+              {/* En-tête : Rappel si une formule payante est sélectionnée */}
+              {selectedPlan !== "free" && (
+                <div className="p-3 bg-gradient-to-r from-blue-950/60 to-indigo-950/60 border border-blue-500/40 rounded-2xl flex items-center justify-between gap-3 text-xs text-blue-200 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">
+                        Pack {getCreditPack(selectedPlan)?.label || selectedPlan} sélectionné
+                      </span>
+                      <span className="text-[11px] text-slate-300">
+                        {getCreditPack(selectedPlan)?.credits || 250} crédits IA ({accountType === "business" ? "12 mois" : "30 jours"}) • Règlement sécurisé KKiaPay
+                      </span>
+                    </div>
+                  </div>
+                  <span className="font-black text-blue-300 bg-blue-900/60 px-2.5 py-1 rounded-xl text-xs border border-blue-700/50 shrink-0">
+                    {(getCreditPack(selectedPlan)?.prixFcfa || 0).toLocaleString("fr-FR")} FCFA
+                  </span>
+                </div>
+              )}
+
+              {/* Sélecteur des formules */}
+              <div className="p-3 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{accountType === "business" ? "Choisissez votre formule Entreprise" : "Choisissez votre formule Candidat"}</span>
+                  </label>
+                  <span className="text-[10px] text-blue-400 font-extrabold bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-800/60">
+                    {accountType === "business" ? "Tarif B2B • Vivier RH" : "Tarifs clairs en FCFA"}
+                  </span>
+                </div>
+
+                <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                  {activePlans.map((p) => {
+                    const isSelected = normalizePlanId(selectedPlan) === normalizePlanId(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => setSelectedPlan(p.id)}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between select-none ${
+                          isSelected
+                            ? accountType === "business"
+                              ? "bg-amber-950/30 border-amber-500 ring-2 ring-amber-500/30 shadow-md shadow-amber-500/10"
+                              : "bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/30 shadow-md shadow-blue-500/10"
+                            : "bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-900"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected
+                                    ? accountType === "business"
+                                      ? "border-amber-500 bg-amber-500 text-slate-950"
+                                      : "border-blue-500 bg-blue-500 text-white"
+                                    : "border-slate-600 bg-slate-800"
+                                }`}
+                              >
+                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </div>
+                              <span className="text-xs font-black text-white leading-tight">
+                                {p.name}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap ${
+                                p.highlight
+                                  ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                                  : isSelected
+                                  ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                                  : "bg-slate-800 text-slate-400 border border-slate-700"
+                              }`}
+                            >
+                              {p.badge}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex items-baseline justify-between gap-1">
+                            <span
+                              className={`text-sm font-black ${
+                                accountType === "business" ? "text-amber-400" : "text-blue-400"
+                              }`}
+                            >
+                              {p.price}
+                            </span>
+                            {p.perProfile && (
+                              <span className="text-[9px] font-bold text-teal-300 bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-800/60 whitespace-nowrap">
+                                {p.perProfile}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] text-slate-400 leading-snug mt-1.5">
+                            {p.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Bannières d'erreur et succès */}
@@ -671,7 +808,11 @@ function SignupForm() {
                     </>
                   ) : (
                     <>
-                      <span>Créer mon compte et accéder au tableau de bord</span>
+                      <span>
+                        {selectedPlan === "free"
+                          ? "Créer mon compte et accéder au tableau de bord"
+                          : `Créer mon compte (${currentPlan?.price || ""})`}
+                      </span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

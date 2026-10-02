@@ -36,3 +36,4 @@ Thumbs.db
 # Sensitive credentials & admin documentation
 ACCES_ADMINISTRATION/
 ACCES_ADMIN*.md
+.vercel

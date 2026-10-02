@@ -1020,9 +1020,20 @@ export const AccountSettingsModal: React.FC<Props> = ({
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       onClose();
-                      if (onLogout) onLogout();
+                      if (onLogout) {
+                        await onLogout();
+                      } else {
+                        try {
+                          await SupabaseService.signOut();
+                        } catch {
+                          StorageManager.logout();
+                        }
+                        if (typeof window !== "undefined") {
+                          window.location.href = "/";
+                        }
+                      }
                     }}
                     className="px-4 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
                   >

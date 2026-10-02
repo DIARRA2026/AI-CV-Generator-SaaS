@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
       if (!logged) {
         setIsAuthOpen(false);
-        router.replace("/login?redirect=/dashboard");
+        router.replace("/");
         return;
       } else {
         setIsAuthOpen(false);
@@ -2348,11 +2348,19 @@ export default function DashboardPage() {
       <AccountSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onLogout={() => {
-          StorageManager.logout();
+        onLogout={async () => {
+          try {
+            await SupabaseService.signOut();
+          } catch {
+            StorageManager.logout();
+          }
           setIsLoggedIn(false);
           setCurrentUser(null);
-          setIsAuthOpen(true);
+          if (typeof window !== "undefined") {
+            window.location.href = "/";
+          } else {
+            router.push("/");
+          }
         }}
       />
 

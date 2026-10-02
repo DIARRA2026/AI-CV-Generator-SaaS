@@ -8,6 +8,7 @@ import {
 import { AuthModal } from "@/components/tools/AuthModal";
 import { AccountSettingsModal } from "@/components/tools/AccountSettingsModal";
 import { StorageManager, UserSession } from "@/lib/storage";
+import { SupabaseService } from "@/lib/supabaseService";
 import { AdminService } from "@/lib/adminService";
 import { PlanTier } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
@@ -187,14 +188,23 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isProfileMenuOpen, isMobileDrawerOpen]);
 
-  const handleLogout = () => {
-    StorageManager.logout();
+  const handleLogout = async () => {
+    try {
+      await SupabaseService.signOut();
+    } catch (e) {
+      console.warn("Erreur déconnexion:", e);
+      StorageManager.logout();
+    }
     setCurrentUser(null);
     setIsProfileMenuOpen(false);
+    setIsMobileDrawerOpen(false);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("moncv_user_logged_out"));
+      window.location.href = "/";
+    } else {
+      router.push("/");
     }
-    router.push("/");
   };
 
   return (

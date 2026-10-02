@@ -49,6 +49,10 @@ export function AuthRedirectHandler() {
           window.location.replace(
             "/auth/reset-password" + (currentSearch || "") + (currentHash || "")
           );
+        } else if (event === "SIGNED_OUT") {
+          if (typeof window !== "undefined" && window.location.pathname !== "/") {
+            window.location.href = "/";
+          }
         }
       });
 

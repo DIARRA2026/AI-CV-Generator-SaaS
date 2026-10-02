@@ -16,6 +16,7 @@ import {
 import confetti from "canvas-confetti";
 import { StorageManager } from "@/lib/storage";
 import { getCreditPack } from "@/config/payments";
+import { supabase } from "@/lib/supabaseClient";
 
 interface KKiaPayWidgetModalProps {
   isOpen: boolean;
@@ -160,6 +161,22 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
     }, 5000); // Polling toutes les 5 secondes
   }, [stopPolling]);
 
+  // Helper pour extraire le token d'authentification utilisateur actif
+  const getAuthToken = useCallback(async (): Promise<string | null> => {
+    try {
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return data.session.access_token;
+        }
+      }
+    } catch (e) {
+      console.warn("[KKiaPayWidget] Session check:", e);
+    }
+    const localUser = StorageManager.getUser();
+    return localUser?.token || null;
+  }, []);
+
   // 3. Vérification serveur suite à l'événement de succès du widget
   const handleVerifyTransaction = useCallback(
     async (orderId: string, transactionId: string) => {
@@ -167,9 +184,15 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
       setErrorMessage(null);
 
       try {
+        const token = await getAuthToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const res = await fetch("/api/payments/kkiapay/verify", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ orderId, transactionId }),
         });
 
@@ -214,7 +237,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
         startPolling(orderId);
       }
     },
-    [planId, pack, onSuccess, startPolling]
+    [planId, pack, onSuccess, startPolling, getAuthToken]
   );
 
   // 4. Lancement du paiement : Création commande serveur + Ouverture widget
@@ -223,8 +246,9 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
     const isLogged = StorageManager.isLoggedIn();
     const currentUser = StorageManager.getUser();
+    const activeToken = await getAuthToken();
 
-    if (!isLogged || !currentUser) {
+    if (!isLogged && !activeToken) {
       if (onNeedAuth) {
         onNeedAuth(planId);
       } else {
@@ -236,10 +260,15 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
     setStep("ordering");
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (activeToken) {
+        headers["Authorization"] = `Bearer ${activeToken}`;
+      }
+
       // Étape A : Création de la commande côté serveur (Règle 1 : le client n'envoie pas le prix)
       const orderRes = await fetch("/api/payments/kkiapay/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ planId }),
       });
 
@@ -275,15 +304,19 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
         setStep("widget_opened");
 
+        const fullName = currentUser
+          ? `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim()
+          : undefined;
+
         // Étape C : Ouverture du widget KKiaPay avec les paramètres officiels
         window.openKkiapayWidget({
           amount: orderData.amount,
           api_key: publicKey,
           key: publicKey, // compatibilité script k.js
           sandbox: isSandbox,
-          email: currentUser.email || "",
-          phone: currentUser.phone || "",
-          name: `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || undefined,
+          email: currentUser?.email || "",
+          phone: currentUser?.phone || "",
+          name: fullName || undefined,
           partnerId: orderId,
           data: orderId,
           theme: "#2563eb",
@@ -454,11 +487,51 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                 </div>
               </div>
 
-              {/* Message d'erreur s'il y a lieu */}
+              {/* Message d'erreur ou d'authentification s'il y a lieu */}
               {errorMessage && (
-                <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl flex items-start gap-2.5 text-red-700 dark:text-red-300 text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-                  <span>{errorMessage}</span>
+                <div
+                  className={`p-4 rounded-2xl border text-xs space-y-3 ${
+                    errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
+                      ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900/60 text-amber-900 dark:text-amber-200"
+                      : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300"
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${
+                      errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600"
+                    }`} />
+                    <div className="space-y-1">
+                      <p className="font-black text-sm">
+                        {errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
+                          ? "Connexion à votre compte MonCV.ai requise"
+                          : "Échec de l'opération"}
+                      </p>
+                      <p className="leading-relaxed text-xs">
+                        {errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
+                          ? "Pour que vos crédits IA (CV & Lettres) et votre accès de 30 jours soient instantanément activés et sécurisés sur votre profil après paiement, vous devez être connecté à votre compte candidat."
+                          : errorMessage}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onNeedAuth) {
+                          onNeedAuth(planId);
+                        } else {
+                          router.push(`/login?redirect=/tarifs&plan=${planId}`);
+                        }
+                      }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                    >
+                      <span>Se connecter ou créer mon compte</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
 

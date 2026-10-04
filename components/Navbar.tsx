@@ -420,6 +420,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </Link>
                 )}
 
+                {/* Bouton AI COINS Direct Desktop */}
+                <Link
+                  href="/credits"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-amber-100/80 hover:from-amber-100 hover:to-amber-200/80 border border-amber-300 text-amber-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer btn-press"
+                  title="Portefeuille AI Coins"
+                >
+                  <span className="text-sm">💎</span>
+                  <span>{creditBalance !== null ? creditBalance.toLocaleString("fr-FR") : 0}</span>
+                  <span className="hidden xl:inline text-[11px] font-bold text-amber-800">AI Coins</span>
+                </Link>
+
                 {/* Menu Déroulant Profil & Paramètres Desktop */}
                 <div className="relative pl-0.5" id="user-profile-menu">
                   <button
@@ -448,9 +459,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <span className="font-bold text-slate-900 text-xs truncate">
                             {currentUser.firstName} {currentUser.lastName || ""}
                           </span>
-                          <span className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                            ⚡ {creditBalance !== null ? `${creditBalance} crédits` : "Crédits"}
-                          </span>
+                          <Link
+                            href="/credits"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 transition-colors"
+                          >
+                            💎 {creditBalance !== null ? `${creditBalance} AI Coins` : "AI Coins"}
+                          </Link>
                         </div>
                         <p className="text-[11px] text-slate-500 truncate font-medium">
                           {currentUser.business?.companyName ? `${currentUser.business.companyName} • ` : ""}{currentUser.email}
@@ -559,9 +574,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Link
                   href="/credits"
                   className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-900 font-black text-xs rounded-xl shadow-2xs"
-                  title="Solde de crédits"
+                  title="Portefeuille AI Coins"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-600 shrink-0" />
+                  <span className="text-xs">💎</span>
                   <span>{creditBalance !== null ? creditBalance : 0}</span>
                 </Link>
 
@@ -777,11 +792,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-amber-50 text-amber-950 font-bold text-xs cursor-pointer btn-press border border-amber-200"
                       >
                         <div className="flex items-center gap-3">
-                          <Zap className="w-4 h-4 fill-amber-500 text-amber-600" />
-                          <span>Mes Crédits IA</span>
+                          <span className="text-sm">💎</span>
+                          <span>Portefeuille AI Coins</span>
                         </div>
                         <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black">
-                          {creditBalance !== null ? `${creditBalance} crédits` : "0 crédit"}
+                          {creditBalance !== null ? `${creditBalance} Coins` : "0 Coin"}
                         </span>
                       </Link>
                     </>

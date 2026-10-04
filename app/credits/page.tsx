@@ -4,43 +4,72 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { WavePaymentClaimModal } from "@/components/tools/WavePaymentClaimModal";
+import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import {
-  Zap, Clock, ShieldCheck, Plus, History, Layers,
-  AlertCircle, CheckCircle2, XCircle, ArrowUpRight, ArrowDownLeft, RefreshCw
+  Zap,
+  Clock,
+  ShieldCheck,
+  Plus,
+  History,
+  Layers,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  ArrowDownLeft,
+  RefreshCw,
+  Coins,
+  Sparkles,
+  CreditCard,
+  Lock,
+  ChevronRight,
+  Info,
 } from "lucide-react";
-import { CreditBatch, CreditLedgerEntry, PaymentClaim, UserCreditSummary } from "@/lib/types";
-import { CREDIT_PACKS } from "@/config/payments";
+import {
+  WalletSummary,
+  CreditTransaction,
+  CreditPackage,
+  CreditCost,
+} from "@/lib/types";
 
 export default function CreditsPage() {
-  const [summary, setSummary] = useState<UserCreditSummary | null>(null);
-  const [batches, setBatches] = useState<CreditBatch[]>([]);
-  const [ledger, setLedger] = useState<CreditLedgerEntry[]>([]);
-  const [claims, setClaims] = useState<PaymentClaim[]>([]);
+  const [wallet, setWallet] = useState<WalletSummary | null>(null);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [packages, setPackages] = useState<CreditPackage[]>([]);
+  const [costs, setCosts] = useState<CreditCost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modales de paiement
   const [isWaveModalOpen, setIsWaveModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"batches" | "ledger" | "claims">("batches");
+  const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
+  const [selectedPlanForKKiaPay, setSelectedPlanForKKiaPay] = useState<string>("pro");
+
+  // Filtre d'historique
+  const [activeTab, setActiveTab] = useState<"all" | "purchase" | "usage" | "bonus">("all");
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [credRes, claimsRes] = await Promise.all([
+      const [credRes, costsRes] = await Promise.all([
         fetch("/api/credits"),
-        fetch("/api/payment-claims"),
+        fetch("/api/admin/credits/costs").catch(() => null),
       ]);
 
       if (credRes.ok) {
         const data = await credRes.json();
-        setSummary(data.summary || null);
-        setBatches(data.batches || []);
-        setLedger(data.ledger || []);
+        setWallet(data.wallet || data.summary || null);
+        setTransactions(data.transactions || data.ledger || []);
+        if (data.packages && Array.isArray(data.packages)) {
+          setPackages(data.packages);
+        }
       }
 
-      if (claimsRes.ok) {
-        const claimsData = await claimsRes.json();
-        setClaims(claimsData.claims || []);
+      if (costsRes && costsRes.ok) {
+        const costData = await costsRes.json();
+        if (costData.costs) setCosts(costData.costs);
       }
     } catch (err) {
-      console.error("Erreur lors de la récupération des crédits:", err);
+      console.error("Erreur lors de la récupération des données AI Coins:", err);
     } finally {
       setLoading(false);
     }
@@ -50,36 +79,79 @@ export default function CreditsPage() {
     fetchData();
   }, []);
 
-  const formatExpiry = (dateStr?: string | null) => {
-    if (!dateStr) return "Aucune expiration (illimité)";
-    const date = new Date(dateStr);
-    const diffDays = Math.ceil((date.getTime() - Date.now()) / (1000 * 3600 * 24));
-    if (diffDays <= 0) return "Expiré";
-    if (diffDays === 1) return "Expire demain";
-    return `Dans ${diffDays} jours (${date.toLocaleDateString("fr-FR")})`;
+  const handleOpenPayment = (packSlug: string) => {
+    setSelectedPlanForKKiaPay(packSlug);
+    setIsKKiaPayModalOpen(true);
   };
 
-  const getActionLabel = (action: string) => {
-    switch (action) {
-      case "welcome_gift":
-        return "Cadeau de bienvenue (30 crédits)";
+  const filteredTransactions = transactions.filter((tx) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "purchase") return tx.type === "purchase" || tx.type === "subscription";
+    if (activeTab === "usage") return tx.type === "usage";
+    if (activeTab === "bonus") {
+      return (
+        tx.type === "bonus" ||
+        tx.type === "signup_bonus" ||
+        tx.type === "referral_bonus" ||
+        tx.type === "promotion"
+      );
+    }
+    return true;
+  });
+
+  const getTransactionTypeBadge = (type: string) => {
+    switch (type) {
       case "purchase":
-        return "Achat de pack de crédits Wave";
-      case "cv_generate":
-        return "Génération / Réécriture CV IA";
-      case "cover_letter":
-        return "Rédaction Lettre de motivation IA";
-      case "ats_analysis":
-        return "Optimisation & Score ATS IA";
-      case "translate_en":
-        return "Traduction CV en Anglais IA";
-      case "pro_photo":
-        return "Photo de profil professionnelle IA";
+      case "subscription":
+        return {
+          label: "Achat Pack",
+          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          icon: ArrowDownLeft,
+          color: "text-emerald-600",
+        };
+      case "signup_bonus":
+        return {
+          label: "Bonus Inscription",
+          bg: "bg-purple-50 text-purple-700 border-purple-200",
+          icon: Sparkles,
+          color: "text-purple-600",
+        };
+      case "promotion":
+      case "bonus":
+        return {
+          label: "Bonus Pack",
+          bg: "bg-amber-50 text-amber-700 border-amber-200",
+          icon: Sparkles,
+          color: "text-amber-600",
+        };
+      case "usage":
+        return {
+          label: "Consommation IA",
+          bg: "bg-blue-50 text-blue-700 border-blue-200",
+          icon: ArrowUpRight,
+          color: "text-blue-600",
+        };
       case "refund":
-      case "refund_failed_ia":
-        return "Remboursement suite à incident IA";
+        return {
+          label: "Remboursement",
+          bg: "bg-cyan-50 text-cyan-700 border-cyan-200",
+          icon: ArrowDownLeft,
+          color: "text-cyan-600",
+        };
+      case "admin_adjustment":
+        return {
+          label: "Geste Admin",
+          bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          icon: ShieldCheck,
+          color: "text-indigo-600",
+        };
       default:
-        return action;
+        return {
+          label: type,
+          bg: "bg-slate-50 text-slate-700 border-slate-200",
+          icon: History,
+          color: "text-slate-600",
+        };
     }
   };
 
@@ -92,14 +164,14 @@ export default function CreditsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold mb-2">
-              <Zap className="w-3.5 h-3.5 fill-amber-500" />
-              Espace Crédits IA
+              <span className="text-sm">💎</span>
+              Portefeuille Interne MonCV.ai
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              Gestion de votre solde et historique
+              AI COINS & Grand Livre des Opérations
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Consultez vos lots de crédits disponibles, vos consommations et vos réclamations de paiement Wave.
+              Mesurez et gérez votre consommation des technologies d'intelligence artificielle.
             </p>
           </div>
 
@@ -114,350 +186,420 @@ export default function CreditsPage() {
             </button>
 
             <button
-              onClick={() => setIsWaveModalOpen(true)}
-              className="py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-blue-500/20 flex items-center gap-2 transition"
+              onClick={() => handleOpenPayment("pro")}
+              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-amber-500/20 flex items-center gap-2 transition btn-press cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              Recharger mes crédits Wave
+              Recharger mes AI Coins
             </button>
           </div>
         </div>
 
-        {/* Balance Overview Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Card 1: Balance */}
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg space-y-3 relative overflow-hidden">
-            <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider font-semibold text-blue-100">
-                Solde disponible
+        {/* SECTION 1 : WALLET CARD PRINCIPALE */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Carte Majeure : Solde Disponible & Réservé */}
+          <div className="lg:col-span-2 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden border border-slate-800">
+            <div className="absolute -right-8 -bottom-8 w-48 h-48 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
+            <div className="absolute right-12 top-6 opacity-10 text-8xl font-black select-none pointer-events-none">
+              💎
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Portefeuille Actif
               </span>
-              <div className="p-2 rounded-xl bg-white/10 text-white">
-                <Zap className="w-5 h-5 fill-white" />
+              <div className="px-2.5 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold backdrop-blur-xs">
+                Zero Overdraft Guarantee
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl sm:text-5xl font-black tracking-tight">
-                {summary ? summary.balance : "—"}
-              </span>
-              <span className="text-sm font-semibold text-blue-200">
-                crédits actifs
-              </span>
+
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400 uppercase font-semibold">Solde Disponible</span>
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl sm:text-6xl font-black tracking-tight text-white">
+                  {wallet ? wallet.availableCredits.toLocaleString("fr-FR") : "—"}
+                </span>
+                <span className="text-xl font-bold text-amber-400">AI Coins</span>
+              </div>
             </div>
-            <p className="text-xs text-blue-100/90 pt-1">
-              Prêt pour vos prochaines générations de CV et lettres de motivation.
-            </p>
+
+            {/* Métriques secondaires */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-white/10">
+              <div className="space-y-0.5">
+                <div className="text-[11px] text-slate-400 font-medium">En Réservation</div>
+                <div className="text-sm sm:text-base font-bold text-amber-300">
+                  {wallet?.reservedCredits || 0} Coins
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-[11px] text-slate-400 font-medium">Cumul Acheté</div>
+                <div className="text-sm sm:text-base font-bold text-emerald-400">
+                  {wallet?.lifetimePurchased || 0} Coins
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-[11px] text-slate-400 font-medium">Cumul Consommé</div>
+                <div className="text-sm sm:text-base font-bold text-blue-300">
+                  {wallet?.lifetimeConsumed || 0} Coins
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-[11px] text-slate-400 font-medium">Bonus & Cadeaux</div>
+                <div className="text-sm sm:text-base font-bold text-purple-300">
+                  {wallet?.lifetimeEarned || 0} Coins
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Card 2: Next Expiration */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                Prochaine expiration
-              </span>
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <Clock className="w-5 h-5" />
+          {/* Carte d'Aide & Statut */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-xl">
+                ⚡
               </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Réservation Sécurisée
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Lorsque vous lancez une tâche IA, le montant requis est temporairement réservé.
+                Si le modèle IA rencontre une anomalie, vos AI Coins sont automatiquement restitués.
+              </p>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-              {summary ? formatExpiry(summary.nearestExpiry) : "Chargement..."}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Règle FIFO : vos crédits les plus proches de l'échéance sont consommés en premier.
-            </p>
-          </div>
 
-          {/* Card 3: Free Guarantee */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                Exports & Édition
-              </span>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-500">Exports PDF & Word :</span>
+              <span className="text-emerald-600 font-bold">100% Illimités & Gratuits</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">
-              100% Gratuit & Illimité
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Téléchargez vos CV en PDF et Word sans filigrane même avec un solde à 0 crédit.
-            </p>
           </div>
         </div>
 
-        {/* Tabs & Content */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          {/* Tabs bar */}
-          <div className="flex items-center border-b border-slate-200 dark:border-slate-800 px-6 pt-4 gap-6 text-sm font-semibold">
-            <button
-              onClick={() => setActiveTab("batches")}
-              className={`pb-3.5 border-b-2 transition flex items-center gap-2 ${
-                activeTab === "batches"
-                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              Lots de crédits actifs ({batches.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("ledger")}
-              className={`pb-3.5 border-b-2 transition flex items-center gap-2 ${
-                activeTab === "ledger"
-                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <History className="w-4 h-4" />
-              Historique des opérations ({ledger.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("claims")}
-              className={`pb-3.5 border-b-2 transition flex items-center gap-2 ${
-                activeTab === "claims"
-                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Zap className="w-4 h-4" />
-              Paiements Wave ({claims.length})
-            </button>
+        {/* SECTION 2 : PACKS D'AI COINS */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                Recharger mon Portefeuille
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Paiement instantané par Mobile Money (Wave, Orange, MTN, Moov) et Carte Bancaire.
+              </p>
+            </div>
           </div>
 
-          {/* Tab 1: Active Batches */}
-          {activeTab === "batches" && (
-            <div className="p-6">
-              {batches.length === 0 ? (
-                <div className="text-center py-12 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
-                    <Layers className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Pack 1 : Starter */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Starter
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
+                    +50 bonus
+                  </span>
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">
+                    500 <span className="text-sm font-semibold text-slate-500">AI Coins</span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Aucun lot de crédits actif pour le moment
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    Rechargez un pack via Wave dès 1 500 FCFA pour débloquer l'ensemble des fonctionnalités IA.
-                  </p>
-                  <button
-                    onClick={() => setIsWaveModalOpen(true)}
-                    className="mt-2 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Recharger des crédits
-                  </button>
+                  <div className="text-lg font-bold text-blue-600 mt-1">
+                    5 000 FCFA
+                  </div>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 text-xs uppercase tracking-wider">
-                        <th className="py-3 px-4">Lot / Pack</th>
-                        <th className="py-3 px-4">Origine</th>
-                        <th className="py-3 px-4">Crédits restants</th>
-                        <th className="py-3 px-4">Date d'expiration</th>
-                        <th className="py-3 px-4 text-right">Progression</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {batches.map((batch) => {
-                        const pack = batch.packCode ? CREDIT_PACKS[batch.packCode] : null;
-                        const pct = batch.creditsInitial > 0
-                          ? Math.round((batch.creditsRemaining / batch.creditsInitial) * 100)
-                          : 0;
-                        return (
-                          <tr key={batch.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                            <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                              {pack?.label || batch.packCode || "Crédits"}
-                            </td>
-                            <td className="py-3.5 px-4 text-xs text-slate-500 capitalize">
-                              {batch.source === "offert" ? "🎁 Cadeau d'inscription" : "💳 Achat Wave"}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <span className="font-bold text-amber-600 dark:text-amber-400">
-                                {batch.creditsRemaining}
-                              </span>
-                              <span className="text-xs text-slate-400"> / {batch.creditsInitial}</span>
-                            </td>
-                            <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300">
-                              {formatExpiry(batch.expiresAt)}
-                            </td>
-                            <td className="py-3.5 px-4 text-right">
-                              <div className="inline-flex items-center gap-2">
-                                <div className="w-20 bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                                  <div
-                                    className="bg-blue-600 h-2 rounded-full transition-all"
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-semibold text-slate-500">{pct}%</span>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-2 pt-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Soit 25 CV complets ou 50 lettres
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Sans expiration de durée
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Facture disponible
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => handleOpenPayment("starter")}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs transition cursor-pointer"
+              >
+                Choisir Starter
+              </button>
             </div>
-          )}
 
-          {/* Tab 2: Ledger History */}
-          {activeTab === "ledger" && (
-            <div className="p-6">
-              {ledger.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs">
-                  Aucun mouvement enregistré pour le moment.
+            {/* Pack 2 : Pro (Populaire) */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border-2 border-amber-500 shadow-lg relative flex flex-col justify-between space-y-5">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-black uppercase tracking-wider">
+                ⭐ Le Plus Populaire
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                    Pro Pack
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-[10px] font-black">
+                    +200 bonus
+                  </span>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 text-xs uppercase tracking-wider">
-                        <th className="py-3 px-4">Date</th>
-                        <th className="py-3 px-4">Action</th>
-                        <th className="py-3 px-4 text-center">Variation</th>
-                        <th className="py-3 px-4 text-right">Solde après</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {ledger.map((entry) => {
-                        const isPositive = entry.delta > 0;
-                        return (
-                          <tr key={entry.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                            <td className="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
-                              {new Date(entry.createdAt).toLocaleString("fr-FR")}
-                            </td>
-                            <td className="py-3 px-4 text-xs font-medium text-slate-800 dark:text-slate-200">
-                              {getActionLabel(entry.action)}
-                              {entry.ref && (
-                                 <span className="block text-[10px] font-mono text-slate-400">
-                                   Réf: {entry.ref}
-                                 </span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span
-                                className={`inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-full ${
-                                  isPositive
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                    : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
-                                }`}
-                              >
-                                {isPositive ? (
-                                  <>
-                                    <ArrowUpRight className="w-3 h-3" />
-                                    +{entry.delta}
-                                  </>
-                                ) : (
-                                  <>
-                                    <ArrowDownLeft className="w-3 h-3" />
-                                    {entry.delta}
-                                  </>
-                                )}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right font-bold text-xs text-slate-700 dark:text-slate-300">
-                              {entry.balanceAfter} crédits
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">
+                    1 500 <span className="text-sm font-semibold text-slate-500">AI Coins</span>
+                  </div>
+                  <div className="text-lg font-bold text-amber-600 mt-1">
+                    12 000 FCFA
+                  </div>
                 </div>
-              )}
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-2 pt-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Soit 75 CV complets ou 150 lettres
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Photos professionnelles IA incluses
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Support prioritaire WhatsApp
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => handleOpenPayment("pro")}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition cursor-pointer"
+              >
+                Choisir Pro
+              </button>
             </div>
-          )}
 
-          {/* Tab 3: Payment Claims */}
-          {activeTab === "claims" && (
-            <div className="p-6">
-              {claims.length === 0 ? (
-                <div className="text-center py-12 space-y-3">
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Aucune réclamation de paiement en cours
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Lorsque vous effectuez un paiement via Wave, signalez-le pour recevoir vos crédits rapidement.
-                  </p>
-                  <button
-                    onClick={() => setIsWaveModalOpen(true)}
-                    className="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition"
-                  >
-                    Effectuer une recharge Wave
-                  </button>
+            {/* Pack 3 : Business */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Business
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 text-[10px] font-black">
+                    +1 000 bonus
+                  </span>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {claims.map((claim) => {
-                    const pack = claim.packCode ? CREDIT_PACKS[claim.packCode] : null;
-                    const isPending = claim.status === "pending";
-                    const isApproved = claim.status === "approved";
-                    const isRejected = claim.status === "rejected";
+                <div>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">
+                    5 000 <span className="text-sm font-semibold text-slate-500">AI Coins</span>
+                  </div>
+                  <div className="text-lg font-bold text-purple-600 mt-1">
+                    30 000 FCFA
+                  </div>
+                </div>
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-2 pt-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Soit 250 CV complets ou 500 lettres
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Idéal pour cabinets RH & agences
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Facture normalisée OHADA
+                  </li>
+                </ul>
+              </div>
 
-                    return (
-                      <div
-                        key={claim.id}
-                        className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-slate-900 dark:text-white">
-                              {pack?.label || claim.packCode}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              ({(claim.amountFcfa || 0).toLocaleString("fr-FR")} FCFA)
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500">
-                            Réf. Wave : <span className="font-mono text-slate-700 dark:text-slate-300">{claim.waveReference}</span> · Soumis le {new Date(claim.createdAt).toLocaleDateString("fr-FR")}
-                          </p>
-                          {isRejected && claim.rejectionReason && (
-                            <p className="text-xs text-rose-500 font-medium">
-                              Motif du rejet : {claim.rejectionReason}
-                            </p>
-                          )}
+              <button
+                onClick={() => handleOpenPayment("business")}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs transition cursor-pointer"
+              >
+                Choisir Business
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 3 : GRAND LIVRE DES TRANSACTIONS (IMMUTABLE LEDGER) */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <History className="w-5 h-5 text-blue-600" />
+                Grand Livre des AI Coins
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Audit trail immuable de chaque crédit, réservation et débit d'AI Coins.
+              </p>
+            </div>
+
+            {/* Filtres */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-semibold">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`px-3 py-1.5 rounded-xl transition ${
+                  activeTab === "all" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold" : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Tous
+              </button>
+              <button
+                onClick={() => setActiveTab("purchase")}
+                className={`px-3 py-1.5 rounded-xl transition ${
+                  activeTab === "purchase" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold" : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Achats
+              </button>
+              <button
+                onClick={() => setActiveTab("usage")}
+                className={`px-3 py-1.5 rounded-xl transition ${
+                  activeTab === "usage" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold" : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Consommations IA
+              </button>
+              <button
+                onClick={() => setActiveTab("bonus")}
+                className={`px-3 py-1.5 rounded-xl transition ${
+                  activeTab === "bonus" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold" : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Bonus
+              </button>
+            </div>
+          </div>
+
+          {filteredTransactions.length === 0 ? (
+            <div className="p-12 text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                <History className="w-6 h-6" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Aucun mouvement enregistré pour ce filtre
+              </p>
+              <p className="text-xs text-slate-500">
+                Vos prochaines opérations IA apparaîtront ici avec leur référence unique.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredTransactions.map((tx) => {
+                const badge = getTransactionTypeBadge(tx.type);
+                const isPositive = tx.amount > 0;
+                return (
+                  <div
+                    key={tx.id || tx.reference}
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                  >
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className={`p-2.5 rounded-xl border ${badge.bg}`}>
+                        <badge.icon className="w-4 h-4" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                            {tx.description}
+                          </span>
+                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${badge.bg}`}>
+                            {badge.label}
+                          </span>
                         </div>
-
-                        <div>
-                          {isPending && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-xs font-semibold">
-                              <Clock className="w-3.5 h-3.5" />
-                              En attente de validation
-                            </span>
-                          )}
-                          {isApproved && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Validé & Crédité
-                            </span>
-                          )}
-                          {isRejected && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 text-xs font-semibold">
-                              <XCircle className="w-3.5 h-3.5" />
-                              Rejeté
-                            </span>
-                          )}
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                          <span>{new Date(tx.createdAt).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                          <span>•</span>
+                          <span className="font-mono text-[10px] truncate max-w-[180px] sm:max-w-xs">{tx.reference}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+
+                    <div className="text-left sm:text-right pl-12 sm:pl-0">
+                      <div className={`text-sm sm:text-base font-black ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
+                        {isPositive ? `+${tx.amount}` : tx.amount} AI Coins
+                      </div>
+                      <div className="text-[10.5px] text-slate-400">
+                        Solde après : {tx.balanceAfter} Coins
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+        </div>
+
+        {/* SECTION 4 : BARÈME OFFICIEL DES FONCTIONNALITÉS */}
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <Coins className="w-5 h-5 text-amber-500" />
+            Tarification des Fonctionnalités IA (Coûts en AI Coins)
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Chaque opération est facturée selon un barème transparent, débité uniquement en cas de succès.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">CV Complet IA</div>
+              <div className="text-lg font-black text-blue-600">20 AI Coins</div>
+              <div className="text-[10px] text-slate-400">Génération / réécriture</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">Lettre de Motivation</div>
+              <div className="text-lg font-black text-amber-600">10 AI Coins</div>
+              <div className="text-[10px] text-slate-400">Personnalisée au poste</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">Analyse ATS & Traduction</div>
+              <div className="text-lg font-black text-purple-600">10 AI Coins</div>
+              <div className="text-[10px] text-slate-400">Score & adaptation</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">Photo Pro Studio</div>
+              <div className="text-lg font-black text-emerald-600">50 AI Coins</div>
+              <div className="text-[10px] text-slate-400">Studio HD & fond pro</div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 5 : CLAUSE LÉGALE & DISCLAIMER OBLIGATOIRE */}
+        <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs text-slate-600 dark:text-slate-400 space-y-2">
+          <div className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-400">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>Clause Juridique & Conditions d'Utilisation des AI Coins</span>
+          </div>
+          <p className="leading-relaxed">
+            Les <strong>AI Coins</strong> sont des unités virtuelles internes de facturation à usage strictement réservé au sein du SaaS MonCV.ai.
+            Ils ne constituent en aucun cas une monnaie ayant cours légal, un moyen de paiement bancaire, ni un actif financier, token blockchain ou cryptomonnaie.
+            Ils ne possèdent aucune valeur monétaire en dehors du service, ne génèrent aucun droit à intérêts et ne peuvent pas être convertis librement en espèces.
+          </p>
         </div>
       </main>
 
-      {/* Modal Wave Claim */}
+      {/* Modal KKiaPay Widget pour le rechargement */}
+      <KKiaPayWidgetModal
+        isOpen={isKKiaPayModalOpen}
+        onClose={() => setIsKKiaPayModalOpen(false)}
+        planId={selectedPlanForKKiaPay}
+        onSuccess={() => {
+          setIsKKiaPayModalOpen(false);
+          fetchData();
+        }}
+      />
+
+      {/* Modal Réclamation Wave */}
       <WavePaymentClaimModal
         isOpen={isWaveModalOpen}
         onClose={() => setIsWaveModalOpen(false)}
         onClaimSubmitted={() => {
+          setIsWaveModalOpen(false);
           fetchData();
         }}
       />

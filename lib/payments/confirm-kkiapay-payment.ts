@@ -1,6 +1,8 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyTransaction, KKiaPayVerificationResponse, getKKiaPayServerConfig } from "@/lib/kkiapay/server";
+import { WalletService } from "@/lib/credits/walletService";
+import { getCreditPack } from "@/config/payments";
 
 export interface ConfirmPaymentParams {
   transactionId: string;
@@ -317,6 +319,30 @@ export async function confirmKKiaPayPayment(
       userId: order.user_id,
       reason: `Plan ${resRow.plan_id} actif jusqu'au ${resRow.expires_at}`,
     });
+
+    // Crédit automatique du portefeuille interne AI COINS
+    try {
+      const planId = resRow.plan_id || order.plan_id;
+      const packConfig = getCreditPack(planId);
+      const creditsToAdd = packConfig?.credits ?? (paidAmount >= 5000 ? 600 : paidAmount >= 2500 ? 250 : paidAmount >= 1500 ? 120 : 50);
+      const bonusToAdd = (planId === "carriere" || planId === "5000" || planId === "vip") ? 100 : (planId === "evolution" || planId === "2500" || planId === "pro") ? 25 : 0;
+
+      await WalletService.purchase({
+        userId: order.user_id,
+        credits: creditsToAdd,
+        bonus: bonusToAdd,
+        reference: `KKIAPAY_${transactionId}`,
+        description: `Achat Pack ${packConfig?.nom || planId} (KKiaPay)`,
+        metadata: {
+          orderId: order.id,
+          transactionId,
+          amount: paidAmount,
+          planId,
+        },
+      });
+    } catch (coinErr) {
+      console.warn("[confirmKKiaPayPayment] Erreur crédit AI Coins (non bloquant):", coinErr);
+    }
 
     return {
       success: true,

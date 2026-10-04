@@ -60,6 +60,7 @@ import {
 } from "@/lib/types";
 import { AdminService } from "@/lib/adminService";
 import { AdminWaveClaimsTab } from "@/components/admin/AdminWaveClaimsTab";
+import { AdminAICoinsTab } from "@/components/admin/AdminAICoinsTab";
 import { InvoiceService, INNOVA_GROUP_INFO } from "@/lib/invoiceService";
 import { InvoiceModal } from "@/components/tools/InvoiceModal";
 
@@ -98,7 +99,7 @@ export default function AdminConsolePage() {
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<
-    "overview" | "claims" | "transactions" | "invoices" | "users" | "business" | "diagnostics" | "maintenance"
+    "overview" | "credits" | "claims" | "transactions" | "invoices" | "users" | "business" | "diagnostics" | "maintenance"
   >("overview");
 
   // Données Factures de Souscription
@@ -1020,6 +1021,19 @@ export default function AdminConsolePage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("credits")}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "credits"
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-black"
+              : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+          }`}
+        >
+          <span className="text-sm">💎</span>
+          <span>AI Coins & Portefeuilles</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("claims")}
           className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "claims"
@@ -1129,6 +1143,15 @@ export default function AdminConsolePage() {
 
       {/* Contenu Principal */}
       <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        {/* ================================================================= */}
+        {/* ONGLET AI COINS & PORTEFEUILLES */}
+        {/* ================================================================= */}
+        {activeTab === "credits" && (
+          <div className="space-y-4">
+            <AdminAICoinsTab onNotify={(text, type) => showToast(text, type)} />
+          </div>
+        )}
+
         {/* ================================================================= */}
         {/* ONGLET RÉCLAMATIONS WAVE & CRÉDITS */}
         {/* ================================================================= */}

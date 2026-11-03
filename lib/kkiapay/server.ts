@@ -1,5 +1,7 @@
 import "server-only";
 import crypto from "crypto";
+// @ts-ignore - SDK KKiaPay Node.js officiel
+import { kkiapay as kkiapaySDK } from "@kkiapay-org/nodejs-sdk";
 
 /**
  * Interface normalisée pour la réponse de vérification KKiaPay
@@ -15,6 +17,7 @@ export interface KKiaPayVerificationResponse {
   source_common_name?: string;
   partnerId?: string;
   state?: string;
+  data?: string;
   transactionId: string;
   performed_at?: string;
   failureCode?: string;
@@ -66,6 +69,50 @@ export function getKKiaPayServerConfig() {
     isSandbox,
     baseUrl,
   };
+}
+
+/**
+ * Vérifie une transaction directement avec le SDK officiel KKiaPay (@kkiapay-org/nodejs-sdk)
+ * avec repli automatique sur l'API REST officielle en cas de besoin.
+ */
+export async function verifyTransactionWithSDK(
+  transactionId: string
+): Promise<KKiaPayVerificationResponse> {
+  const cleanTxId = transactionId?.trim();
+  if (!cleanTxId) {
+    throw new Error("transactionId requis pour la vérification KKiaPay.");
+  }
+
+  const config = getKKiaPayServerConfig();
+
+  try {
+    const kkiapayInstance = kkiapaySDK({
+      publickey: config.publicKey,
+      privatekey: config.privateKey,
+      secretkey: config.secretKey,
+      sandbox: config.isSandbox,
+    });
+
+    const sdkResult = await kkiapayInstance.verify(cleanTxId);
+    if (sdkResult && sdkResult.status) {
+      return sdkResult as KKiaPayVerificationResponse;
+    }
+  } catch (sdkErr: any) {
+    if (
+      sdkErr?.message === "Transaction Not Found" ||
+      sdkErr?.message === "TRANSACTION_NOT_FOUND" ||
+      sdkErr?.message?.toLowerCase().includes("not found")
+    ) {
+      throw new Error("TRANSACTION_NOT_FOUND");
+    }
+    console.warn(
+      `[KKiaPay SDK] Vérification SDK a échoué (${cleanTxId}), bascule sur API REST:`,
+      sdkErr?.message
+    );
+  }
+
+  // Repli automatique sur l'appel REST direct
+  return verifyTransaction(cleanTxId);
 }
 
 /**

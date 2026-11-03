@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const rawPlanId = (body.planId || body.plan_id || "").toString().toLowerCase().trim();
+    const firstName = (body.firstName || "").toString().trim();
+    const lastName = (body.lastName || "").toString().trim();
+    const phone = (body.phone || "").toString().trim();
 
     if (!rawPlanId) {
       return NextResponse.json(
@@ -76,6 +79,24 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = auth.user.id;
+
+    // Mise à jour éventuelle des coordonnées du profil utilisateur dans Supabase
+    if (userId && (firstName || lastName || phone)) {
+      try {
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            ...(firstName ? { first_name: firstName } : {}),
+            ...(lastName ? { last_name: lastName } : {}),
+            ...(phone ? { phone } : {}),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId);
+      } catch (profErr) {
+        console.warn("[KKiaPay orders] Mise à jour profil non bloquante:", profErr);
+      }
+    }
+
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
     // 2. Recherche d'une commande `pending` récente pour éviter d'inonder la table
@@ -99,6 +120,7 @@ export async function POST(request: NextRequest) {
         currency: recentPendingOrder.currency || "XOF",
         planName: planData.name,
         planId: planData.id,
+        userId: auth.user.id,
       });
     }
 
@@ -130,6 +152,7 @@ export async function POST(request: NextRequest) {
       currency: newOrder.currency,
       planName: planData.name,
       planId: planData.id,
+      userId: auth.user.id,
     });
   } catch (err: any) {
     console.error("[KKiaPay orders] Exception:", err);

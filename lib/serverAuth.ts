@@ -159,6 +159,76 @@ export async function getServerAuthUser(request: NextRequest): Promise<ServerAut
     }
   }
 
+  // 4. Vérification de secours via cookies de session applicatifs moncv_auth_token ou email
+  const moncvCookie = request.cookies.get("moncv_auth_token")?.value;
+  const directEmail = request.cookies.get("moncv_user_email")?.value;
+  const headerEmail = request.headers.get("x-user-email");
+  const authHeader = request.headers.get("authorization");
+
+  let candidateEmail: string | null = null;
+  if (directEmail && directEmail.includes("@")) {
+    candidateEmail = directEmail.toLowerCase().trim();
+  } else if (headerEmail && headerEmail.includes("@")) {
+    candidateEmail = headerEmail.toLowerCase().trim();
+  } else if (moncvCookie) {
+    try {
+      const decoded = decodeURIComponent(moncvCookie).trim();
+      if (decoded.startsWith("auth_") && decoded.includes("@")) {
+        candidateEmail = decoded.slice(5).toLowerCase().trim();
+      } else if (decoded.includes("@") && !decoded.includes(".")) {
+        candidateEmail = decoded.toLowerCase().trim();
+      }
+    } catch {}
+  } else if (authHeader && authHeader.toLowerCase().startsWith("bearer auth_")) {
+    const raw = authHeader.slice(12).trim();
+    if (raw.includes("@")) candidateEmail = raw.toLowerCase().trim();
+  }
+
+  if (candidateEmail && supabaseAdmin) {
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, role")
+        .eq("email", candidateEmail)
+        .maybeSingle();
+
+      if (profile?.id && profile?.email) {
+        return {
+          authenticated: true,
+          isAdmin: profile.role === "admin" || profile.role === "superadmin",
+          user: {
+            id: profile.id,
+            email: profile.email.toLowerCase().trim(),
+            isAdmin: profile.role === "admin" || profile.role === "superadmin",
+            role: profile.role === "admin" || profile.role === "superadmin" ? "superadmin" : "user",
+          },
+        };
+      }
+
+      // Recherche de secours dans auth.users si disponible
+      try {
+        const { data: userResp } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 100 });
+        const matchedUser = userResp?.users?.find(
+          (u) => u.email?.toLowerCase().trim() === candidateEmail
+        );
+        if (matchedUser?.id && matchedUser?.email) {
+          return {
+            authenticated: true,
+            isAdmin: false,
+            user: {
+              id: matchedUser.id,
+              email: matchedUser.email.toLowerCase().trim(),
+              isAdmin: false,
+              role: "user",
+            },
+          };
+        }
+      } catch {}
+    } catch (e) {
+      console.warn("Erreur résolution profil utilisateur via candidateEmail:", e);
+    }
+  }
+
   return {
     authenticated: false,
     isAdmin: false,

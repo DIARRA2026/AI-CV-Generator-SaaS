@@ -10,9 +10,10 @@ import { NextResponse, type NextRequest } from "next/server";
  * 1. Routes protégées (/dashboard, /dashboard/*, /create, /portfolio/edit) :
  *    -> Redirige vers /login si aucune session active n'est détectée.
  * 2. Routes publiques (/, /login, /signup) :
- *    -> Redirige automatiquement vers /dashboard si l'utilisateur est authentifié.
+ *    -> Redirige automatiquement vers /dashboard (ou vers le paramètre ?redirect=) si l'utilisateur est authentifié.
  *    -> La landing page (/) ne doit JAMAIS s'afficher à un utilisateur connecté.
- * 3. En-têtes de sécurité HTTP OWASP injectés sur toutes les réponses.
+ * 3. Les routes de paiement (/tarifs, /credits, /api/payments/*) ne doivent JAMAIS renvoyer un utilisateur connecté vers /login.
+ * 4. En-têtes de sécurité HTTP OWASP injectés sur toutes les réponses.
  */
 
 // Liste des routes protégées
@@ -107,12 +108,21 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = Boolean(user);
 
   // 4. APPLICATION DE LA RÈGLE : La landing page (/) et auth (/login, /signup)
-  // ne doivent JAMAIS s'afficher à un utilisateur authentifié -> Redirection /dashboard
+  // ne doivent JAMAIS s'afficher à un utilisateur authentifié -> Redirection /dashboard ou redirect URL
   const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((route) => pathname === route);
 
   if (isPublicAuthRoute && isAuthenticated) {
-    const dashboardUrl = new URL("/dashboard", request.url);
-    const redirectResponse = NextResponse.redirect(dashboardUrl);
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    let targetPath = "/dashboard";
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+      targetPath = redirectParam;
+    }
+    const targetUrl = new URL(targetPath, request.url);
+    const planParam = request.nextUrl.searchParams.get("plan");
+    if (planParam && !targetUrl.searchParams.has("plan")) {
+      targetUrl.searchParams.set("plan", planParam);
+    }
+    const redirectResponse = NextResponse.redirect(targetUrl);
     redirectResponse.headers.set("X-Frame-Options", "DENY");
     redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
     return redirectResponse;

@@ -8,6 +8,7 @@ import { PACKS_B2C_ARRAY, PACKS_B2B_ARRAY, CreditPack } from "@/config/payments"
 import { KKiaPayWidgetModal } from "@/components/payment/KKiaPayWidget";
 import { AuthModal } from "@/components/tools/AuthModal";
 import { StorageManager } from "@/lib/storage";
+import { supabase } from "@/lib/supabaseClient";
 import {
   Zap, Check, ShieldCheck, Sparkles, Building2, User,
   Clock, ArrowRight, Download, FileText, CheckCircle2, Phone, ExternalLink, CreditCard
@@ -20,6 +21,7 @@ export default function TarifsPage() {
   const [isKKiaPayModalOpen, setIsKKiaPayModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
+  // Synchronisation transparente de la session utilisateur
   useEffect(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash;
@@ -29,21 +31,51 @@ export default function TarifsPage() {
         setActiveTab("particuliers");
       }
 
-      const params = new URLSearchParams(window.location.search);
-      const checkout = params.get("checkout") || params.get("plan");
-      if (checkout && checkout !== "free" && checkout !== "decouverte") {
-        setSelectedPackCode(checkout);
-        if (checkout === "revendeur" || checkout === "structure" || checkout === "business_pro" || checkout === "licence_etablissement") {
-          setActiveTab("entreprises");
+      const syncSessionAndInit = async () => {
+        let isAuth = StorageManager.isLoggedIn();
+        if (!isAuth && supabase) {
+          try {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session?.user) {
+              isAuth = true;
+              const u = data.session.user;
+              StorageManager.setUser({
+                id: u.id,
+                email: u.email || "",
+                firstName: u.user_metadata?.first_name || u.email?.split("@")[0] || "Candidat",
+                lastName: u.user_metadata?.last_name || "",
+                phone: u.user_metadata?.phone,
+                accountType: (u.user_metadata?.account_type as any) || "candidate",
+                planTier: "free",
+                token: data.session.access_token,
+              });
+            }
+          } catch {}
         }
-        const isAuth = StorageManager.isLoggedIn();
-        if (isAuth) {
-          setIsKKiaPayModalOpen(true);
-        } else {
-          StorageManager.setPendingCheckoutPlan(checkout as any, true);
-          setIsAuthOpen(true);
+
+        const params = new URLSearchParams(window.location.search);
+        const checkout = params.get("checkout") || params.get("plan");
+        if (checkout && checkout !== "free" && checkout !== "decouverte") {
+          setSelectedPackCode(checkout);
+          if (
+            checkout === "revendeur" ||
+            checkout === "structure" ||
+            checkout === "business_pro" ||
+            checkout === "licence_etablissement"
+          ) {
+            setActiveTab("entreprises");
+          }
+
+          if (isAuth) {
+            setIsKKiaPayModalOpen(true);
+          } else {
+            StorageManager.setPendingCheckoutPlan(checkout as any, true);
+            setIsAuthOpen(true);
+          }
         }
-      }
+      };
+
+      syncSessionAndInit();
     }
   }, []);
 
@@ -54,22 +86,42 @@ export default function TarifsPage() {
     }
   };
 
-  const handleSelectPack = (pack: CreditPack) => {
+  const handleSelectPack = async (pack: CreditPack) => {
     if (pack.prixFcfa === 0) return;
-    const isAuth = StorageManager.isLoggedIn();
+
+    let isAuth = StorageManager.isLoggedIn();
+    if (!isAuth && supabase) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          isAuth = true;
+          const u = data.session.user;
+          StorageManager.setUser({
+            id: u.id,
+            email: u.email || "",
+            firstName: u.user_metadata?.first_name || u.email?.split("@")[0] || "Candidat",
+            lastName: u.user_metadata?.last_name || "",
+            phone: u.user_metadata?.phone,
+            accountType: (u.user_metadata?.account_type as any) || "candidate",
+            planTier: "free",
+            token: data.session.access_token,
+          });
+        }
+      } catch {}
+    }
+
     if (!isAuth) {
-      // 1. Sauvegarder la formule choisie avant d'orienter vers l'inscription
+      // Utilisateur non connecté : mémoriser l'offre et afficher le modal de connexion
       StorageManager.setPendingCheckoutPlan(pack.slug as any, true);
       setSelectedPackCode(pack.slug);
       setIsAuthOpen(true);
       return;
     }
 
-    // 2. Utilisateur connecté : ouvrir directement l'interface de paiement KKiaPay vérifiée serveur
+    // Utilisateur connecté : ouvrir directement l'interface de pré-paiement KKiaPay
     setSelectedPackCode(pack.slug);
     setIsKKiaPayModalOpen(true);
   };
-
 
   const currentPacks = activeTab === "particuliers" ? PACKS_B2C_ARRAY : PACKS_B2B_ARRAY;
 
@@ -91,7 +143,7 @@ export default function TarifsPage() {
             </span>
           </h1>
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
-            Rechargez vos crédits en toute liberté via KKiaPay (Wave, MTN, Orange, Moov & Carte Bancaire). Activation instantanée vérifiée par le serveur, zéro prélèvement récurrent, facture normalisée OHADA délivrée sur chaque achat.
+            Rechargez vos crédits en toute liberté via KKiaPay (Orange Money, Wave, MTN MoMo, Moov &amp; Carte Visa). Activation instantanée vérifiée par le serveur, zéro prélèvement récurrent, facture normalisée OHADA délivrée sur chaque achat.
           </p>
         </div>
 
@@ -103,7 +155,7 @@ export default function TarifsPage() {
             </div>
             <div>
               <p className="font-bold text-sm">
-                Téléchargements PDF & Word 100% Gratuits & Illimités
+                Téléchargements PDF &amp; Word 100% Gratuits &amp; Illimités
               </p>
               <p className="text-xs text-emerald-700 dark:text-emerald-300">
                 La création manuelle, l édition et les exports sans filigrane restent toujours gratuits (0 crédit).
@@ -127,22 +179,22 @@ export default function TarifsPage() {
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
                 activeTab === "particuliers"
                   ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-md shadow-slate-900/5"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               }`}
             >
               <User className="w-4 h-4" />
-              Candidats & Particuliers
+              Candidats &amp; Particuliers
             </button>
             <button
               onClick={() => handleTabChange("entreprises")}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
                 activeTab === "entreprises"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-900/5"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               }`}
             >
               <Building2 className="w-4 h-4" />
-              Entreprises & Établissements
+              Entreprises &amp; Établissements
               <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">
                 Tarifs de gros
               </span>
@@ -260,7 +312,7 @@ export default function TarifsPage() {
           })}
         </div>
 
-        {/* Table of Action Costs (§1.1) */}
+        {/* Table of Action Costs */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-5">
             <div>
@@ -273,7 +325,7 @@ export default function TarifsPage() {
               </p>
             </div>
             <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold shrink-0">
-              Exports PDF & Word : 0 crédit garanti
+              Exports PDF &amp; Word : 0 crédit garanti
             </div>
           </div>
 
@@ -322,7 +374,7 @@ export default function TarifsPage() {
             </div>
             <h4 className="font-bold text-sm text-slate-900 dark:text-white">Paiement Sécurisé KKiaPay</h4>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Réglez en toute sécurité via Mobile Money (Wave, MTN, Orange, Moov) ou Carte bancaire avec vérification serveur immédiate.
+              Réglez en toute sécurité via Orange Money, Wave, MTN MoMo, Moov ou Carte bancaire avec vérification serveur immédiate.
             </p>
           </div>
 
@@ -393,4 +445,3 @@ export default function TarifsPage() {
     </div>
   );
 }
-

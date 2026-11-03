@@ -1,8 +1,8 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { verifyTransaction, KKiaPayVerificationResponse, getKKiaPayServerConfig } from "@/lib/kkiapay/server";
+import { verifyTransactionWithSDK, KKiaPayVerificationResponse, getKKiaPayServerConfig } from "@/lib/kkiapay/server";
 import { WalletService } from "@/lib/credits/walletService";
-import { getCreditPack } from "@/config/payments";
+import { getCreditPack, getCreditPackByAmount } from "@/config/payments";
 
 export interface ConfirmPaymentParams {
   transactionId: string;
@@ -95,18 +95,17 @@ export async function confirmKKiaPayPayment(
     userId: expectedUserId,
   });
 
-  // 1. VÉRIFICATION DU PAIEMENT AUPRÈS DU SERVEUR KKIAPAY
-  // Seule cette réponse vérifiée compte (jamais les données non signées du client)
+  // 1. VÉRIFICATION DU PAIEMENT AUPRÈS DU SERVEUR KKIAPAY VIA SDK (ou mock en test)
   let verifyData: KKiaPayVerificationResponse;
   try {
     if (mockVerifyResponse) {
       verifyData = mockVerifyResponse;
     } else {
-      verifyData = await verifyTransaction(transactionId);
+      verifyData = await verifyTransactionWithSDK(transactionId);
     }
   } catch (err: any) {
     const errorMsg = err?.message || "Erreur de communication avec KKiaPay";
-    console.warn(`[confirmKKiaPayPayment] Échec verifyTransaction (${transactionId}):`, errorMsg);
+    console.warn(`[confirmKKiaPayPayment] Échec verifyTransactionWithSDK (${transactionId}):`, errorMsg);
 
     if (errorMsg === "TRANSACTION_NOT_FOUND") {
       logPaymentEvent("payment.rejected", {
@@ -171,9 +170,19 @@ export async function confirmKKiaPayPayment(
   }
 
   // 3. RETROUVER LA COMMANDE (orders) ASSOCIÉE
-  // KKiaPay renvoie l'identifiant fourni à l'ouverture du widget dans partnerId (ou state)
+  // KKiaPay renvoie l'identifiant fourni à l'ouverture du widget dans partnerId, state ou data
+  let parsedCustomData: any = null;
+  if (verifyData.data) {
+    try {
+      parsedCustomData = typeof verifyData.data === "string" ? JSON.parse(verifyData.data) : verifyData.data;
+    } catch {
+      parsedCustomData = { raw: verifyData.data };
+    }
+  }
+
   const resolvedOrderId =
     verifyData.partnerId?.trim() ||
+    parsedCustomData?.orderId?.trim() ||
     verifyData.state?.trim() ||
     expectedOrderId?.trim();
 
@@ -212,7 +221,6 @@ export async function confirmKKiaPayPayment(
   }
 
   // 5. CONTRÔLE DE SÉCURITÉ DU RATTACHEMENT (Règle 2)
-  // Cas route de vérification avec utilisateur connecté
   if (expectedOrderId && expectedOrderId !== order.id) {
     logPaymentEvent("payment.rejected", {
       transactionId,
@@ -320,10 +328,10 @@ export async function confirmKKiaPayPayment(
       reason: `Plan ${resRow.plan_id} actif jusqu'au ${resRow.expires_at}`,
     });
 
-    // Crédit automatique du portefeuille interne AI COINS
+    // 8. CRÉDIT AUTOMATIQUE DU PORTEFEUILLE INTERNE AI COINS DANS SUPABASE
     try {
       const planId = resRow.plan_id || order.plan_id;
-      const packConfig = getCreditPack(planId);
+      const packConfig = getCreditPack(planId) || getCreditPackByAmount(paidAmount);
       const creditsToAdd = packConfig?.credits ?? (paidAmount >= 5000 ? 600 : paidAmount >= 2500 ? 250 : paidAmount >= 1500 ? 120 : 50);
       const bonusToAdd = (planId === "carriere" || planId === "5000" || planId === "vip") ? 100 : (planId === "evolution" || planId === "2500" || planId === "pro") ? 25 : 0;
 

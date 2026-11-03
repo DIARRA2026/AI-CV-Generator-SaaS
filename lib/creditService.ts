@@ -46,6 +46,24 @@ export class CreditService {
       }
     }
 
+    // 1. Consultation prioritaire du portefeuille officiel AI COINS (credit_wallets)
+    try {
+      const { data: walletData } = await client
+        .from("credit_wallets")
+        .select("available_credits, updated_at")
+        .eq("user_id", resolvedId)
+        .maybeSingle();
+
+      if (walletData && typeof walletData.available_credits === "number") {
+        return {
+          solde: walletData.available_credits,
+          prochaineExpiration: null,
+          nbLots: 1,
+        };
+      }
+    } catch {}
+
+    // 2. Repli sur le lot de crédits hérité (credit_batches)
     try {
       const { data } = await client.rpc("solde_credits", {
         p_compte: resolvedId,

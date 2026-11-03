@@ -12,10 +12,14 @@ import {
   X,
   CreditCard,
   Lock,
+  Phone,
+  User,
+  Sparkles,
+  Coins,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { StorageManager } from "@/lib/storage";
-import { getCreditPack } from "@/config/payments";
+import { getCreditPack, getCreditPackByAmount } from "@/config/payments";
 import { supabase } from "@/lib/supabaseClient";
 
 interface KKiaPayWidgetModalProps {
@@ -43,7 +47,18 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
   onNeedAuth,
 }) => {
   const router = useRouter();
-  const [step, setStep] = useState<"idle" | "ordering" | "widget_opened" | "verifying" | "polling" | "success" | "failed">("idle");
+
+  // Étape du flux de paiement : "form" (saisie coordonnées) | "ordering" | "widget_opened" | "verifying" | "polling" | "success" | "failed"
+  const [step, setStep] = useState<
+    "form" | "ordering" | "widget_opened" | "verifying" | "polling" | "success" | "failed"
+  >("form");
+
+  // Champs de pré-paiement demandés par le cahier des charges
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [confirmedPlan, setConfirmedPlan] = useState<string | null>(null);
@@ -55,7 +70,56 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
   const pack = getCreditPack(planId) || getCreditPack("pro");
 
-  // 1. Chargement dynamique asynchrone du script officiel KKiaPay CDN k.js
+  // 1. Pré-remplissage des champs profil utilisateur dès l'ouverture du modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadProfileData = async () => {
+      // Lecture depuis le gestionnaire de stockage local
+      const localUser = StorageManager.getUser();
+      if (localUser) {
+        if (localUser.firstName) setFirstName(localUser.firstName);
+        if (localUser.lastName) setLastName(localUser.lastName);
+        if (localUser.phone) setPhone(localUser.phone);
+        if (localUser.email) setEmail(localUser.email);
+      }
+
+      // Complément éventuel depuis la session Supabase
+      if (supabase) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.user) {
+            const u = data.session.user;
+            if (!email && u.email) setEmail(u.email);
+            const meta = u.user_metadata || {};
+            if (!firstName && meta.first_name) setFirstName(meta.first_name);
+            if (!lastName && meta.last_name) setLastName(meta.last_name);
+            if (!phone && (meta.phone || u.phone)) setPhone(meta.phone || u.phone || "");
+
+            // Synchronisation StorageManager si absent
+            if (!localUser) {
+              StorageManager.setUser({
+                id: u.id,
+                email: u.email || "",
+                firstName: meta.first_name || u.email?.split("@")[0] || "Candidat",
+                lastName: meta.last_name || "",
+                phone: meta.phone || u.phone,
+                accountType: (meta.account_type as any) || "candidate",
+                planTier: "free",
+                token: data.session.access_token,
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("[KKiaPayWidget] Erreur synchronisation session:", e);
+        }
+      }
+    };
+
+    loadProfileData();
+  }, [isOpen, email, firstName, lastName, phone]);
+
+  // 2. Chargement dynamique asynchrone du script officiel KKiaPay CDN k.js
   useEffect(() => {
     if (typeof window === "undefined" || window.openKkiapayWidget) {
       scriptLoadedRef.current = true;
@@ -90,7 +154,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
   // Reset état à la fermeture
   useEffect(() => {
     if (!isOpen) {
-      setStep("idle");
+      setStep("form");
       setErrorMessage(null);
       setActiveOrderId(null);
       stopPolling();
@@ -109,58 +173,6 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, step, onClose]);
 
-  // 2. Démarrage du polling pour les paiements Mobile Money lents (Étape 4)
-  const startPolling = useCallback((orderId: string) => {
-    setStep("polling");
-    setPollCountdown(180);
-    stopPolling();
-
-    const startTime = Date.now();
-    const maxDuration = 180 * 1000; // 3 minutes
-
-    pollingIntervalRef.current = setInterval(async () => {
-      const elapsed = Date.now() - startTime;
-      const remainingSec = Math.max(0, Math.floor((maxDuration - elapsed) / 1000));
-      setPollCountdown(remainingSec);
-
-      if (elapsed >= maxDuration) {
-        stopPolling();
-        setStep("idle");
-        setErrorMessage(
-          "Le paiement est toujours en cours de validation par votre opérateur Mobile Money. Votre accès s'activera automatiquement dès la confirmation."
-        );
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/payments/kkiapay/orders/${orderId}`);
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok && data.order?.status === "paid") {
-          stopPolling();
-          setConfirmedPlan(data.order.planId);
-          setExpiresAt(data.order.expiresAt);
-          setStep("success");
-
-          try {
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          } catch {}
-
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("moncv_credits_updated"));
-            window.dispatchEvent(new Event("storage"));
-          }
-        } else if (data.order?.status === "failed") {
-          stopPolling();
-          setStep("failed");
-          setErrorMessage("La transaction a été refusée ou a échoué.");
-        }
-      } catch (pollErr) {
-        console.warn("[KKiaPay polling] Erreur consultation commande:", pollErr);
-      }
-    }, 5000); // Polling toutes les 5 secondes
-  }, [stopPolling]);
-
   // Helper pour extraire le token d'authentification utilisateur actif
   const getAuthToken = useCallback(async (): Promise<string | null> => {
     try {
@@ -177,7 +189,62 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
     return localUser?.token || null;
   }, []);
 
-  // 3. Vérification serveur suite à l'événement de succès du widget
+  // 3. Démarrage du polling pour les paiements Mobile Money asynchrones
+  const startPolling = useCallback(
+    (orderId: string) => {
+      setStep("polling");
+      setPollCountdown(180);
+      stopPolling();
+
+      const startTime = Date.now();
+      const maxDuration = 180 * 1000; // 3 minutes
+
+      pollingIntervalRef.current = setInterval(async () => {
+        const elapsed = Date.now() - startTime;
+        const remainingSec = Math.max(0, Math.floor((maxDuration - elapsed) / 1000));
+        setPollCountdown(remainingSec);
+
+        if (elapsed >= maxDuration) {
+          stopPolling();
+          setStep("form");
+          setErrorMessage(
+            "Le paiement est toujours en cours de validation par votre opérateur Mobile Money. Vos crédits s'activeront automatiquement dès réception de la confirmation."
+          );
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/payments/kkiapay/orders/${orderId}`);
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.order?.status === "paid") {
+            stopPolling();
+            setConfirmedPlan(data.order.planId);
+            setExpiresAt(data.order.expiresAt);
+            setStep("success");
+
+            try {
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } catch {}
+
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("moncv_credits_updated"));
+              window.dispatchEvent(new Event("storage"));
+            }
+          } else if (data.order?.status === "failed") {
+            stopPolling();
+            setStep("failed");
+            setErrorMessage("La transaction a été refusée ou a échoué chez votre opérateur.");
+          }
+        } catch (pollErr) {
+          console.warn("[KKiaPay polling] Erreur consultation commande:", pollErr);
+        }
+      }, 5000);
+    },
+    [stopPolling]
+  );
+
+  // 4. Vérification serveur suite à l'événement de succès du widget KKiaPay
   const handleVerifyTransaction = useCallback(
     async (orderId: string, transactionId: string) => {
       setStep("verifying");
@@ -185,9 +252,16 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
       try {
         const token = await getAuthToken();
+        const currentUser = StorageManager.getUser();
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
+        }
+        if (currentUser?.email) {
+          headers["x-user-email"] = currentUser.email;
+        }
+        if (currentUser?.id) {
+          headers["x-user-id"] = currentUser.id;
         }
 
         const res = await fetch("/api/payments/kkiapay/verify", {
@@ -204,7 +278,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
           setExpiresAt(data.expiresAt || null);
           setStep("success");
 
-          // Synchronisation locale pour fluidité UI
+          // Synchronisation locale pour fluidité UI immédiate
           StorageManager.setPlanTier(data.plan || planId, {
             status: "active",
             amount: pack?.prixFcfa || 2500,
@@ -225,7 +299,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
           if (onSuccess) onSuccess(data.plan || planId);
         } else if (data.status === "pending") {
-          // Paiement asynchrone / lent : lancer le polling
+          // Paiement asynchrone / lent : basculer en polling
           startPolling(orderId);
         } else {
           setStep("failed");
@@ -233,22 +307,48 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
         }
       } catch (err: any) {
         console.error("[handleVerifyTransaction] Erreur:", err);
-        // En cas d'erreur de communication réseau : basculer en polling doux
         startPolling(orderId);
       }
     },
     [planId, pack, onSuccess, startPolling, getAuthToken]
   );
 
-  // 4. Lancement du paiement : Création commande serveur + Ouverture widget
-  const handleStartPayment = async () => {
+  // 5. Validation du formulaire et déclenchement de l'ordre KKiaPay côté serveur
+  const handleStartPayment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMessage(null);
+
+    // Validation des champs requis
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanPhone = phone.trim().replace(/\s+/g, "");
+
+    if (!cleanFirstName) {
+      setErrorMessage("Veuillez saisir votre prénom.");
+      return;
+    }
+    if (!cleanLastName) {
+      setErrorMessage("Veuillez saisir votre nom.");
+      return;
+    }
+    if (!cleanPhone || cleanPhone.length < 8) {
+      setErrorMessage("Veuillez saisir un numéro de téléphone Mobile Money valide (ex: 0701020304).");
+      return;
+    }
+
+    // Sauvegarde immédiate dans le profil local
+    StorageManager.updateUserProfile({
+      firstName: cleanFirstName,
+      lastName: cleanLastName,
+      phone: cleanPhone,
+    });
 
     const isLogged = StorageManager.isLoggedIn();
     const currentUser = StorageManager.getUser();
     const activeToken = await getAuthToken();
 
-    if (!isLogged && !activeToken) {
+    // Si aucune trace de connexion
+    if (!isLogged && !activeToken && !currentUser?.email) {
       if (onNeedAuth) {
         onNeedAuth(planId);
       } else {
@@ -264,28 +364,47 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
       if (activeToken) {
         headers["Authorization"] = `Bearer ${activeToken}`;
       }
+      if (currentUser?.email) {
+        headers["x-user-email"] = currentUser.email;
+      }
+      if (currentUser?.id) {
+        headers["x-user-id"] = currentUser.id;
+      }
 
-      // Étape A : Création de la commande côté serveur (Règle 1 : le client n'envoie pas le prix)
+      // Synchronisation du cookie utilisateur pour pérenniser l'identification SSR
+      if (typeof document !== "undefined" && currentUser?.email) {
+        document.cookie = `moncv_user_email=${encodeURIComponent(currentUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+        if (currentUser.id) {
+          document.cookie = `moncv_user_id=${encodeURIComponent(currentUser.id)}; path=/; max-age=2592000; SameSite=Lax`;
+        }
+      }
+
+      // Création de la commande côté serveur (Règle 1 : le client n'impose pas le prix)
       const orderRes = await fetch("/api/payments/kkiapay/orders", {
         method: "POST",
         headers,
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({
+          planId,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          phone: cleanPhone,
+        }),
       });
 
       const orderData = await orderRes.json().catch(() => ({}));
       if (!orderRes.ok || !orderData.orderId) {
-        throw new Error(orderData.message || "Impossible de créer la commande de paiement.");
+        throw new Error(orderData.message || "Impossible de générer la commande de paiement.");
       }
 
       const orderId = orderData.orderId;
+      const verifiedUserId = orderData.userId || currentUser?.id || "user";
       setActiveOrderId(orderId);
 
       const publicKey = process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY?.trim() || "";
       const isSandbox = (process.env.NEXT_PUBLIC_KKIAPAY_SANDBOX || "").toLowerCase() === "true";
 
-      // Étape B : Configuration des listeners d'événements KKiaPay
+      // Configuration des auditeurs KKiaPay
       if (typeof window !== "undefined" && window.openKkiapayWidget) {
-        // Enregistrement des listeners officiels
         if (window.addSuccessListener) {
           window.addSuccessListener((response) => {
             if (response?.transactionId) {
@@ -304,21 +423,23 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
         setStep("widget_opened");
 
-        const fullName = currentUser
-          ? `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim()
-          : undefined;
+        const fullName = `${cleanFirstName} ${cleanLastName}`.trim();
 
-        // Étape C : Ouverture du widget KKiaPay avec les paramètres officiels
+        // Ouverture du widget KKiaPay avec les métadonnées de sécurité
         window.openKkiapayWidget({
           amount: orderData.amount,
           api_key: publicKey,
-          key: publicKey, // compatibilité script k.js
+          key: publicKey,
           sandbox: isSandbox,
-          email: currentUser?.email || "",
-          phone: currentUser?.phone || "",
-          name: fullName || undefined,
+          email: currentUser?.email || email || "",
+          phone: cleanPhone,
+          name: fullName,
           partnerId: orderId,
-          data: orderId,
+          data: JSON.stringify({
+            userId: verifiedUserId,
+            orderId,
+            planId: orderData.planId,
+          }),
           theme: "#2563eb",
         });
       } else {
@@ -365,7 +486,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                 Paiement Sécurisé KKiaPay
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Mobile Money (Wave, Orange, MTN, Moov) &amp; Carte Bancaire
+                Orange Money, Wave, MTN MoMo, Moov &amp; Carte Bancaire
               </p>
             </div>
           </div>
@@ -380,7 +501,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
           )}
         </div>
 
-        {/* Corps du modal selon l'étape */}
+        {/* Corps du modal */}
         <div className="p-5 sm:p-6 space-y-5">
           {/* Étape : SUCCÈS CONFIRMÉ */}
           {step === "success" && (
@@ -393,7 +514,8 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                   Paiement Confirmé !
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                  Votre abonnement pour la formule <strong>{pack?.label}</strong> est maintenant actif.
+                  Votre formule <strong>{pack?.label}</strong> et vos{" "}
+                  <strong>{pack?.credits} crédits IA</strong> sont maintenant actifs.
                 </p>
               </div>
 
@@ -401,8 +523,14 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-2">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span>
-                    Valable 30 jours jusqu&apos;au{" "}
-                    <strong>{new Date(expiresAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</strong>
+                    Accès actif jusqu&apos;au{" "}
+                    <strong>
+                      {new Date(expiresAt).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </strong>
                   </span>
                 </div>
               )}
@@ -427,13 +555,13 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                   Vérification sécurisée en cours...
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Le serveur authentifie votre transaction auprès de KKiaPay avant d&apos;activer votre abonnement.
+                  Le serveur authentifie votre transaction auprès de KKiaPay avant de créditer vos AI Coins.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Étape : POLLING PAIEMENT MOBILE MONEY LENT */}
+          {/* Étape : POLLING PAIEMENT MOBILE MONEY */}
           {step === "polling" && (
             <div className="text-center space-y-4 py-4">
               <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto">
@@ -441,105 +569,117 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
               </div>
               <div className="space-y-1">
                 <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                  Paiement en attente de confirmation
+                  Paiement en attente de validation
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Votre opérateur Mobile Money traite votre demande. Détection automatique en cours ({pollCountdown}s restantes)...
+                  Votre opérateur Mobile Money traite votre demande ({pollCountdown}s restantes)...
                 </p>
               </div>
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-[11px] text-slate-500">
-                Vous pouvez fermer cet écran en toute sécurité : dès validation de l&apos;opérateur, votre accès sera activé automatiquement.
+                Vous pouvez fermer cet écran sans crainte : dès validation de votre opérateur, vos crédits seront ajoutés à votre compte.
               </div>
             </div>
           )}
 
-          {/* Étape : VUE COMMANDE NORMALE OU ÉCHEC */}
+          {/* Étape : FORMULAIRE DE PRÉ-PAIEMENT & RECAPITULATIF */}
           {step !== "success" && step !== "verifying" && step !== "polling" && (
-            <div className="space-y-5">
+            <form onSubmit={handleStartPayment} className="space-y-5">
               {/* Récapitulatif de la formule */}
               <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Formule choisie</span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Formule sélectionnée</span>
                     <h4 className="text-base font-black text-slate-900 dark:text-white">{pack?.label}</h4>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Durée 30 jours</span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Accès 30 jours</span>
                     <p className="text-lg font-black text-blue-600 dark:text-blue-400">
                       {(pack?.prixFcfa || 0).toLocaleString("fr-FR")} FCFA
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{pack?.credits} crédits IA activés immédiatement</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Exports PDF &amp; Word illimités sans filigrane</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Facture normalisée OHADA mise à disposition</span>
-                  </div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <Coins className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>{pack?.credits.toLocaleString("fr-FR")} AI Coins crédités immédiatement</span>
                 </div>
               </div>
 
-              {/* Message d'erreur ou d'authentification s'il y a lieu */}
+              {/* Message d'erreur s'il y a lieu */}
               {errorMessage && (
-                <div
-                  className={`p-4 rounded-2xl border text-xs space-y-3 ${
-                    errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
-                      ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900/60 text-amber-900 dark:text-amber-200"
-                      : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300"
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
-                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${
-                      errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-red-600"
-                    }`} />
-                    <div className="space-y-1">
-                      <p className="font-black text-sm">
-                        {errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
-                          ? "Connexion à votre compte MonCV.ai requise"
-                          : "Échec de l'opération"}
-                      </p>
-                      <p className="leading-relaxed text-xs">
-                        {errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")
-                          ? "Pour que vos crédits IA (CV & Lettres) et votre accès de 30 jours soient instantanément activés et sécurisés sur votre profil après paiement, vous devez être connecté à votre compte candidat."
-                          : errorMessage}
-                      </p>
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Formulaire des coordonnées de facturation et Mobile Money (Exigence explicite) */}
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Coordonnées pour le paiement
+                  </label>
+                  <span className="text-[11px] text-slate-400">Pré-remplies depuis votre profil</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Prénom *</label>
+                    <div className="relative">
+                      <User className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Ex: Jean"
+                        className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
 
-                  {(errorMessage.toLowerCase().includes("authentification") || errorMessage.toLowerCase().includes("connecter")) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onNeedAuth) {
-                          onNeedAuth(planId);
-                        } else {
-                          router.push(`/login?redirect=/tarifs&plan=${planId}`);
-                        }
-                      }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
-                    >
-                      <span>Se connecter ou créer mon compte</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  )}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Nom *</label>
+                    <div className="relative">
+                      <User className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Ex: Kouassi"
+                        className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                    Numéro de téléphone Mobile Money *
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Ex: 0701020304 ou +2250701020304"
+                      className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 pt-0.5">
+                    Orange Money, Wave, MTN MoMo, Moov Money ou Carte Bancaire Visa / Mastercard.
+                  </p>
+                </div>
+              </div>
 
               {/* Badges de sécurité */}
               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                 <div className="flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Paiement sécurisé SSL</span>
+                  <span>Paiement chiffré SSL</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-blue-600" />
@@ -549,15 +689,14 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
               {/* Bouton Payer maintenant */}
               <button
-                type="button"
-                disabled={step === "ordering"}
-                onClick={handleStartPayment}
-                className="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-blue-500/25 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                type="submit"
+                disabled={step === "ordering" || !firstName.trim() || !lastName.trim() || !phone.trim()}
+                className="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-blue-500/25 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {step === "ordering" ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Génération de la commande...</span>
+                    <span>Préparation du guichet KKiaPay...</span>
                   </>
                 ) : (
                   <>
@@ -566,7 +705,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                   </>
                 )}
               </button>
-            </div>
+            </form>
           )}
         </div>
       </div>

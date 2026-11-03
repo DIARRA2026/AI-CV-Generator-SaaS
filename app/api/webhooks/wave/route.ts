@@ -33,31 +33,51 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const webhookSecret = process.env.WAVE_WEBHOOK_SECRET?.trim();
 
-    // 1. Vérification de la signature cryptographique Wave HMAC-SHA256 (si secret configuré)
-    if (webhookSecret && webhookSecret !== "whsec_wave_secret_signature_ici") {
-      const signatureHeader = request.headers.get("wave-signature");
-      if (!signatureHeader) {
-        console.warn("[Wave Webhook] Signature Wave manquante dans les en-têtes.");
-        return NextResponse.json({ success: false, error: "Signature manquante" }, { status: 401 });
-      }
+    // 1. Contrôle strict du secret et de la signature cryptographique Wave HMAC-SHA256 (Fail-Closed)
+    if (!webhookSecret || webhookSecret === "whsec_wave_secret_signature_ici") {
+      console.error("[Wave Webhook] Rejet 503 : WAVE_WEBHOOK_SECRET non configuré ou valeur placeholder par défaut.");
+      return NextResponse.json(
+        { success: false, error: "Passerelle Wave non configurée sur le serveur." },
+        { status: 503 }
+      );
+    }
 
-      // Format Wave : t=timestamp,v1=hash
-      const parts = signatureHeader.split(",");
-      const timestamp = parts.find((p) => p.startsWith("t="))?.replace("t=", "");
-      const receivedHash = parts.find((p) => p.startsWith("v1="))?.replace("v1=", "");
+    const signatureHeader = request.headers.get("wave-signature");
+    if (!signatureHeader) {
+      console.warn("[Wave Webhook] Rejet 401 : En-tête wave-signature manquant.");
+      return NextResponse.json({ success: false, error: "Signature manquante" }, { status: 401 });
+    }
 
-      if (timestamp && receivedHash) {
-        const payloadToSign = `${timestamp}.${rawBody}`;
-        const computedHash = crypto
-          .createHmac("sha256", webhookSecret)
-          .update(payloadToSign)
-          .digest("hex");
+    // Format Wave : t=timestamp,v1=hash
+    const parts = signatureHeader.split(",");
+    const timestamp = parts.find((p) => p.startsWith("t="))?.replace("t=", "")?.trim();
+    const receivedHash = parts.find((p) => p.startsWith("v1="))?.replace("v1=", "")?.trim();
 
-        if (computedHash !== receivedHash) {
-          console.warn("[Wave Webhook] Signature invalide reçue.");
-          return NextResponse.json({ success: false, error: "Signature invalide" }, { status: 403 });
-        }
-      }
+    if (!timestamp || !receivedHash) {
+      console.warn("[Wave Webhook] Rejet 400 : Format de signature wave-signature invalide.");
+      return NextResponse.json({ success: false, error: "Format signature invalide" }, { status: 400 });
+    }
+
+    // Protection anti-rejeu (Replay attack) : tolérance max de 10 minutes
+    const reqTimestamp = parseInt(timestamp, 10);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (isNaN(reqTimestamp) || Math.abs(nowSeconds - reqTimestamp) > 600) {
+      console.warn("[Wave Webhook] Rejet 401 : Horodatage du webhook trop ancien ou décalé.");
+      return NextResponse.json({ success: false, error: "Horodatage expiré" }, { status: 401 });
+    }
+
+    const payloadToSign = `${timestamp}.${rawBody}`;
+    const computedHash = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(payloadToSign)
+      .digest("hex");
+
+    const bufComputed = Buffer.from(computedHash);
+    const bufReceived = Buffer.from(receivedHash);
+
+    if (bufComputed.length !== bufReceived.length || !crypto.timingSafeEqual(bufComputed, bufReceived)) {
+      console.warn("[Wave Webhook] Rejet 403 : Signature Wave invalide.");
+      return NextResponse.json({ success: false, error: "Signature invalide" }, { status: 403 });
     }
 
     const event = JSON.parse(rawBody || "{}");

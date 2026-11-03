@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthUser } from "@/lib/serverAuth";
+import { verifyAdminRequest } from "@/lib/adminAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { InvoiceService } from "@/lib/invoiceService";
 
@@ -7,21 +7,16 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/invoices
- * Récupère l'ensemble des factures de souscription pour la console SuperAdmin
+ * Récupère l'ensemble des factures de souscription pour la console SuperAdmin (Contrôle strict)
  */
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getServerAuthUser(request);
-    // Autoriser l'accès pour l'administration
-    if (!auth.authenticated || !auth.isAdmin) {
-      // Si requête interne depuis la console admin avec header ou token
-      const authHeader = request.headers.get("authorization");
-      if (!authHeader && !request.cookies.get("moncv_admin_session")) {
-        return NextResponse.json(
-          { success: false, message: "Accès réservé aux administrateurs" },
-          { status: 403 }
-        );
-      }
+    const auth = verifyAdminRequest(request);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, message: auth.error || "Accès réservé aux administrateurs" },
+        { status: auth.statusCode || 403 }
+      );
     }
 
     if (supabaseAdmin) {
@@ -74,15 +69,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getServerAuthUser(request);
-    if (!auth.authenticated || !auth.isAdmin) {
-      const authHeader = request.headers.get("authorization");
-      if (!authHeader && !request.cookies.get("moncv_admin_session")) {
-        return NextResponse.json(
-          { success: false, message: "Accès réservé aux administrateurs" },
-          { status: 403 }
-        );
-      }
+    const auth = verifyAdminRequest(request);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, message: auth.error || "Accès réservé aux administrateurs" },
+        { status: auth.statusCode || 403 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));

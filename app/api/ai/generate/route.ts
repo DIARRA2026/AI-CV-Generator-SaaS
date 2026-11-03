@@ -29,23 +29,26 @@ export async function POST(request: NextRequest) {
 
     const auth = await getServerAuthUser(request);
 
-    // Les micro-assistants et générations locales sont accessibles immédiatement
-    // pour garantir une fluidité totale même en session visiteur
-    const allowedFreeTypes = ["summary", "experience_bullets", "skills", "full_cv", "cv_generate", "ats_analysis"];
+    // Seuls les micro-assistants légers et gratuits (0 AI Coins) sont accessibles aux visiteurs non connectés
+    const allowedFreeGuestTypes = ["summary", "experience_bullets", "skills"];
 
     if (!auth.authenticated || !auth.user?.id) {
-      if (allowedFreeTypes.includes(type)) {
+      if (allowedFreeGuestTypes.includes(type)) {
         const directData = await generateIA(type, body);
         return NextResponse.json({
           success: true,
           type,
-          remainingCredits: 999,
+          remainingCredits: 0,
           data: directData,
         });
       }
 
       return NextResponse.json(
-        { success: false, message: "Vous devez être connecté pour utiliser l'IA avancée." },
+        {
+          success: false,
+          error: "AUTH_REQUIRED",
+          message: "Vous devez être connecté et disposer d'AI Coins pour utiliser cette fonctionnalité IA.",
+        },
         { status: 401 }
       );
     }

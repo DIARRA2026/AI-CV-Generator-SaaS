@@ -702,7 +702,7 @@ function SignupForm() {
                         required
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Ex: INNOVA GROUP SARL"
+                        placeholder="Ex: GS.COM SARL"
                         className="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                       />
                     </div>

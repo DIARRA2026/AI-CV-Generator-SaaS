@@ -414,7 +414,7 @@ export const ar: TranslationDictionary = {
     recruiterBoxDesc: "أنشئ أو سجّل الدخول إلى مساحة التوظيف المخصصة لإدارة مجمع المرشحين وتنزيل الفواتير المعتمدة ضريبياً.",
     recruiterBoxCta: "الدخول إلى مساحة التوظيف",
     securityNote: "دفع آمن ومحمي 100% عبر Wave و Orange Money و MTN MoMo والبطاقات المصرفية",
-    invoiceNote: "فاتورة تجارية معتمدة صادرة رسمياً عن مجموعة INNOVA GROUP",
+    invoiceNote: "فاتورة تجارية معتمدة صادرة رسمياً عن مجموعة GS.COM",
   },
 
   testimonials: {
@@ -510,11 +510,11 @@ export const ar: TranslationDictionary = {
   },
 
   contact: {
-    badge: "تم التطوير والدعم بواسطة مجموعة INNOVA GROUP",
+    badge: "تم التطوير والدعم بواسطة مجموعة GS.COM",
     title: "اتصل بنا",
-    subtitle: "هل لديك استفسار حول المنصة، أو تحتاج إلى مساعدة في إعداد سيرتك الذاتية، أو ترغب في شراكة مؤسسية؟ فريق INNOVA GROUP في خدمتكم طوال أيام الأسبوع.",
+    subtitle: "هل لديك استفسار حول المنصة، أو تحتاج إلى مساعدة في إعداد سيرتك الذاتية، أو ترغب في شراكة مؤسسية؟ فريق GS.COM في خدمتكم طوال أيام الأسبوع.",
     devBadge: "المطور والناشر الرسمي للمنصة",
-    devTitle: "INNOVA GROUP",
+    devTitle: "GS.COM",
     devDesc: "منصة سحابية متقدمة وفائقة الأداء مطابقة لأعلى المعايير الدولية وأنظمة ATS ونماذج التوظيف الإدارية المعتمدة.",
     devSupport247: "دعم فني مباشر متوفر طوال الأسبوع 7/7",
     whatsappBadge: "واتساب الرسمي المباشر",
@@ -532,7 +532,7 @@ export const ar: TranslationDictionary = {
     messagePlaceholder: "وضح تفاصيل طلبك، أسئلتك، أو نوع الدعم والمساعدة التي تحتاجها...",
     sendButton: "إرسال رسالتي الآن",
     sendingButton: "جارٍ الإرسال...",
-    successTitle: "تم إرسال رسالتك إلى INNOVA GROUP بنجاح!",
+    successTitle: "تم إرسال رسالتك إلى GS.COM بنجاح!",
     successMessage: "لقد تلقينا رسالتك وسيتواصل معك أحد مستشارينا في أقرب وقت ممكن.",
     directWhatsApp: "المراسلة المباشرة عبر واتساب (+225 0700510524)",
     directEmail: "إرسال بريد إلكتروني: innovagroup225@gmail.com",
@@ -596,7 +596,7 @@ export const ar: TranslationDictionary = {
     mtnMoney: "MTN MoMo CI",
     moovMoney: "Moov Money CI",
     amountToPay: "المبلغ المطلوب تحويله",
-    phoneNumberToTransfer: "الرقم الرسمي لمجموعة INNOVA GROUP",
+    phoneNumberToTransfer: "الرقم الرسمي لمجموعة GS.COM",
     copyNumber: "نسخ الرقم",
     yourSenderPhone: "رقم هاتفك الذي قمت بالتحويل منه",
     transactionId: "رقم المعاملة أو المرجع (اختياري)",
@@ -743,7 +743,7 @@ export const ar: TranslationDictionary = {
 
   footer: {
     tagline: "المنصة الرائدة لتصميم السير الذاتية المتوافقة مع أنظمة ATS وملفات الأعمال المهنية التفاعلية.",
-    companyName: "مجموعة INNOVA GROUP",
+    companyName: "مجموعة GS.COM",
     rights: "جميع الحقوق محفوظة.",
     linksTitle: "التنقل",
     productTitle: "الميزات",
@@ -754,7 +754,7 @@ export const ar: TranslationDictionary = {
     contact: "اتصل بنا",
     phoneLabel: "واتساب / هاتف: +225 07 00 51 05 24",
     emailLabel: "البريد الإلكتروني: innovagroup225@gmail.com",
-    developedBy: "تم التطوير بواسطة مجموعة INNOVA GROUP",
+    developedBy: "تم التطوير بواسطة مجموعة GS.COM",
   },
 
   cv: {

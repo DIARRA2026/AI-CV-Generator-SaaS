@@ -927,10 +927,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Mentions Éditeur INNOVA GROUP dans le Drawer */}
+            {/* Mentions Éditeur GS.COM dans le Drawer */}
             <div className="p-3 border-t border-slate-100 bg-slate-50/80 text-center">
               <span className="text-[10px] text-slate-500 block">
-                MonCV.ai • Développé par <strong className="text-slate-700 font-bold">INNOVA GROUP</strong>
+                MonCV.ai • Développé par <strong className="text-slate-700 font-bold">GS.COM</strong>
               </span>
             </div>
 

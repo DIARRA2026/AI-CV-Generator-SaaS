@@ -1423,7 +1423,7 @@ export default function HomePage() {
         />
 
         {/* ========================================================================= */}
-        {/* 9. CONTACT & SUPPORT INNOVA GROUP */}
+        {/* 9. CONTACT & SUPPORT GS.COM */}
         {/* ========================================================================= */}
         <section id="contact" className="py-14 sm:py-18 bg-white border-t border-slate-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">

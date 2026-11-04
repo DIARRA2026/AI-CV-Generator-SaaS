@@ -1,6 +1,6 @@
 /**
  * MONCV.AI - MODULE DE RATE LIMITING AVANCÉ (MAXIMUM 4 TENTATIVES)
- * Développé par INNOVA GROUP
+ * Développé par GS.COM
  * 
  * Protection stricte contre les attaques par force brute (Brute Force Protection)
  * Conforme aux recommandations OWASP & RGPD.

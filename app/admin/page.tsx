@@ -946,7 +946,7 @@ export default function AdminConsolePage() {
               )}
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Console Super Admin • INNOVA GROUP
+              Console Super Admin • GS.COM
             </p>
           </div>
         </div>

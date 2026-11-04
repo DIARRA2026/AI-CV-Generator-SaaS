@@ -55,7 +55,7 @@ export default function RootLayout({
           {children}
           <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 text-center text-xs text-slate-500 space-y-2 print:hidden">
             <p className="font-semibold text-slate-700 dark:text-slate-300">
-              MonCV.ai — Une solution développée et éditée par <span className="font-bold text-slate-900 dark:text-white">INNOVA GROUP SARL</span>
+              MonCV.ai — Une solution développée et éditée par <span className="font-bold text-slate-900 dark:text-white">GS.COM SARL</span>
             </p>
             <p className="text-[11px] text-slate-400">
               RCCM : CI-BKE-2019-A-228 · IFU : 2400000X · Abidjan, Côte d Ivoire · Tél / WhatsApp : +225 07 00 51 05 24
@@ -68,7 +68,7 @@ export default function RootLayout({
               <a href="/contact" className="hover:underline">Support & Facturation</a>
             </div>
             <p className="text-[10px] text-slate-400 pt-1">
-              © {new Date().getFullYear()} INNOVA GROUP. Tous droits réservés. Règlements sécurisés en Mobile Money.
+              © {new Date().getFullYear()} GS.COM. Tous droits réservés. Règlements sécurisés en Mobile Money.
             </p>
           </footer>
         </LanguageProvider>

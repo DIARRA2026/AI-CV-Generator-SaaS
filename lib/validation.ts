@@ -1,6 +1,6 @@
 /**
  * MONCV.AI - MODULE DE VALIDATION & ASSAINISSEMENT SÉCURISÉ CÔTÉ SERVEUR
- * Développé par INNOVA GROUP
+ * Développé par GS.COM
  * 
  * Normes de sécurité : OWASP Input Validation & Anti-XSS / Injection
  */

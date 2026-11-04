@@ -88,7 +88,7 @@ export default function ContactPage() {
 
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Support INNOVA GROUP
+              Support GS.COM
             </span>
 
             <Link
@@ -108,7 +108,7 @@ export default function ContactPage() {
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-extrabold">
             <Building className="w-3.5 h-3.5 text-blue-600" />
-            <span>Support & Relations Publiques • INNOVA GROUP</span>
+            <span>Support & Relations Publiques • GS.COM</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
@@ -116,7 +116,7 @@ export default function ContactPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            {dict.contact?.subtitle || "Une question sur vos modèles de CV, votre pack VIP, un partenariat B2B ou un besoin d'assistance ? L'équipe INNOVA GROUP est à votre entière disposition."}
+            {dict.contact?.subtitle || "Une question sur vos modèles de CV, votre pack VIP, un partenariat B2B ou un besoin d'assistance ? L'équipe GS.COM est à votre entière disposition."}
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Colonne Gauche : Canaux de contact directs */}
           <div className="lg:col-span-5 space-y-4">
-            {/* Carte Développeur Officiel INNOVA GROUP */}
+            {/* Carte Développeur Officiel GS.COM */}
             <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white shadow-xl space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center font-black text-sm shadow-md">
@@ -134,12 +134,12 @@ export default function ContactPage() {
                   <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 block">
                     {dict.footer?.developedBy || "Éditeur & Développeur"}
                   </span>
-                  <h2 className="font-extrabold text-base tracking-tight">INNOVA GROUP</h2>
+                  <h2 className="font-extrabold text-base tracking-tight">GS.COM</h2>
                 </div>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                MonCV.ai est conçu, développé et propulsé par <strong>INNOVA GROUP</strong>, acteur majeur des solutions logicielles d'ingénierie et de productivité digitale.
+                MonCV.ai est conçu, développé et propulsé par <strong>GS.COM</strong>, acteur majeur des solutions logicielles d'ingénierie et de productivité digitale.
               </p>
 
               <div className="pt-2 border-t border-slate-700/80 space-y-2 text-xs text-slate-300">
@@ -173,7 +173,7 @@ export default function ContactPage() {
                 </div>
                 <h2 className="font-black text-base">Chat WhatsApp Direct</h2>
                 <p className="text-xs text-emerald-100">
-                  +225 07 00 51 05 24 • Conseiller INNOVA GROUP en direct
+                  +225 07 00 51 05 24 • Conseiller GS.COM en direct
                 </p>
               </div>
               <ChevronRight className="w-5 h-5 text-emerald-200" />
@@ -202,7 +202,7 @@ export default function ContactPage() {
                   <Building className="w-4 h-4" />
                 </div>
                 <div className="truncate">
-                  <span className="text-[10.5px] font-bold text-slate-400 block">Direction Générale & Siège INNOVA GROUP</span>
+                  <span className="text-[10.5px] font-bold text-slate-400 block">Direction Générale & Siège GS.COM</span>
                   <span className="text-xs sm:text-sm font-extrabold text-slate-800">innovagroup225@gmail.com</span>
                 </div>
               </a>
@@ -245,14 +245,14 @@ export default function ContactPage() {
                   {dict.contact?.successTitle || "Message envoyé avec succès !"}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  {dict.contact?.successMessage || "Merci de nous avoir contactés. L'équipe support d'INNOVA GROUP a bien reçu votre demande et vous répondra sous quelques instants."}
+                  {dict.contact?.successMessage || "Merci de nous avoir contactés. L'équipe support d'GS.COM a bien reçu votre demande et vous répondra sous quelques instants."}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                    {dict.contact?.formTitle || "Envoyer un message à l'équipe INNOVA GROUP"}
+                    {dict.contact?.formTitle || "Envoyer un message à l'équipe GS.COM"}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {dict.contact?.formSubtitle || "Remplissez le formulaire ci-dessous pour une prise en charge rapide."}
@@ -362,7 +362,7 @@ export default function ContactPage() {
           <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2.5">
             <span className="font-extrabold text-slate-900">MonCV<span className="text-blue-600">.ai</span></span>
             <span className="text-slate-400">
-              <span className="hidden sm:inline">•</span> Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>
+              <span className="hidden sm:inline">•</span> Développé par <strong className="text-slate-700 font-semibold">GS.COM</strong>
             </span>
           </div>
           <div className="flex items-center justify-center gap-5 text-xs font-semibold">

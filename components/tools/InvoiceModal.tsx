@@ -112,7 +112,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 </div>
                 <span className="text-xl font-black text-slate-950 tracking-tight">MonCV.ai</span>
               </div>
-              <p className="text-xs font-bold text-slate-700 mt-2">INNOVA GROUP SARL</p>
+              <p className="text-xs font-bold text-slate-700 mt-2">GS.COM SARL</p>
               <p className="text-[11px] text-slate-500 leading-relaxed">
                 RCCM : CI-BKE-2019-A-228<br />
                 Régime d Imposition : Réel Simplifié / Services Numériques<br />

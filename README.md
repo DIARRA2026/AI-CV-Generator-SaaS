@@ -1,6 +1,6 @@
 # 🚀 MonCV.ai — AI CV Generator SaaS
 ### Plateforme SaaS d'Excellence & Portfolios Web Certifiés ATS
-> Conçue, Développée et Propulsée par **INNOVA GROUP**
+> Conçue, Développée et Propulsée par **GS.COM**
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### 5. 🏛️ Conformité Juridique & Support Dédié
 - Conditions Générales d'Utilisation complètes (`/terms`) conformes au RGPD et législations africaines.
-- Section et page dédiées « Nous Contacter » (`/contact`) avec support WhatsApp direct 7j/7 assuré par **INNOVA GROUP**.
+- Section et page dédiées « Nous Contacter » (`/contact`) avec support WhatsApp direct 7j/7 assuré par **GS.COM**.
 
 ---
 
@@ -68,5 +68,5 @@ Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
 ## 🏢 Éditeur & Droits d'Auteur
 
-Ce logiciel est conçu, développé et maintenu par **INNOVA GROUP**.  
-Tous droits réservés © 2026 **INNOVA GROUP**.
+Ce logiciel est conçu, développé et maintenu par **GS.COM**.  
+Tous droits réservés © 2026 **GS.COM**.

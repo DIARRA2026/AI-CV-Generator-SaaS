@@ -405,7 +405,7 @@ export const fr: TranslationDictionary = {
     pillar3Title: "Audit de Consommation & Export CSV",
     pillar3Desc: "Traçabilité intégrale de chaque génération IA avec date, collaborateur, action et export comptable en un clic.",
     pillar4Title: "Factures Normalisées OHADA",
-    pillar4Desc: "Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU d'INNOVA GROUP SARL).",
+    pillar4Desc: "Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU d'GS.COM SARL).",
     customVolumeBadge: "Accord-Cadre & Grandes Écoles",
     customVolumeTitle: "Besoin de plus de 50 000 crédits ou d'une Licence Établissement ?",
     customVolumeDesc: "Grandes écoles, universités, ministères ou groupes panafricains : nous configurons votre structure avec utilisateurs illimités et facturation centralisée.",
@@ -414,7 +414,7 @@ export const fr: TranslationDictionary = {
     recruiterBoxDesc: "Créez ou connectez votre Espace Organisation pour piloter votre équipe, vos crédits et vos factures normalisées.",
     recruiterBoxCta: "Accéder à l'Espace Organisation",
     securityNote: "Paiement 100% sécurisé via KKiaPay (Mobile Money & Carte Bancaire, zéro prélèvement automatique)",
-    invoiceNote: "Factures délivrées par INNOVA GROUP SARL (RCCM CI-BKE-2019-A-228)",
+    invoiceNote: "Factures délivrées par GS.COM SARL (RCCM CI-BKE-2019-A-228)",
   },
 
   testimonials: {
@@ -518,11 +518,11 @@ export const fr: TranslationDictionary = {
   },
 
   contact: {
-    badge: "Développé & Propulsé par INNOVA GROUP",
+    badge: "Développé & Propulsé par GS.COM",
     title: "Nous Contacter",
-    subtitle: "Une question sur la plateforme, un besoin d'assistance sur votre CV ou une demande de partenariat ? L'équipe INNOVA GROUP vous accompagne 7j/7.",
+    subtitle: "Une question sur la plateforme, un besoin d'assistance sur votre CV ou une demande de partenariat ? L'équipe GS.COM vous accompagne 7j/7.",
     devBadge: "Concepteur & Éditeur Logiciel",
-    devTitle: "INNOVA GROUP",
+    devTitle: "GS.COM",
     devDesc: "Plateforme SaaS haute performance certifiée conforme aux normes internationales ATS et aux formats administratifs africains.",
     devSupport247: "Support en ligne disponible 7j/7",
     whatsappBadge: "WhatsApp Officiel Direct",
@@ -540,7 +540,7 @@ export const fr: TranslationDictionary = {
     messagePlaceholder: "Précisez votre demande, vos questions ou votre besoin d'accompagnement...",
     sendButton: "Envoyer mon message",
     sendingButton: "Envoi en cours...",
-    successTitle: "Message envoyé à INNOVA GROUP !",
+    successTitle: "Message envoyé à GS.COM !",
     successMessage: "Nous avons bien reçu votre demande. Un conseiller vous répondra dans les plus brefs délais.",
     directWhatsApp: "Écrire directement sur WhatsApp (+225 0700510524)",
     directEmail: "Envoyer un email : innovagroup225@gmail.com",
@@ -604,7 +604,7 @@ export const fr: TranslationDictionary = {
     mtnMoney: "MTN MoMo CI",
     moovMoney: "Moov Money CI",
     amountToPay: "Montant à transférer",
-    phoneNumberToTransfer: "Numéro officiel INNOVA GROUP",
+    phoneNumberToTransfer: "Numéro officiel GS.COM",
     copyNumber: "Copier le numéro",
     yourSenderPhone: "Votre numéro ayant effectué le transfert",
     transactionId: "ID de transaction ou Référence (optionnel)",
@@ -751,7 +751,7 @@ export const fr: TranslationDictionary = {
 
   footer: {
     tagline: "La plateforme d'excellence pour concevoir des CVs certifiés ATS et des portfolios professionnels interactifs.",
-    companyName: "INNOVA GROUP",
+    companyName: "GS.COM",
     rights: "Tous droits réservés.",
     linksTitle: "Navigation",
     productTitle: "Fonctionnalités",
@@ -762,7 +762,7 @@ export const fr: TranslationDictionary = {
     contact: "Nous Contacter",
     phoneLabel: "WhatsApp / Appel : +225 07 00 51 05 24",
     emailLabel: "Email : innovagroup225@gmail.com",
-    developedBy: "Développé par INNOVA GROUP",
+    developedBy: "Développé par GS.COM",
   },
 
   cv: {

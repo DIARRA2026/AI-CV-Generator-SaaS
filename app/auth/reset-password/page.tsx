@@ -280,7 +280,7 @@ export default function ResetPasswordPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wide">
-              MonCV.ai • INNOVA GROUP
+              MonCV.ai • GS.COM
             </span>
           </div>
         </div>

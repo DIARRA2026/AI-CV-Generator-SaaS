@@ -85,9 +85,9 @@ export default function TermsPage() {
             <Building className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
             <div className="text-xs text-blue-950">
               <strong className="block font-bold text-sm text-blue-900 mb-0.5">
-                Application éditée et développée par INNOVA GROUP
+                Application éditée et développée par GS.COM
               </strong>
-              MonCV.ai est un produit logiciel conçu, développé, maintenu et commercialisé à l'échelle internationale par <strong>INNOVA GROUP</strong>. Tous les droits de propriété intellectuelle sur la plateforme, les algorithmes de rédaction IA et l'architecture logicielle appartiennent exclusivement à INNOVA GROUP.
+              MonCV.ai est un produit logiciel conçu, développé, maintenu et commercialisé à l'échelle internationale par <strong>GS.COM</strong>. Tous les droits de propriété intellectuelle sur la plateforme, les algorithmes de rédaction IA et l'architecture logicielle appartiennent exclusivement à GS.COM.
             </div>
           </div>
         </div>
@@ -120,14 +120,14 @@ export default function TermsPage() {
               <span>Mentions Légales & Identification de l'Éditeur</span>
             </h2>
             <p>
-              Le site web et l'application SaaS accessibles à l'adresse <strong>moncv.ai</strong> sont édités et développés par la société <strong>INNOVA GROUP</strong>.
+              Le site web et l'application SaaS accessibles à l'adresse <strong>moncv.ai</strong> sont édités et développés par la société <strong>GS.COM</strong>.
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
-              <li><strong>Éditeur et Développeur :</strong> INNOVA GROUP</li>
+              <li><strong>Éditeur et Développeur :</strong> GS.COM</li>
               <li><strong>Immatriculation Légale :</strong> RCCM CI-BKE-2019-A-228</li>
               <li><strong>Activité :</strong> Ingénierie logicielle, intelligence artificielle et solutions numériques pour l'emploi</li>
               <li><strong>Contact Support :</strong> innovagroup225@gmail.com / support@moncv.ai</li>
-              <li><strong>Assistance Directe :</strong> WhatsApp Service Client INNOVA GROUP (+225 07 00 51 05 24) 7j/7</li>
+              <li><strong>Assistance Directe :</strong> WhatsApp Service Client GS.COM (+225 07 00 51 05 24) 7j/7</li>
             </ul>
           </section>
 
@@ -138,7 +138,7 @@ export default function TermsPage() {
               <span>Objet & Acceptation des Conditions Générales</span>
             </h2>
             <p>
-              Les présentes CGU ont pour objet de définir les modalités et conditions dans lesquelles <strong>INNOVA GROUP</strong> met à la disposition des utilisateurs sa plateforme en ligne d'aide à la création de CV professionnels, de demandes d'emploi officielles, de lettres de motivation assistées par IA et de sites web portfolios interactifs.
+              Les présentes CGU ont pour objet de définir les modalités et conditions dans lesquelles <strong>GS.COM</strong> met à la disposition des utilisateurs sa plateforme en ligne d'aide à la création de CV professionnels, de demandes d'emploi officielles, de lettres de motivation assistées par IA et de sites web portfolios interactifs.
             </p>
             <p>
               Toute création de compte ou utilisation du service emporte l'adhésion pleine et entière de l'utilisateur aux présentes CGU. Si l'utilisateur refuse d'adhérer aux présentes conditions, il doit cesser immédiatement toute utilisation du service.
@@ -184,7 +184,7 @@ export default function TermsPage() {
               Pour sauvegarder ses créations, l'utilisateur crée un compte personnel en fournissant des informations exactes. L'utilisateur est seul responsable de la confidentialité de ses identifiants de connexion.
             </p>
             <p>
-              <strong>Isolation stricte :</strong> Conformément aux règles de sécurité mises en place par <strong>INNOVA GROUP</strong>, chaque utilisateur a accès exclusivement à ses propres CVs et candidatures. Aucun tiers ou autre utilisateur de la plateforme ne peut consulter les documents privés d'un autre candidat à moins que ce dernier n'ait explicitement partagé son lien public de portfolio.
+              <strong>Isolation stricte :</strong> Conformément aux règles de sécurité mises en place par <strong>GS.COM</strong>, chaque utilisateur a accès exclusivement à ses propres CVs et candidatures. Aucun tiers ou autre utilisateur de la plateforme ne peut consulter les documents privés d'un autre candidat à moins que ce dernier n'ait explicitement partagé son lien public de portfolio.
             </p>
           </section>
 
@@ -215,7 +215,7 @@ export default function TermsPage() {
               <span>Utilisation de l'Intelligence Artificielle & Contenus</span>
             </h2>
             <p>
-              Les suggestions de textes, les reformulations STAR et les calculs de score ATS sont fournis à titre d'assistance rédactionnelle. L'utilisateur demeure le garant exclusif de la véracité et de l'authenticité de ses diplômes, certifications et expériences professionnelles. <strong>INNOVA GROUP</strong> ne saurait être tenu responsable d'éventuelles inexactitudes saisies par l'utilisateur.
+              Les suggestions de textes, les reformulations STAR et les calculs de score ATS sont fournis à titre d'assistance rédactionnelle. L'utilisateur demeure le garant exclusif de la véracité et de l'authenticité de ses diplômes, certifications et expériences professionnelles. <strong>GS.COM</strong> ne saurait être tenu responsable d'éventuelles inexactitudes saisies par l'utilisateur.
             </p>
           </section>
 
@@ -226,7 +226,7 @@ export default function TermsPage() {
               <span>Propriété Intellectuelle</span>
             </h2>
             <p>
-              <strong>Droits d'INNOVA GROUP :</strong> L'ensemble des composantes du site et de l'application (marques, logos, codes sources, design systems, modèles visuels, graphismes) sont la propriété exclusive d'<strong>INNOVA GROUP</strong>. Toute reproduction ou rétro-ingénierie non autorisée fera l'objet de poursuites judiciaires.
+              <strong>Droits d'GS.COM :</strong> L'ensemble des composantes du site et de l'application (marques, logos, codes sources, design systems, modèles visuels, graphismes) sont la propriété exclusive d'<strong>GS.COM</strong>. Toute reproduction ou rétro-ingénierie non autorisée fera l'objet de poursuites judiciaires.
             </p>
             <p>
               <strong>Droits de l'Utilisateur :</strong> L'utilisateur conserve la pleine et entière propriété des informations personnelles et des contenus textuels qu'il saisit dans ses documents.
@@ -240,7 +240,7 @@ export default function TermsPage() {
               <span>Protection des Données Personnelles & Confidentialité</span>
             </h2>
             <p>
-              <strong>INNOVA GROUP</strong> applique une politique de confidentialité stricte conforme aux meilleures pratiques internationales (RGPD) et aux réglementations locales relatives à la protection des données à caractère personnel. Vos données ne sont jamais vendues, cédées ou exploitées à des fins publicitaires tierces.
+              <strong>GS.COM</strong> applique une politique de confidentialité stricte conforme aux meilleures pratiques internationales (RGPD) et aux réglementations locales relatives à la protection des données à caractère personnel. Vos données ne sont jamais vendues, cédées ou exploitées à des fins publicitaires tierces.
             </p>
             <p>
               Vous bénéficiez d'un droit d'accès, de rectification et de suppression totale de vos données sur simple demande via les paramètres de votre compte ou par email.
@@ -254,7 +254,7 @@ export default function TermsPage() {
               <span>Disponibilité du Service & SLA</span>
             </h2>
             <p>
-              <strong>INNOVA GROUP</strong> met en œuvre tous les moyens raisonnables pour assurer une disponibilité continue du service 24h/24 et 7j/7 avec un objectif de disponibilité de 99.9%. Des interruptions programmées de courte durée peuvent être effectuées pour assurer les mises à jour et la maintenance de la sécurité.
+              <strong>GS.COM</strong> met en œuvre tous les moyens raisonnables pour assurer une disponibilité continue du service 24h/24 et 7j/7 avec un objectif de disponibilité de 99.9%. Des interruptions programmées de courte durée peuvent être effectuées pour assurer les mises à jour et la maintenance de la sécurité.
             </p>
           </section>
 
@@ -268,7 +268,7 @@ export default function TermsPage() {
               Pour toute question relative aux présentes Conditions Générales d'Utilisation, pour signaler un problème technique ou formuler une demande de partenariat :
             </p>
             <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 space-y-2">
-              <p className="font-bold text-slate-900">Support Client INNOVA GROUP :</p>
+              <p className="font-bold text-slate-900">Support Client GS.COM :</p>
               <p className="flex items-center gap-2 text-slate-700">
                 <Mail className="w-4 h-4 text-blue-600" />
                 <span>Email officiel : <strong>support@moncv.ai</strong> / <strong>innovagroup225@gmail.com</strong></span>
@@ -283,7 +283,7 @@ export default function TermsPage() {
 
         {/* Pied de page document */}
         <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 text-center sm:text-left">
-          <p>© 2026 MonCV.ai — Conçu & Développé par <strong className="text-slate-700 font-semibold">INNOVA GROUP</strong>. Tous droits réservés.</p>
+          <p>© 2026 MonCV.ai — Conçu & Développé par <strong className="text-slate-700 font-semibold">GS.COM</strong>. Tous droits réservés.</p>
           <Link href="/contact" className="text-blue-600 font-bold hover:underline">
             Accéder à la section Nous Contacter →
           </Link>

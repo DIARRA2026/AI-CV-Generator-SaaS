@@ -414,7 +414,7 @@ export const es: TranslationDictionary = {
     recruiterBoxDesc: "Crea o inicia sesión en tu Espacio de Reclutador para administrar tu base de candidatos y facturas fiscales.",
     recruiterBoxCta: "Acceder al Espacio de Reclutador",
     securityNote: "Pago 100% seguro a través de Wave, Orange Money, MTN MoMo y Tarjeta Bancaria",
-    invoiceNote: "Factura comercial oficial emitida por INNOVA GROUP",
+    invoiceNote: "Factura comercial oficial emitida por GS.COM",
   },
 
   testimonials: {
@@ -510,11 +510,11 @@ export const es: TranslationDictionary = {
   },
 
   contact: {
-    badge: "Desarrollado y Gestionado por INNOVA GROUP",
+    badge: "Desarrollado y Gestionado por GS.COM",
     title: "Contáctanos",
-    subtitle: "¿Tienes alguna duda sobre la plataforma, necesitas soporte con tu CV o requieres una alianza corporativa? El equipo de INNOVA GROUP está a tu disposición los 7 días de la semana.",
+    subtitle: "¿Tienes alguna duda sobre la plataforma, necesitas soporte con tu CV o requieres una alianza corporativa? El equipo de GS.COM está a tu disposición los 7 días de la semana.",
     devBadge: "Creador y Editor de Software",
-    devTitle: "INNOVA GROUP",
+    devTitle: "GS.COM",
     devDesc: "Plataforma SaaS de alto rendimiento certificada bajo normas internacionales ATS y formatos administrativos de empleo.",
     devSupport247: "Soporte en línea disponible 7/7",
     whatsappBadge: "WhatsApp Oficial Directo",
@@ -532,7 +532,7 @@ export const es: TranslationDictionary = {
     messagePlaceholder: "Detalla tu consulta, proyecto o solicitud de ayuda...",
     sendButton: "Enviar mi mensaje",
     sendingButton: "Enviando...",
-    successTitle: "¡Mensaje enviado a INNOVA GROUP!",
+    successTitle: "¡Mensaje enviado a GS.COM!",
     successMessage: "Hemos recibido tu solicitud. Un asesor se pondrá en contacto contigo a la brevedad.",
     directWhatsApp: "Chatear directamente en WhatsApp (+225 0700510524)",
     directEmail: "Enviar un correo: innovagroup225@gmail.com",
@@ -596,7 +596,7 @@ export const es: TranslationDictionary = {
     mtnMoney: "MTN MoMo CI",
     moovMoney: "Moov Money CI",
     amountToPay: "Importe a transferir",
-    phoneNumberToTransfer: "Número oficial INNOVA GROUP",
+    phoneNumberToTransfer: "Número oficial GS.COM",
     copyNumber: "Copiar número",
     yourSenderPhone: "Tu número emisor de la transferencia",
     transactionId: "ID de transacción o Referencia (opcional)",
@@ -743,7 +743,7 @@ export const es: TranslationDictionary = {
 
   footer: {
     tagline: "La plataforma de referencia para crear currículums certificados para ATS y portafolios interactivos.",
-    companyName: "INNOVA GROUP",
+    companyName: "GS.COM",
     rights: "Todos los derechos reservados.",
     linksTitle: "Navegación",
     productTitle: "Herramientas",
@@ -754,7 +754,7 @@ export const es: TranslationDictionary = {
     contact: "Contáctanos",
     phoneLabel: "WhatsApp / Teléfono: +225 07 00 51 05 24",
     emailLabel: "Correo: innovagroup225@gmail.com",
-    developedBy: "Desarrollado por INNOVA GROUP",
+    developedBy: "Desarrollado por GS.COM",
   },
 
   cv: {

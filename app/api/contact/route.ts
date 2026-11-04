@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Le message est validé côté serveur
     return NextResponse.json({
       success: true,
-      message: "Votre message a été transmis avec succès à l'équipe INNOVA GROUP.",
+      message: "Votre message a été transmis avec succès à l'équipe GS.COM.",
       remainingAttempts: rateCheck.remaining,
     });
   } catch (error: any) {

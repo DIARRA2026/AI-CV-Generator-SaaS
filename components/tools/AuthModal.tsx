@@ -1013,7 +1013,7 @@ export const AuthModal: React.FC<Props> = ({
           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100/80 mb-1">
             <Sparkles className="w-2.5 h-2.5 text-blue-600" />
             <span className="text-[9px] font-bold text-blue-800 tracking-wide uppercase">
-              MonCV.ai • INNOVA GROUP
+              MonCV.ai • GS.COM
             </span>
           </div>
 

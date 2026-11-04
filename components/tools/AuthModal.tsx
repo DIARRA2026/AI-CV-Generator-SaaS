@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn,
   UserPlus, Phone, CheckCircle2, ArrowRight, Loader2, ShieldCheck,
@@ -1918,6 +1919,17 @@ export const AuthModal: React.FC<Props> = ({
                   </button>
                 </p>
               )}
+
+              <p className="text-center text-[10px] text-slate-400 pt-0.5">
+                <Link
+                  href={selectedPlan && selectedPlan !== "free" ? `/signup?plan=${selectedPlan}` : "/signup"}
+                  onClick={onClose}
+                  className="text-slate-500 hover:text-blue-600 transition-colors inline-flex items-center gap-1"
+                >
+                  <span>Ouvrir la page complète d'inscription</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </Link>
+              </p>
             </div>
           </form>
         </div>

@@ -20,7 +20,8 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED_PREFIXES = ["/dashboard", "/create", "/portfolio/edit"];
 
 // Liste des routes publiques réservées aux visiteurs non connectés
-const PUBLIC_AUTH_ROUTES = ["/", "/login", "/signup"];
+// Note : la page d'inscription (/signup) reste toujours accessible pour permettre la création de nouveaux comptes.
+const PUBLIC_AUTH_ROUTES = ["/", "/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

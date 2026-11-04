@@ -84,14 +84,33 @@ function SignupForm() {
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Garde client : si déjà authentifié, redirection vers le dashboard
+  // Détection d'une session existante sans bloquer l'affichage de la page d'inscription
+  const [existingUser, setExistingUser] = useState<any>(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (StorageManager.isLoggedIn()) {
-        router.replace(redirectParam.startsWith("/") ? redirectParam : "/dashboard");
-      }
+      try {
+        const u = StorageManager.getUser();
+        if (u && StorageManager.isLoggedIn()) {
+          setExistingUser(u);
+        }
+      } catch {}
     }
-  }, [router, redirectParam]);
+  }, []);
+
+  const handleLogoutAndCreateNew = async () => {
+    try {
+      await SupabaseService.signOut();
+    } catch {}
+    StorageManager.logout();
+    setExistingUser(null);
+    setEmail("");
+    setPassword("");
+    setFirstName("");
+    setLastName("");
+    setCompanyName("");
+    setManagerName("");
+  };
 
   // Compte à rebours de renvoi d'OTP
   useEffect(() => {
@@ -460,6 +479,33 @@ function SignupForm() {
           ) : (
             // Formulaire standard d'inscription
             <>
+              {/* Alerte si déjà connecté */}
+              {existingUser && (
+                <div className="p-3.5 bg-blue-950/70 border border-blue-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-200">
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-white block">Session active détectée</span>
+                    <span className="text-[11px] text-slate-300">
+                      Vous êtes connecté avec l'email <strong className="text-white">{existingUser.email}</strong>.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      href="/dashboard"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-colors"
+                    >
+                      Mon Espace
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogoutAndCreateNew}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                    >
+                      Créer un autre compte
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Sélecteur Candidat / Entreprise */}
               <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
                 <button

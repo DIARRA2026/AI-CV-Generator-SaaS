@@ -282,7 +282,7 @@ function LoginForm() {
           {/* Lien vers Inscription */}
           <div className="space-y-2 text-center">
             <Link
-              href={planParam ? `/signup?plan=${planParam}` : "/signup"}
+              href={planParam ? `/signup?plan=${planParam}${redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : ""}` : redirectParam && redirectParam !== "/dashboard" ? `/signup?redirect=${encodeURIComponent(redirectParam)}` : "/signup"}
               className="block w-full py-3 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs sm:text-sm transition-all text-center"
             >
               Créer un compte gratuitement

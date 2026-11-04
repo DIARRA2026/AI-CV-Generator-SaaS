@@ -389,6 +389,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {dict.auth.loginTab || "Connexion"}
                 </button>
 
+                <Link
+                  href="/signup"
+                  className="px-3 py-2 text-xs lg:text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-xl transition-all cursor-pointer btn-press"
+                  title="Créer un compte"
+                >
+                  {dict.auth.registerTab || "Créer un compte"}
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleNewCvClick}
@@ -692,21 +700,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       {dict.auth.loginTab}
                     </button>
-                    <button
-                      onClick={() => {
-                        setIsMobileDrawerOpen(false);
-                        if (onOpenAuth) {
-                          onOpenAuth("register");
-                        } else {
-                          setAuthMode("register");
-                          setTargetRedirect("/create");
-                          setIsAuthOpen(true);
-                        }
-                      }}
-                      className="py-2 px-3 text-center text-xs font-bold text-white bg-blue-600 rounded-xl cursor-pointer btn-press shadow-xs"
+                    <Link
+                      href="/signup"
+                      onClick={() => setIsMobileDrawerOpen(false)}
+                      className="py-2 px-3 text-center text-xs font-bold text-white bg-blue-600 rounded-xl cursor-pointer btn-press shadow-xs block"
                     >
-                      {dict.auth.registerTab}
-                    </button>
+                      {dict.auth.registerTab || "Créer un compte"}
+                    </Link>
 
                   </div>
                 </div>

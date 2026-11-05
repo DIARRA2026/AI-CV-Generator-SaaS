@@ -58,7 +58,7 @@ export class SupabaseService {
     // 2. Si Supabase Cloud est connecté, synchroniser avec Supabase Auth
     if (this.isAvailable() && supabase) {
       try {
-        const targetNext = payload.accountType === "business" ? "/dashboard?tab=business" : "/create";
+        const targetNext = payload.accountType === "business" ? "/dashboard?tab=business" : "/dashboard";
         const emailRedirectTo = typeof window !== "undefined"
           ? `${window.location.origin}/auth/confirm?next=${encodeURIComponent(targetNext)}`
           : undefined;

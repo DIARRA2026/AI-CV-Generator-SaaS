@@ -315,19 +315,12 @@ export default function HomePage() {
         }
       }
 
-      // Reprendre automatiquement un paiement KKiaPay qui attendait la validation du compte
-      const pending = StorageManager.getPendingCheckoutPlan();
-      if (pending && pending.plan && pending.plan !== "free") {
-        setTimeout(() => {
-          setSelectedPack(pending.plan);
-          setIsKKiaPayModalOpen(true);
-        }, 500);
-      } else {
-        // Redirection directe du nouvel inscrit vers son espace pour créer son CV
-        setTimeout(() => {
-          router.push("/create?confirmed=true");
-        }, 600);
-      }
+      // Redirection directe vers le tableau de bord (Particulier ou Entreprise)
+      const u = StorageManager.getUser();
+      const isBiz = u?.accountType === "business" || StorageManager.isBusinessAccount();
+      setTimeout(() => {
+        router.push(isBiz ? "/dashboard?tab=business&confirmed=true" : "/dashboard?confirmed=true");
+      }, 500);
     };
 
 
@@ -1693,20 +1686,19 @@ export default function HomePage() {
           setCurrentUser(u);
           setIsBusinessAccount(isBiz);
 
-          // 1. Reprendre automatiquement la formule sélectionnée avant l'inscription/connexion
-          const pending = StorageManager.getPendingCheckoutPlan();
-          const hasExplicitPaidPlan = Boolean(pending?.plan && pending.plan !== "free");
-
-          if (hasExplicitPaidPlan && pending) {
-            // L'utilisateur a choisi une formule : ouvrir immédiatement le paiement KKiaPay pour son compte
-            setSelectedPack(pending.plan);
-            setTimeout(() => {
-              setIsKKiaPayModalOpen(true);
-            }, 300);
-            return;
+          // 1. Sauvegarder la formule choisie si nécessaire
+          if (chosenPlan && chosenPlan !== "free") {
+            StorageManager.setPendingCheckoutPlan(chosenPlan, true);
           }
 
-          // 2. NOUVELLE INSCRIPTION OU CONNEXION -> Atterrir sur le Tableau de Bord
+          // 2. Synchroniser le cookie de session pour le middleware
+          if (u?.token || u?.email) {
+            const tokenVal = encodeURIComponent(u.token || `auth_${u.email}`);
+            document.cookie = `moncv_auth_token=${tokenVal}; path=/; max-age=2592000; SameSite=Lax`;
+          }
+
+          // 3. REDIRECTION SYSTÉMATIQUE VERS LE TABLEAU DE BORD (Particulier ou Entreprise)
+          // Ne jamais laisser l'utilisateur sur la landing page après une inscription ou connexion
           if (isBiz) {
             router.push("/dashboard?tab=business");
           } else {

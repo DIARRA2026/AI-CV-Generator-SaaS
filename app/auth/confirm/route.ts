@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseKey) {
-    const dest = type === "recovery" ? "/auth/reset-password" : `${next}?confirmed=true`;
+    const separator = next.includes("?") ? "&" : "?";
+    const dest = type === "recovery" ? "/auth/reset-password" : `${next}${separator}confirmed=true`;
     let response = NextResponse.redirect(new URL(dest, request.url));
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -77,5 +78,6 @@ export async function GET(request: NextRequest) {
   if (type === "recovery") {
     return NextResponse.redirect(new URL("/auth/reset-password?auth_error=invalid_token", request.url));
   }
-  return NextResponse.redirect(new URL(`${next}?auth_error=invalid_token`, request.url));
+  const separator = next.includes("?") ? "&" : "?";
+  return NextResponse.redirect(new URL(`${next}${separator}auth_error=invalid_token`, request.url));
 }

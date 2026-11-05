@@ -158,7 +158,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       onOpenAuth("register");
     } else {
       setAuthMode("register");
-      setTargetRedirect("/create");
+      setTargetRedirect("/dashboard");
       setIsAuthOpen(true);
     }
   };
@@ -968,8 +968,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           }
           if (u?.accountType === "business" || StorageManager.isBusinessAccount()) {
             router.push("/dashboard?tab=business");
-          } else if (actionType === "register") {
-            router.push("/create");
           } else {
             router.push(targetRedirect || "/dashboard");
           }

@@ -339,14 +339,13 @@ function SignupForm() {
     window.dispatchEvent(new Event("storage"));
 
     setTimeout(() => {
-      if (selectedPlan && selectedPlan !== "free") {
-        router.replace(`/tarifs?checkout=${selectedPlan}`);
-      } else if (accountType === "business") {
+      // Redirection DIRECTE vers le tableau de bord (Particulier ou Entreprise)
+      if (accountType === "business") {
         router.replace("/dashboard?tab=business");
       } else {
         router.replace("/dashboard");
       }
-    }, 500);
+    }, 400);
   };
 
   return (

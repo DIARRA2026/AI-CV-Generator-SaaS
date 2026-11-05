@@ -1,6 +1,6 @@
 /**
  * MONCV.AI - CONFIGURATION DU SYSTEME DE CREDITS PREPAYÉS B2C & B2B
- * Marchand Wave : MonCV.ai / INNOVA GROUP - M_iWih2Nsg7dr8
+ * Marchand Wave : MonCV.ai / GS.COM - M_iWih2Nsg7dr8
  * REGLE : Le serveur lit TOUJOURS les couts depuis action_costs en DB.
  * INVARIANT : prix_credit(B2B) < prix_credit(meilleur B2C)
  * B2C plancher : 8.33 F/credit (Carriere 5000/600)

@@ -560,7 +560,7 @@ export const es: TranslationDictionary = {
     fullNameLabel: "Nombre completo",
     fullNamePlaceholder: "Ej: Koffi Emmanuel Kouassi",
     companyLabel: "Nombre de la empresa",
-    companyPlaceholder: "Ej: Innova Group SARL",
+    companyPlaceholder: "Ej: GS.COM",
     emailLabel: "Correo electrónico",
     emailPlaceholder: "tu.correo@ejemplo.com",
     phoneLabel: "Número de teléfono",

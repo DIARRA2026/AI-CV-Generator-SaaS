@@ -245,7 +245,7 @@ export default function ContactPage() {
                   {dict.contact?.successTitle || "Message envoyé avec succès !"}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  {dict.contact?.successMessage || "Merci de nous avoir contactés. L'équipe support d'GS.COM a bien reçu votre demande et vous répondra sous quelques instants."}
+                  {dict.contact?.successMessage || "Merci de nous avoir contactés. L'équipe support de GS.COM a bien reçu votre demande et vous répondra sous quelques instants."}
                 </p>
               </div>
             ) : (

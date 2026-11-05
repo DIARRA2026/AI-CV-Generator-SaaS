@@ -226,7 +226,7 @@ export default function TermsPage() {
               <span>Propriété Intellectuelle</span>
             </h2>
             <p>
-              <strong>Droits d'GS.COM :</strong> L'ensemble des composantes du site et de l'application (marques, logos, codes sources, design systems, modèles visuels, graphismes) sont la propriété exclusive d'<strong>GS.COM</strong>. Toute reproduction ou rétro-ingénierie non autorisée fera l'objet de poursuites judiciaires.
+              <strong>Droits de GS.COM :</strong> L'ensemble des composantes du site et de l'application (marques, logos, codes sources, design systems, modèles visuels, graphismes) sont la propriété exclusive de <strong>GS.COM</strong>. Toute reproduction ou rétro-ingénierie non autorisée fera l'objet de poursuites judiciaires.
             </p>
             <p>
               <strong>Droits de l'Utilisateur :</strong> L'utilisateur conserve la pleine et entière propriété des informations personnelles et des contenus textuels qu'il saisit dans ses documents.

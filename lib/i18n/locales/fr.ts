@@ -405,7 +405,7 @@ export const fr: TranslationDictionary = {
     pillar3Title: "Audit de Consommation & Export CSV",
     pillar3Desc: "Traçabilité intégrale de chaque génération IA avec date, collaborateur, action et export comptable en un clic.",
     pillar4Title: "Factures Normalisées OHADA",
-    pillar4Desc: "Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU d'GS.COM SARL).",
+    pillar4Desc: "Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU de GS.COM).",
     customVolumeBadge: "Accord-Cadre & Grandes Écoles",
     customVolumeTitle: "Besoin de plus de 50 000 crédits ou d'une Licence Établissement ?",
     customVolumeDesc: "Grandes écoles, universités, ministères ou groupes panafricains : nous configurons votre structure avec utilisateurs illimités et facturation centralisée.",
@@ -414,7 +414,7 @@ export const fr: TranslationDictionary = {
     recruiterBoxDesc: "Créez ou connectez votre Espace Organisation pour piloter votre équipe, vos crédits et vos factures normalisées.",
     recruiterBoxCta: "Accéder à l'Espace Organisation",
     securityNote: "Paiement 100% sécurisé via KKiaPay (Mobile Money & Carte Bancaire, zéro prélèvement automatique)",
-    invoiceNote: "Factures délivrées par GS.COM SARL (RCCM CI-BKE-2019-A-228)",
+    invoiceNote: "Factures délivrées par GS.COM (RCCM CI-BKE-2019-A-228)",
   },
 
   testimonials: {
@@ -568,7 +568,7 @@ export const fr: TranslationDictionary = {
     fullNameLabel: "Nom complet",
     fullNamePlaceholder: "Ex: Koffi Emmanuel Kouassi",
     companyLabel: "Nom de l'entreprise",
-    companyPlaceholder: "Ex: Innova Group SARL",
+    companyPlaceholder: "Ex: GS.COM",
     emailLabel: "Adresse email",
     emailPlaceholder: "votre.email@exemple.com",
     phoneLabel: "Numéro de téléphone",

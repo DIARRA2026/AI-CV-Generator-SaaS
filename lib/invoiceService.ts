@@ -3,7 +3,7 @@ import { supabaseAdmin } from "./supabaseAdmin";
 import { Invoice } from "./types";
 
 export const INNOVA_GROUP_INFO = {
-  nom: "GS.COM SARL",
+  nom: "GS.COM",
   service: "MonCV.ai — Plateforme Numérique d IA pour l Emploi",
   rccm: "CI-BKE-2019-A-228",
   ifu: "2400000X",

@@ -1357,7 +1357,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-indigo-900 font-medium pt-1 border-t border-indigo-200/50">
-                    <span>GS.COM SARL</span>
+                    <span>GS.COM</span>
                     <button
                       type="button"
                       onClick={() => setCandidateSubTab("invoices")}
@@ -2061,7 +2061,7 @@ export default function DashboardPage() {
                         Mes Factures & Reçus de Souscription
                       </h2>
                       <p className="text-xs text-slate-300 max-w-xl">
-                        Toutes vos souscriptions réglées par Mobile Money ou Carte Bancaire sont archivées légalement par GS.COM SARL. Vous pouvez visualiser et télécharger vos factures normalisées à tout moment.
+                        Toutes vos souscriptions réglées par Mobile Money ou Carte Bancaire sont archivées légalement par GS.COM. Vous pouvez visualiser et télécharger vos factures normalisées à tout moment.
                       </p>
                     </div>
 

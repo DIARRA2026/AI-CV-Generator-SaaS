@@ -99,7 +99,7 @@ export const LandingBusinessSection: React.FC<LandingBusinessSectionProps> = ({
             </div>
             <h4 className="font-extrabold text-sm text-white">Factures Normalisées OHADA</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU d'GS.COM SARL).
+              Chaque recharge émet une facture en bonne et due forme avec mentions légales complètes (RCCM, IFU de GS.COM).
             </p>
           </div>
         </div>
@@ -255,7 +255,7 @@ export const LandingBusinessSection: React.FC<LandingBusinessSectionProps> = ({
           </div>
           <div className="flex items-center gap-2 text-slate-400">
             <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-            <span>Factures délivrées par GS.COM SARL (RCCM CI-BKE-2019-A-228)</span>
+            <span>Factures délivrées par GS.COM (RCCM CI-BKE-2019-A-228)</span>
           </div>
         </div>
       </div>

@@ -560,7 +560,7 @@ export const ar: TranslationDictionary = {
     fullNameLabel: "الاسم الكامل",
     fullNamePlaceholder: "مثال: كوفي إيمانويل كواسي",
     companyLabel: "اسم الشركة أو المؤسسة",
-    companyPlaceholder: "مثال: Innova Group SARL",
+    companyPlaceholder: "مثال: GS.COM",
     emailLabel: "عنوان البريد الإلكتروني",
     emailPlaceholder: "your.email@example.com",
     phoneLabel: "رقم الهاتف",

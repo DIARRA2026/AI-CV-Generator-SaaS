@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * MONCV.AI - MIDDLEWARE SSR D'AUTHENTIFICATION & PROTECTION DES ROUTES
  * Conforme Next.js 14 App Router & Supabase SSR (@supabase/ssr)
- * Développé par INNOVA GROUP
+ * Développé par GS.COM
  * 
  * Règles d'accès strictes :
  * 1. Routes protégées (/dashboard, /dashboard/*, /create, /portfolio/edit) :

@@ -259,18 +259,8 @@ export default function HomePage() {
   };
 
   const handleSelectPack = (packCode: string) => {
-    const isAuth = StorageManager.isLoggedIn();
-    if (!isAuth) {
-      // 1. Sauvegarder la formule choisie pour ne pas la perdre après l'inscription
-      StorageManager.setPendingCheckoutPlan(packCode as PlanTier, true);
-      setAuthDefaultPlan(packCode as PlanTier);
-      setSelectedPack(packCode);
-      // 2. Ouvrir la modale d'inscription / connexion
-      setIsAuthOpen(true);
-      return;
-    }
-
-    // 3. Utilisateur déjà authentifié : passer directement à l'étape de paiement KKiaPay
+    // Ouvrir directement le paiement sans bloquer par l'authentification préalable
+    StorageManager.setPendingCheckoutPlan(packCode as PlanTier, true);
     setSelectedPack(packCode);
     setIsKKiaPayModalOpen(true);
   };
@@ -1659,12 +1649,6 @@ export default function HomePage() {
         isOpen={isKKiaPayModalOpen}
         onClose={() => setIsKKiaPayModalOpen(false)}
         planId={selectedPack}
-        onNeedAuth={(plan) => {
-          setIsKKiaPayModalOpen(false);
-          StorageManager.setPendingCheckoutPlan(plan as PlanTier, true);
-          setAuthDefaultPlan(plan as PlanTier);
-          setIsAuthOpen(true);
-        }}
         onSuccess={(confirmedPlanId) => {
           setIsKKiaPayModalOpen(false);
           StorageManager.clearPendingCheckoutPlan();

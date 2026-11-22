@@ -16,6 +16,7 @@ import {
   User,
   Sparkles,
   Coins,
+  Mail,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { StorageManager } from "@/lib/storage";
@@ -347,34 +348,25 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
     const currentUser = StorageManager.getUser();
     const activeToken = await getAuthToken();
 
-    // Si aucune trace de connexion
-    if (!isLogged && !activeToken && !currentUser?.email) {
-      if (onNeedAuth) {
-        onNeedAuth(planId);
-      } else {
-        router.push(`/login?redirect=/tarifs&plan=${planId}`);
-      }
-      return;
-    }
-
     setStep("ordering");
 
     try {
+      const cleanEmail = email.trim() || currentUser?.email || "";
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (activeToken) {
         headers["Authorization"] = `Bearer ${activeToken}`;
       }
-      if (currentUser?.email) {
-        headers["x-user-email"] = currentUser.email;
+      if (cleanEmail) {
+        headers["x-user-email"] = cleanEmail;
       }
       if (currentUser?.id) {
         headers["x-user-id"] = currentUser.id;
       }
 
       // Synchronisation du cookie utilisateur pour pérenniser l'identification SSR
-      if (typeof document !== "undefined" && currentUser?.email) {
-        document.cookie = `moncv_user_email=${encodeURIComponent(currentUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
-        if (currentUser.id) {
+      if (typeof document !== "undefined" && cleanEmail) {
+        document.cookie = `moncv_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=2592000; SameSite=Lax`;
+        if (currentUser?.id) {
           document.cookie = `moncv_user_id=${encodeURIComponent(currentUser.id)}; path=/; max-age=2592000; SameSite=Lax`;
         }
       }
@@ -388,6 +380,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
           firstName: cleanFirstName,
           lastName: cleanLastName,
           phone: cleanPhone,
+          email: cleanEmail || undefined,
         }),
       });
 
@@ -398,7 +391,30 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
 
       const orderId = orderData.orderId;
       const verifiedUserId = orderData.userId || currentUser?.id || "user";
+      const resolvedEmail = orderData.userEmail || cleanEmail || "";
       setActiveOrderId(orderId);
+
+      // Si l'utilisateur n'était pas authentifié localement, l'enregistrer avec les identifiants créés par le serveur
+      if (orderData.userId) {
+        const existingLocal = StorageManager.getUser();
+        StorageManager.setUser({
+          id: orderData.userId,
+          email: resolvedEmail || existingLocal?.email || "",
+          firstName: cleanFirstName || existingLocal?.firstName || "Client",
+          lastName: cleanLastName || existingLocal?.lastName || "",
+          phone: cleanPhone,
+          accountType: existingLocal?.accountType || "candidate",
+          planTier: (orderData.planId as any) || existingLocal?.planTier || "free",
+          token: existingLocal?.token,
+        });
+
+        if (typeof document !== "undefined") {
+          document.cookie = `moncv_user_id=${encodeURIComponent(orderData.userId)}; path=/; max-age=2592000; SameSite=Lax`;
+          if (resolvedEmail) {
+            document.cookie = `moncv_user_email=${encodeURIComponent(resolvedEmail)}; path=/; max-age=2592000; SameSite=Lax`;
+          }
+        }
+      }
 
       const publicKey = process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY?.trim() || "";
       const isSandbox = (process.env.NEXT_PUBLIC_KKIAPAY_SANDBOX || "").toLowerCase() === "true";
@@ -431,7 +447,7 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
           api_key: publicKey,
           key: publicKey,
           sandbox: isSandbox,
-          email: currentUser?.email || email || "",
+          email: resolvedEmail || cleanEmail || "",
           phone: cleanPhone,
           name: fullName,
           partnerId: orderId,
@@ -672,6 +688,23 @@ export const KKiaPayWidgetModal: React.FC<KKiaPayWidgetModalProps> = ({
                   <p className="text-[10px] text-slate-400 pt-0.5">
                     Orange Money, Wave, MTN MoMo, Moov Money ou Carte Bancaire Visa / Mastercard.
                   </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                    <span>Adresse Email</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Pour votre reçu & compte</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Ex: jean.kouassi@exemple.com (optionnel)"
+                      className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -66,12 +66,8 @@ export default function TarifsPage() {
             setActiveTab("entreprises");
           }
 
-          if (isAuth) {
-            setIsKKiaPayModalOpen(true);
-          } else {
-            StorageManager.setPendingCheckoutPlan(checkout as any, true);
-            setIsAuthOpen(true);
-          }
+          StorageManager.setPendingCheckoutPlan(checkout as any, true);
+          setIsKKiaPayModalOpen(true);
         }
       };
 
@@ -89,12 +85,10 @@ export default function TarifsPage() {
   const handleSelectPack = async (pack: CreditPack) => {
     if (pack.prixFcfa === 0) return;
 
-    let isAuth = StorageManager.isLoggedIn();
-    if (!isAuth && supabase) {
+    if (supabase) {
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
-          isAuth = true;
           const u = data.session.user;
           StorageManager.setUser({
             id: u.id,
@@ -110,15 +104,8 @@ export default function TarifsPage() {
       } catch {}
     }
 
-    if (!isAuth) {
-      // Utilisateur non connecté : mémoriser l'offre et afficher le modal de connexion
-      StorageManager.setPendingCheckoutPlan(pack.slug as any, true);
-      setSelectedPackCode(pack.slug);
-      setIsAuthOpen(true);
-      return;
-    }
-
-    // Utilisateur connecté : ouvrir directement l'interface de pré-paiement KKiaPay
+    // Ouvrir directement l'interface de paiement KKiaPay sans barrière d'authentification préalable
+    StorageManager.setPendingCheckoutPlan(pack.slug as any, true);
     setSelectedPackCode(pack.slug);
     setIsKKiaPayModalOpen(true);
   };
@@ -404,12 +391,6 @@ export default function TarifsPage() {
         isOpen={isKKiaPayModalOpen}
         onClose={() => setIsKKiaPayModalOpen(false)}
         planId={selectedPackCode}
-        onNeedAuth={(pack) => {
-          setIsKKiaPayModalOpen(false);
-          StorageManager.setPendingCheckoutPlan(pack as any, true);
-          setSelectedPackCode(pack);
-          setIsAuthOpen(true);
-        }}
         onSuccess={(pack) => {
           setIsKKiaPayModalOpen(false);
           StorageManager.clearPendingCheckoutPlan();
